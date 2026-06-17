@@ -1,0 +1,40 @@
+---
+description: Protocolo obrigatório de leitura do memory-bank antes de qualquer tarefa no projeto SeniorEase
+alwaysApply: true
+---
+
+# SeniorEase — Protocolo do Memory Bank
+
+Este projeto usa um memory-bank centralizado como submódulo em `memory-bank/`. Todo agente DEVE seguir este protocolo antes de executar qualquer tarefa.
+
+## Leitura obrigatória antes de qualquer tarefa
+
+Leia os seguintes arquivos ANTES de começar qualquer implementação:
+
+1. `memory-bank/projectbrief.md` — requisitos do Hackathon, telas obrigatórias, entregáveis
+2. `memory-bank/productContext.md` — persona do usuário, princípios de produto
+3. `memory-bank/systemPatterns.md` — Clean Architecture, estrutura de pastas, padrões de código
+4. `memory-bank/techContext.md` — stack, tokens do Design System, schema Firebase
+5. `memory-bank/activeContext.md` — foco atual do time e próximos passos
+
+## Após concluir uma tarefa
+
+Atualize `memory-bank/progress.md` marcando os itens concluídos com `[x]`.
+
+## Ao iniciar uma nova frente de trabalho
+
+Atualize `memory-bank/activeContext.md` com o que está sendo implementado e por quem.
+
+## Ao tomar uma decisão arquitetural nova
+
+Registre em `memory-bank/decisions.md` seguindo o formato ADR definido no arquivo.
+
+## Regras invioláveis de implementação
+
+- **Clean Architecture:** a camada Domain nunca importa de Infrastructure ou Presentation
+- **Acessibilidade:** área clicável mínima de 44×44px; contraste mínimo 4.5:1 (WCAG AA)
+- **Guided Task Mode:** sempre mostrar "Passo X de Y" com barra de progresso; botão "Passo Anterior" sempre visível; celebração Lottie ao concluir
+- **Confirmação de exclusão:** sempre exibir modal de confirmação antes de deletar qualquer item
+- **Linguagem:** textos sempre em português, simples e sem jargão técnico
+- **Tokens:** usar exclusivamente os tokens de cor, tipografia e espaçamento definidos em `memory-bank/techContext.md`
+- **Modo Básico/Avançado:** implementar como lógica real que simplifica a UI (oculta elementos não essenciais no Modo Básico)
