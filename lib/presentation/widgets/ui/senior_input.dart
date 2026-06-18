@@ -21,6 +21,7 @@ class SeniorInput extends StatefulWidget {
     this.onSubmitted,
     this.validator,
     this.semanticLabel,
+    this.compactLabel = false,
   });
 
   final TextEditingController? controller;
@@ -38,6 +39,7 @@ class SeniorInput extends StatefulWidget {
   final ValueChanged<String>? onSubmitted;
   final FormFieldValidator<String>? validator;
   final String? semanticLabel;
+  final bool compactLabel;
 
   @override
   State<SeniorInput> createState() => _SeniorInputState();
@@ -66,12 +68,17 @@ class _SeniorInputState extends State<SeniorInput> {
           if (widget.label != null) ...[
             Text(
               widget.label!,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.slate900,
-                  ),
+              style: widget.compactLabel
+                  ? Theme.of(context).textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.slate900,
+                      )
+                  : Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.slate900,
+                      ),
             ),
-            const SizedBox(height: AppSpacing.sm),
+            const SizedBox(height: 6),
           ],
           SizedBox(
             height: AppTheme.inputHeight,

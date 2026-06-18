@@ -3,7 +3,7 @@ import 'package:mobile/presentation/theme/app_colors.dart';
 import 'package:mobile/presentation/theme/app_spacing.dart';
 import 'package:mobile/presentation/theme/app_theme.dart';
 
-enum SeniorButtonVariant { primary, secondary, ghost, destructive }
+enum SeniorButtonVariant { primary, secondary, outline, ghost, destructive }
 
 enum SeniorButtonSize { medium, large }
 
@@ -44,12 +44,12 @@ class SeniorButton extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: isDisabled ? null : onPressed,
-          borderRadius: BorderRadius.circular(AppTheme.borderRadiusSm),
+          borderRadius: BorderRadius.circular(AppTheme.buttonBorderRadius),
           child: Ink(
             height: height,
             decoration: BoxDecoration(
               color: _backgroundColor(isDisabled),
-              borderRadius: BorderRadius.circular(AppTheme.borderRadiusSm),
+              borderRadius: BorderRadius.circular(AppTheme.buttonBorderRadius),
               border: _border(isDisabled),
               boxShadow: variant == SeniorButtonVariant.primary && !isDisabled
                   ? [
@@ -78,14 +78,18 @@ class SeniorButton extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           if (icon != null) ...[
-                            Icon(icon, size: 20, color: _foregroundColor(isDisabled)),
+                            Icon(
+                              icon,
+                              size: variant == SeniorButtonVariant.outline ? 16 : 20,
+                              color: _foregroundColor(isDisabled),
+                            ),
                             const SizedBox(width: AppSpacing.sm),
                           ],
                           Text(
                             label,
                             style: TextStyle(
-                              fontSize: size == SeniorButtonSize.large ? 18 : 16,
-                              fontWeight: FontWeight.w600,
+                              fontSize: _fontSize,
+                              fontWeight: _fontWeight,
                               color: _foregroundColor(isDisabled),
                             ),
                           ),
@@ -104,6 +108,16 @@ class SeniorButton extends StatelessWidget {
     return button;
   }
 
+  double get _fontSize => switch (variant) {
+        SeniorButtonVariant.outline => 14,
+        _ => size == SeniorButtonSize.large ? 18 : 16,
+      };
+
+  FontWeight get _fontWeight => switch (variant) {
+        SeniorButtonVariant.outline => FontWeight.w500,
+        _ => FontWeight.w600,
+      };
+
   Color _backgroundColor(bool isDisabled) {
     if (isDisabled) {
       return switch (variant) {
@@ -115,6 +129,7 @@ class SeniorButton extends StatelessWidget {
     return switch (variant) {
       SeniorButtonVariant.primary => AppColors.primary,
       SeniorButtonVariant.secondary => Colors.white,
+      SeniorButtonVariant.outline => Colors.white,
       SeniorButtonVariant.ghost => Colors.transparent,
       SeniorButtonVariant.destructive => AppColors.danger,
     };
@@ -125,6 +140,7 @@ class SeniorButton extends StatelessWidget {
     return switch (variant) {
       SeniorButtonVariant.primary => Colors.white,
       SeniorButtonVariant.secondary => AppColors.primary,
+      SeniorButtonVariant.outline => AppColors.slate600,
       SeniorButtonVariant.ghost => AppColors.primary,
       SeniorButtonVariant.destructive => Colors.white,
     };
@@ -135,6 +151,11 @@ class SeniorButton extends StatelessWidget {
       return Border.all(
         color: isDisabled ? AppColors.slate300 : AppColors.slate200,
         width: 2,
+      );
+    }
+    if (variant == SeniorButtonVariant.outline) {
+      return Border.all(
+        color: isDisabled ? AppColors.slate300 : AppColors.slate200,
       );
     }
     return null;

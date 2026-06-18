@@ -8,10 +8,12 @@ class SeniorLogo extends StatelessWidget {
     super.key,
     this.size = 72,
     this.showLabel = false,
+    this.useGradient = true,
   });
 
   final double size;
   final bool showLabel;
+  final bool useGradient;
 
   @override
   Widget build(BuildContext context) {
@@ -21,17 +23,20 @@ class SeniorLogo extends StatelessWidget {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [AppColors.primary, AppColors.primaryDark],
-            ),
-            borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+            color: useGradient ? null : AppColors.primary,
+            gradient: useGradient
+                ? const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [AppColors.primary, AppColors.primaryDark],
+                  )
+                : null,
+            borderRadius: BorderRadius.circular(AppTheme.inputBorderRadius),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 6),
+                color: AppColors.primary.withValues(alpha: 0.25),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
@@ -40,8 +45,8 @@ class SeniorLogo extends StatelessWidget {
             'SE',
             style: TextStyle(
               color: Colors.white,
-              fontSize: size * 0.35,
-              fontWeight: FontWeight.bold,
+              fontSize: size * 0.3125,
+              fontWeight: FontWeight.w900,
               letterSpacing: -0.5,
             ),
           ),

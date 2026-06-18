@@ -42,5 +42,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Olá, Maria Silva!'), findsOneWidget);
+    expect(find.text('SeniorEase'), findsOneWidget);
   });
 }

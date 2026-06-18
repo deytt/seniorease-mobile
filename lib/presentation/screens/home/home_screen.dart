@@ -5,6 +5,7 @@ import 'package:mobile/app/router.dart';
 import 'package:mobile/presentation/providers/auth_provider.dart';
 import 'package:mobile/presentation/theme/app_spacing.dart';
 import 'package:mobile/presentation/widgets/ui/senior_button.dart';
+import 'package:mobile/presentation/widgets/ui/senior_screen_scaffold.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -13,22 +14,9 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authStateProvider).asData?.value;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('SeniorEase'),
-        actions: [
-          IconButton(
-            tooltip: 'Sair',
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await ref.read(authControllerProvider.notifier).signOut();
-              if (context.mounted) {
-                context.go(AppRoutes.login);
-              }
-            },
-          ),
-        ],
-      ),
+    return SeniorScreenScaffold(
+      title: 'SeniorEase',
+      showBackButton: false,
       body: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
         child: Center(
@@ -49,7 +37,7 @@ class HomeScreen extends ConsumerWidget {
               const SizedBox(height: AppSpacing.sm),
               Text(
                 'Plataforma de inclusão digital para idosos.',
-                style: Theme.of(context).textTheme.bodyLarge,
+                style: Theme.of(context).textTheme.bodyMedium,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.xl),
