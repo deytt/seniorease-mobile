@@ -7,42 +7,6 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:98401811269:android:bbd562566f04b1bb625c2c",
-        "android_client_info": {
-          "package_name": "com.seniorase.mobile"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "98401811269-69e4nd2f8s3da66d6tjb86ast6kjuddp.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyAUIFnS40pnK5fpKgOPq05fuzoxu_zXqeU"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "98401811269-69e4nd2f8s3da66d6tjb86ast6kjuddp.apps.googleusercontent.com",
-              "client_type": 3
-            },
-            {
-              "client_id": "98401811269-8p2965kff2nd0ahvfqdpdv907l090rj7.apps.googleusercontent.com",
-              "client_type": 2,
-              "ios_info": {
-                "bundle_id": "com.seniorease.mobile"
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
         "mobilesdk_app_id": "1:98401811269:android:d8c654de403fb876625c2c",
         "android_client_info": {
           "package_name": "com.seniorease.mobile"
