@@ -42,6 +42,12 @@ class HomeScreen extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.xl),
               SeniorButton(
+                label: 'Definições de Acessibilidade',
+                icon: Icons.accessibility_new,
+                onPressed: () => context.push(AppRoutes.accessibility),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              SeniorButton(
                 label: 'Sair da conta',
                 variant: SeniorButtonVariant.secondary,
                 icon: Icons.logout,

@@ -22,8 +22,9 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  // TODO(dev): remover credenciais de teste antes de publicar
+  final _emailController = TextEditingController(text: 'seniore@teste.com');
+  final _passwordController = TextEditingController(text: '123456');
   var _rememberMe = true;
 
   static const _formHorizontalPadding = 20.0;
