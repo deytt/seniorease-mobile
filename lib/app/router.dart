@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:mobile/presentation/providers/auth_provider.dart';
-import 'package:mobile/presentation/screens/auth/forgot_password_screen.dart';
-import 'package:mobile/presentation/screens/auth/login_screen.dart';
-import 'package:mobile/presentation/screens/auth/register_screen.dart';
-import 'package:mobile/presentation/screens/home/home_screen.dart';
+import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:mobile/features/auth/presentation/screens/forgot_password_screen.dart';
+import 'package:mobile/features/auth/presentation/screens/login_screen.dart';
+import 'package:mobile/features/auth/presentation/screens/register_screen.dart';
+import 'package:mobile/features/home/presentation/screens/home_screen.dart';
 
 abstract final class AppRoutes {
   static const home = '/';
