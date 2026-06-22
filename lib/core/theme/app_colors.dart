@@ -28,4 +28,25 @@ abstract final class AppColors {
   static const Color slate500 = Color(0xFF64748B);
   static const Color slate600 = Color(0xFF475569);
   static const Color slate900 = Color(0xFF0F172A);
+
+  // Dark mode — fundos e superfícies
+  static const Color darkBackground = Color(0xFF0F172A);
+  static const Color darkSurface = Color(0xFF1E293B);
+  static const Color darkSurfaceVariant = Color(0xFF334155);
+  static const Color darkBorder = Color(0xFF475569);
+  static const Color darkTextPrimary = Color(0xFFF8FAFC);
+  static const Color darkTextSecondary = Color(0xFFCBD5E1);
+
+  // High contrast — WCAG AAA reforçado
+  static const Color highContrastText = Color(0xFF000000);
+  static const Color highContrastBg = Color(0xFFFFFFFF);
+  static const Color highContrastBorder = Color(0xFF000000);
+
+  // Maximum contrast (dark mode + high contrast) — preto/branco/amarelo
+  static const Color maximumBackground = Color(0xFF000000);
+  static const Color maximumSurface = Color(0xFF111111);
+  static const Color maximumText = Color(0xFFFFFFFF);
+  static const Color maximumTextSecondary = Color(0xFFDDDDDD);
+  static const Color maximumButton = Color(0xFFFFFF00);
+  static const Color maximumButtonText = Color(0xFF000000);
 }
