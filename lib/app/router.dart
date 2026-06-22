@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile/app/shell_scaffold.dart';
 import 'package:mobile/features/accessibility/presentation/screens/accessibility_screen.dart';
 import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:mobile/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:mobile/features/auth/presentation/screens/login_screen.dart';
 import 'package:mobile/features/auth/presentation/screens/register_screen.dart';
 import 'package:mobile/features/home/presentation/screens/home_screen.dart';
+import 'package:mobile/features/profile/presentation/screens/settings_screen.dart';
 
 abstract final class AppRoutes {
   static const home = '/';
@@ -14,6 +16,10 @@ abstract final class AppRoutes {
   static const register = '/register';
   static const forgotPassword = '/forgot-password';
   static const accessibility = '/accessibility';
+  static const tasks = '/tasks';
+  static const reminders = '/reminders';
+  static const history = '/history';
+  static const settings = '/settings';
 }
 
 final _authRoutes = {
@@ -47,10 +53,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      GoRoute(
-        path: AppRoutes.home,
-        builder: (context, state) => const HomeScreen(),
-      ),
+      // Auth routes (fora da shell)
       GoRoute(
         path: AppRoutes.login,
         builder: (context, state) => const LoginScreen(),
@@ -67,9 +70,95 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.accessibility,
         builder: (context, state) => const AccessibilityScreen(),
       ),
+
+      // Shell com bottom nav
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            ShellScaffold(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.home,
+                builder: (context, state) => const HomeScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.tasks,
+                builder: (context, state) =>
+                    const _PlaceholderScreen(title: 'Tarefas'),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.reminders,
+                builder: (context, state) =>
+                    const _PlaceholderScreen(title: 'Lembretes'),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.history,
+                builder: (context, state) =>
+                    const _PlaceholderScreen(title: 'Histórico'),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: AppRoutes.settings,
+                builder: (context, state) => const SettingsScreen(),
+              ),
+            ],
+          ),
+        ],
+      ),
     ],
   );
 });
+
+class _PlaceholderScreen extends StatelessWidget {
+  const _PlaceholderScreen({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.construction_outlined,
+              size: 64,
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Em breve',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class GoRouterRefreshNotifier extends ChangeNotifier {
   GoRouterRefreshNotifier(Ref ref) {
