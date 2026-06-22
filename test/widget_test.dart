@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/app/app.dart';
-import 'package:mobile/domain/entities/user.dart';
-import 'package:mobile/presentation/providers/auth_provider.dart';
+import 'package:mobile/features/auth/domain/entities/user.dart';
+import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
 
 void main() {
   testWidgets('exibe tela de login quando não autenticado', (WidgetTester tester) async {
