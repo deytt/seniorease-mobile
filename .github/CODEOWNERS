@@ -1,0 +1,6 @@
+# Proprietários de código do repositório SeniorEase Mobile
+# Formato: <padrão de arquivo> <owner(s)>
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Regra padrão: @deytt é owner de todos os arquivos
+* @deytt
