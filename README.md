@@ -6,3 +6,5 @@ git submodule add git@github.com:deytt/seniorease-memory-bank.git memory-bank
 mkdir -p .cursor/rules
 cp memory-bank/.cursor/rules/memory-bank.mdc .cursor/rules/memory-bank.mdc
 git add . && git commit -m "chore: add memory-bank submodule and cursor rule"
+
+23/07/2026
