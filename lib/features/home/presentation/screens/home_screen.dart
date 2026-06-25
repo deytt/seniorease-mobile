@@ -78,12 +78,14 @@ class _SuccessBanner extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Expanded(
+              Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Muito bem! 🎉',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppColors.successDark,
@@ -92,9 +94,10 @@ class _SuccessBanner extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   'Continua assim — cada pequeno passo conta!',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: AppColors.successDark,
-                    fontSize: 13,
                   ),
                 ),
               ],

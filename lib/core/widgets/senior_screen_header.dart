@@ -11,6 +11,7 @@ class SeniorScreenHeader extends StatelessWidget {
     super.key,
     this.subtitle,
     this.showBackButton = true,
+    this.backIcon = Icons.arrow_back,
     this.onBack,
     this.trailing,
   });
@@ -18,15 +19,19 @@ class SeniorScreenHeader extends StatelessWidget {
   final String title;
   final String? subtitle;
   final bool showBackButton;
+
+  /// Ícone do botão de retroceder (ex: [Icons.close] para ecrãs de criação).
+  final IconData backIcon;
   final VoidCallback? onBack;
   final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SeniorSystemUi.headerOverlay,
       child: ColoredBox(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -41,13 +46,19 @@ class SeniorScreenHeader extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   if (showBackButton) ...[
-                    _BackButton(onPressed: onBack ?? () => Navigator.of(context).maybePop()),
+                    _BackButton(
+                      icon: backIcon,
+                      onPressed:
+                          onBack ?? () => Navigator.of(context).maybePop(),
+                    ),
                     const SizedBox(width: 12),
                   ],
                   Expanded(
                     child: Text(
                       title,
                       style: Theme.of(context).textTheme.titleLarge,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   if (trailing != null) ...[trailing!],
@@ -65,6 +76,8 @@ class SeniorScreenHeader extends StatelessWidget {
                 child: Text(
                   subtitle!,
                   style: Theme.of(context).textTheme.bodyMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             const Divider(height: 1, thickness: 1, color: AppColors.slate200),
@@ -76,39 +89,33 @@ class SeniorScreenHeader extends StatelessWidget {
 }
 
 class _BackButton extends StatelessWidget {
-  const _BackButton({required this.onPressed});
+  const _BackButton({required this.onPressed, this.icon = Icons.arrow_back});
 
   final VoidCallback onPressed;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Semantics(
       button: true,
-      label: 'Voltar',
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-          child: SizedBox(
-            width: AppTheme.minTouchTarget,
-            height: AppTheme.minTouchTarget,
-            child: Center(
-              child: Ink(
-                width: AppTheme.backButtonVisualSize,
-                height: AppTheme.backButtonVisualSize,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-                  border: Border.all(color: AppColors.slate200),
-                ),
-                child: const Icon(
-                  Icons.arrow_back,
-                  color: AppColors.slate900,
-                  size: AppTheme.backButtonIconSize,
-                ),
-              ),
-            ),
+      label: icon == Icons.close ? 'Fechar' : 'Voltar',
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onPressed();
+        },
+        child: Container(
+          width: AppTheme.minTouchTarget,
+          height: AppTheme.minTouchTarget,
+          decoration: BoxDecoration(
+            border: Border.all(color: theme.colorScheme.outline),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(
+            icon,
+            size: AppTheme.backButtonIconSize,
+            color: theme.colorScheme.onSurface,
           ),
         ),
       ),

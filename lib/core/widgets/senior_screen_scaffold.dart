@@ -9,6 +9,7 @@ class SeniorScreenScaffold extends StatelessWidget {
     super.key,
     this.subtitle,
     this.showBackButton = true,
+    this.backIcon = Icons.arrow_back,
     this.onBack,
     this.trailing,
     this.backgroundColor = AppColors.slate50,
@@ -17,6 +18,7 @@ class SeniorScreenScaffold extends StatelessWidget {
   final String title;
   final String? subtitle;
   final bool showBackButton;
+  final IconData backIcon;
   final VoidCallback? onBack;
   final Widget? trailing;
   final Widget body;
@@ -33,6 +35,7 @@ class SeniorScreenScaffold extends StatelessWidget {
             title: title,
             subtitle: subtitle,
             showBackButton: showBackButton,
+            backIcon: backIcon,
             onBack: onBack,
             trailing: trailing,
           ),
