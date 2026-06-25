@@ -42,32 +42,36 @@ class InterfaceModeCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _ModeButton(
-                  label: 'Básico',
-                  sublabel: 'Elementos maiores e simplificados',
-                  selected: value == InterfaceMode.basic,
-                  selectedBg: AppColors.secondaryLight,
-                  selectedBorder: AppColors.secondary,
-                  selectedTextColor: AppColors.secondary,
-                  onTap: () => onChanged(InterfaceMode.basic),
+          // IntrinsicHeight garante que os dois cards têm sempre a mesma altura
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: _ModeButton(
+                    label: 'Básico',
+                    sublabel: 'Elementos maiores e simplificados',
+                    selected: value == InterfaceMode.basic,
+                    selectedBg: AppColors.secondaryLight,
+                    selectedBorder: AppColors.secondary,
+                    selectedTextColor: AppColors.secondary,
+                    onTap: () => onChanged(InterfaceMode.basic),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _ModeButton(
-                  label: 'Avançado',
-                  sublabel: 'Todas as funcionalidades',
-                  selected: value == InterfaceMode.advanced,
-                  selectedBg: AppColors.primaryLight,
-                  selectedBorder: AppColors.primary,
-                  selectedTextColor: AppColors.primary,
-                  onTap: () => onChanged(InterfaceMode.advanced),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ModeButton(
+                    label: 'Avançado',
+                    sublabel: 'Todas as funcionalidades',
+                    selected: value == InterfaceMode.advanced,
+                    selectedBg: AppColors.primaryLight,
+                    selectedBorder: AppColors.primary,
+                    selectedTextColor: AppColors.primary,
+                    onTap: () => onChanged(InterfaceMode.advanced),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -114,9 +118,12 @@ class _ModeButton extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: theme.textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: labelColor,
@@ -125,6 +132,8 @@ class _ModeButton extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               sublabel,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: theme.textTheme.labelSmall?.copyWith(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
