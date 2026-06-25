@@ -8,6 +8,7 @@ class SeniorScreenScaffold extends StatelessWidget {
     required this.body,
     super.key,
     this.subtitle,
+    this.subtitleWidget,
     this.showBackButton = true,
     this.backIcon = Icons.arrow_back,
     this.onBack,
@@ -17,6 +18,7 @@ class SeniorScreenScaffold extends StatelessWidget {
 
   final String title;
   final String? subtitle;
+  final Widget? subtitleWidget;
   final bool showBackButton;
   final IconData backIcon;
   final VoidCallback? onBack;
@@ -34,6 +36,7 @@ class SeniorScreenScaffold extends StatelessWidget {
           SeniorScreenHeader(
             title: title,
             subtitle: subtitle,
+            subtitleWidget: subtitleWidget,
             showBackButton: showBackButton,
             backIcon: backIcon,
             onBack: onBack,

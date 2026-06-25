@@ -10,6 +10,7 @@ class SeniorScreenHeader extends StatelessWidget {
     required this.title,
     super.key,
     this.subtitle,
+    this.subtitleWidget,
     this.showBackButton = true,
     this.backIcon = Icons.arrow_back,
     this.onBack,
@@ -18,6 +19,11 @@ class SeniorScreenHeader extends StatelessWidget {
 
   final String title;
   final String? subtitle;
+
+  /// Widget exibido abaixo da linha do título, dentro do header.
+  /// Alternativa ao [subtitle] textual — use para badges, chips ou conteúdo
+  /// estruturado. Se ambos forem fornecidos, [subtitleWidget] tem precedência.
+  final Widget? subtitleWidget;
   final bool showBackButton;
 
   /// Ícone do botão de retroceder (ex: [Icons.close] para ecrãs de criação).
@@ -65,7 +71,17 @@ class SeniorScreenHeader extends StatelessWidget {
                 ],
               ),
             ),
-            if (subtitle != null)
+            if (subtitleWidget != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  0,
+                  AppSpacing.md,
+                  AppSpacing.md,
+                ),
+                child: subtitleWidget!,
+              )
+            else if (subtitle != null)
               Padding(
                 padding: const EdgeInsets.fromLTRB(
                   AppSpacing.md,
