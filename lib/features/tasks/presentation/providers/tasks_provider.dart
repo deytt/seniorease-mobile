@@ -45,11 +45,36 @@ final completeTaskUseCaseProvider = Provider<CompleteTaskUseCase>((ref) {
 
 // --- Streams ---
 
-/// Lista de tarefas do utilizador autenticado.
+/// Lista de tarefas do utilizador autenticado (ordenada por dueDate ascendente).
 final tasksStreamProvider = StreamProvider<List<Task>>((ref) {
   final userId = ref.watch(authStateProvider).asData?.value?.id;
   if (userId == null) return Stream.value(const []);
   return ref.read(getTasksUseCaseProvider).call(userId);
+});
+
+/// Próxima tarefa pendente para exibir no card "Próxima Atividade" da Home.
+///
+/// Critérios (por prioridade):
+/// 1. Tarefa não concluída com dueDate >= agora, ordenada pela mais próxima.
+/// 2. Se não houver, qualquer tarefa não concluída (sem dueDate ou dueDate passado).
+/// Devolve `null` se não existirem tarefas pendentes.
+final nextPendingTaskProvider = Provider<Task?>((ref) {
+  final tasks = ref.watch(tasksStreamProvider).asData?.value ?? const [];
+  final pending = tasks.where((t) => !t.isCompleted).toList();
+  if (pending.isEmpty) return null;
+
+  final now = DateTime.now();
+
+  // Prefere a próxima tarefa com dueDate no futuro (ou agora)
+  final upcoming = pending
+      .where((t) => t.dueDate != null && !t.dueDate!.isBefore(now))
+      .toList()
+    ..sort((a, b) => a.dueDate!.compareTo(b.dueDate!));
+
+  if (upcoming.isNotEmpty) return upcoming.first;
+
+  // Fallback: tarefa mais recente sem data (ou com data já passada)
+  return pending.first;
 });
 
 /// Stream de uma tarefa individual (com passos).

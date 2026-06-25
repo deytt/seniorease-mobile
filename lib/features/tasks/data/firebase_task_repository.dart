@@ -25,8 +25,33 @@ class FirebaseTaskRepository implements TaskRepository {
         final tasks = snap.docs
             .map((doc) => Task.fromMap(doc.id, doc.data()))
             .toList();
-        // Ordena em memória para evitar exigir índice composto no Firestore.
-        tasks.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        // Ordena em memória (evita índice composto no Firestore):
+        // 1. Pendentes/em progresso antes de concluídas.
+        // 2. Dentro de pendentes: dueDate ascendente (mais próxima primeiro);
+        //    tarefas sem dueDate vão para o fim das pendentes.
+        // 3. Dentro de concluídas: completedAt descendente (mais recente primeiro).
+        tasks.sort((a, b) {
+          final aDone = a.isCompleted;
+          final bDone = b.isCompleted;
+          if (aDone != bDone) return aDone ? 1 : -1;
+
+          if (aDone) {
+            // Ambas concluídas → mais recentemente concluída primeiro
+            final aAt = a.completedAt ?? a.updatedAt;
+            final bAt = b.completedAt ?? b.updatedAt;
+            return bAt.compareTo(aAt);
+          }
+
+          // Ambas pendentes → por dueDate ascendente; null vai para o fim
+          final aDue = a.dueDate;
+          final bDue = b.dueDate;
+          if (aDue == null && bDue == null) {
+            return b.createdAt.compareTo(a.createdAt);
+          }
+          if (aDue == null) return 1;
+          if (bDue == null) return -1;
+          return aDue.compareTo(bDue);
+        });
         return tasks;
       });
 
