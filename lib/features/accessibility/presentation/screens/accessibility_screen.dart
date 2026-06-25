@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/widgets/senior_button.dart';
+import 'package:mobile/core/widgets/senior_screen_scaffold.dart';
 import 'package:mobile/features/accessibility/domain/entities/user_preferences.dart';
 import 'package:mobile/features/accessibility/presentation/providers/preferences_provider.dart';
 import 'package:mobile/features/accessibility/presentation/widgets/font_size_slider_card.dart';
@@ -75,7 +75,6 @@ class _AccessibilityScreenState extends ConsumerState<AccessibilityScreen> {
     final saveState = ref.watch(accessibilityControllerProvider);
     final isSaving = saveState is AsyncLoading;
 
-    // Inicializa draft quando o stream emite pela primeira vez
     prefsAsync.whenData((prefs) {
       if (_draft == null) {
         WidgetsBinding.instance.addPostFrameCallback(
@@ -87,92 +86,24 @@ class _AccessibilityScreenState extends ConsumerState<AccessibilityScreen> {
     final current = _current;
     final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _Header(onBack: () => Navigator.of(context).pop()),
-            Expanded(
-              child: prefsAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(
-                  child: Text(
-                    'Erro ao carregar as definições.',
-                    style: theme.textTheme.bodyLarge,
-                  ),
-                ),
-                data: (_) => _Body(
-                  current: current,
-                  isSaving: isSaving,
-                  onUpdate: _update,
-                  onSave: _save,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ------------------------------------------------------------------ Header
-
-class _Header extends StatelessWidget {
-  const _Header({required this.onBack});
-
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(color: theme.colorScheme.outline),
-        ),
-      ),
-      child: Row(
-        children: [
-          Semantics(
-            button: true,
-            label: 'Voltar',
-            child: GestureDetector(
-              onTap: () {
-                HapticFeedback.lightImpact();
-                onBack();
-              },
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  border: Border.all(color: theme.colorScheme.outline),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(
-                  Icons.chevron_left,
-                  size: 18,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
-            ),
+    return SeniorScreenScaffold(
+      title: 'Definições de Acessibilidade',
+      backIcon: Icons.chevron_left,
+      onBack: () => Navigator.of(context).pop(),
+      body: prefsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(
+          child: Text(
+            'Erro ao carregar as definições.',
+            style: theme.textTheme.bodyLarge,
           ),
-          const SizedBox(width: AppSpacing.md),
-          Text(
-            'Definições de Acessibilidade',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onSurface,
-            ),
-          ),
-        ],
+        ),
+        data: (_) => _Body(
+          current: current,
+          isSaving: isSaving,
+          onUpdate: _update,
+          onSave: _save,
+        ),
       ),
     );
   }
