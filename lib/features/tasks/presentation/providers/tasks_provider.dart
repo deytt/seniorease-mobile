@@ -2,12 +2,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:mobile/features/tasks/data/firebase_task_repository.dart';
 import 'package:mobile/features/tasks/domain/entities/task.dart';
+import 'package:mobile/features/tasks/domain/entities/task_filter.dart';
 import 'package:mobile/features/tasks/domain/entities/task_step.dart';
 import 'package:mobile/features/tasks/domain/repositories/task_repository.dart';
 import 'package:mobile/features/tasks/domain/usecases/complete_step_use_case.dart';
 import 'package:mobile/features/tasks/domain/usecases/complete_task_use_case.dart';
 import 'package:mobile/features/tasks/domain/usecases/create_task_use_case.dart';
 import 'package:mobile/features/tasks/domain/usecases/delete_task_use_case.dart';
+import 'package:mobile/features/tasks/domain/usecases/get_filtered_tasks_use_case.dart';
 import 'package:mobile/features/tasks/domain/usecases/get_task_use_case.dart';
 import 'package:mobile/features/tasks/domain/usecases/get_tasks_use_case.dart';
 
@@ -21,6 +23,10 @@ final taskRepositoryProvider = Provider<TaskRepository>((ref) {
 
 final getTasksUseCaseProvider = Provider<GetTasksUseCase>((ref) {
   return GetTasksUseCase(ref.watch(taskRepositoryProvider));
+});
+
+final getFilteredTasksUseCaseProvider = Provider<GetFilteredTasksUseCase>((ref) {
+  return GetFilteredTasksUseCase(ref.watch(taskRepositoryProvider));
 });
 
 final getTaskUseCaseProvider = Provider<GetTaskUseCase>((ref) {
@@ -43,13 +49,36 @@ final completeTaskUseCaseProvider = Provider<CompleteTaskUseCase>((ref) {
   return CompleteTaskUseCase(ref.watch(taskRepositoryProvider));
 });
 
+// --- Estado do filtro ---
+
+/// Filtro activo na lista de tarefas. Alterado pelo bottom sheet de filtros.
+final taskFilterProvider =
+    NotifierProvider<TaskFilterNotifier, TaskFilter>(TaskFilterNotifier.new);
+
+class TaskFilterNotifier extends Notifier<TaskFilter> {
+  @override
+  TaskFilter build() => TaskFilter.empty;
+
+  void update(TaskFilter filter) => state = filter;
+}
+
 // --- Streams ---
 
-/// Lista de tarefas do utilizador autenticado (ordenada por dueDate ascendente).
+/// Lista de tarefas do utilizador autenticado (sem filtro — usada internamente
+/// pelo [nextPendingTaskProvider] e pelo pull-to-refresh).
 final tasksStreamProvider = StreamProvider<List<Task>>((ref) {
   final userId = ref.watch(authStateProvider).asData?.value?.id;
   if (userId == null) return Stream.value(const []);
   return ref.read(getTasksUseCaseProvider).call(userId);
+});
+
+/// Lista filtrada de tarefas, derivada do [taskFilterProvider].
+/// É o stream principal exibido pela [TaskListScreen].
+final filteredTasksStreamProvider = StreamProvider<List<Task>>((ref) {
+  final userId = ref.watch(authStateProvider).asData?.value?.id;
+  if (userId == null) return Stream.value(const []);
+  final filter = ref.watch(taskFilterProvider);
+  return ref.read(getFilteredTasksUseCaseProvider).call(userId, filter);
 });
 
 /// Próxima tarefa pendente para exibir no card "Próxima Atividade" da Home.
