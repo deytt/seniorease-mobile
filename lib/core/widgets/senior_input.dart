@@ -22,6 +22,7 @@ class SeniorInput extends StatefulWidget {
     this.validator,
     this.semanticLabel,
     this.compactLabel = false,
+    this.maxLength,
   });
 
   final TextEditingController? controller;
@@ -35,6 +36,7 @@ class SeniorInput extends StatefulWidget {
   final bool obscureText;
   final bool enabled;
   final bool autocorrect;
+  final int? maxLength;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
   final FormFieldValidator<String>? validator;
@@ -81,7 +83,9 @@ class _SeniorInputState extends State<SeniorInput> {
             const SizedBox(height: 6),
           ],
           SizedBox(
-            height: AppTheme.inputHeight,
+            height: widget.maxLength != null
+                ? AppTheme.inputHeight + 20
+                : AppTheme.inputHeight,
             child: TextFormField(
               controller: widget.controller,
               enabled: widget.enabled,
@@ -89,6 +93,7 @@ class _SeniorInputState extends State<SeniorInput> {
               autocorrect: widget.autocorrect,
               keyboardType: widget.keyboardType,
               textInputAction: widget.textInputAction,
+              maxLength: widget.maxLength,
               onChanged: widget.onChanged,
               onFieldSubmitted: widget.onSubmitted,
               validator: widget.validator,

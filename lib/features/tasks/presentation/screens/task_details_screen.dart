@@ -22,10 +22,12 @@ class TaskDetailsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final taskAsync = ref.watch(taskStreamProvider(taskId));
+    final task = taskAsync.asData?.value;
 
     return SeniorScreenScaffold(
-      title: 'Detalhes da Tarefa',
-      trailing: taskAsync.asData != null
+      title: task?.title ?? 'Detalhes da Tarefa',
+      subtitleWidget: task != null ? _HeaderBadges(task: task) : null,
+      trailing: task != null
           ? IconButton(
               icon: const Icon(Icons.delete_outline, color: AppColors.danger),
               tooltip: 'Apagar tarefa',
@@ -70,6 +72,36 @@ class TaskDetailsScreen extends ConsumerWidget {
   }
 }
 
+// ------------------------------------------------------------------ Header badges
+
+class _HeaderBadges extends StatelessWidget {
+  const _HeaderBadges({required this.task});
+
+  final Task task;
+
+  @override
+  Widget build(BuildContext context) {
+    final pColor = priorityColor(task.priority);
+    return Row(
+      children: [
+        _Badge(
+          label: task.priority.fullLabel,
+          color: pColor,
+          background: pColor.withValues(alpha: 0.12),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        _Badge(
+          label: task.category.label,
+          color: AppColors.secondary,
+          background: AppColors.secondaryLight,
+        ),
+      ],
+    );
+  }
+}
+
+// ------------------------------------------------------------------ Conteúdo
+
 class _Content extends ConsumerWidget {
   const _Content({required this.task});
 
@@ -78,35 +110,11 @@ class _Content extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final pColor = priorityColor(task.priority);
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
-        Text(
-          task.title,
-          style: theme.textTheme.headlineMedium,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        Row(
-          children: [
-            _Badge(
-              label: task.priority.fullLabel,
-              color: pColor,
-              background: pColor.withValues(alpha: 0.12),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-            _Badge(
-              label: task.category.label,
-              color: AppColors.secondary,
-              background: AppColors.secondaryLight,
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.md),
-        if (task.description.isNotEmpty) ...[
+        if (task.description.isNotEmpty || task.dueDate != null) ...[
           _DescriptionCard(task: task),
           const SizedBox(height: AppSpacing.md),
         ],
@@ -127,7 +135,8 @@ class _Content extends ConsumerWidget {
           SeniorButton(
             label: 'Iniciar Modo Guiado',
             icon: Icons.bolt,
-            variant: SeniorButtonVariant.secondary,
+            customBackgroundColor: AppColors.secondary,
+            customForegroundColor: Colors.white,
             onPressed: () => context.push('/tasks/${task.id}/guided'),
           ),
         const SizedBox(height: 12),
@@ -141,14 +150,39 @@ class _Content extends ConsumerWidget {
   }
 }
 
+// ------------------------------------------------------------------ Description card
+
 class _DescriptionCard extends StatelessWidget {
   const _DescriptionCard({required this.task});
 
   final Task task;
 
+  String _formatDueDate(DateTime dt) {
+    final now = DateTime.now();
+    final isToday =
+        dt.year == now.year && dt.month == now.month && dt.day == now.day;
+    final isTomorrow = dt.year == now.year &&
+        dt.month == now.month &&
+        dt.day == now.day + 1;
+
+    final hour = dt.hour.toString().padLeft(2, '0');
+    final min = dt.minute.toString().padLeft(2, '0');
+    final time = '$hour:$min';
+
+    if (isToday) return '$time · Hoje';
+    if (isTomorrow) return '$time · Amanhã';
+
+    final day = dt.day.toString().padLeft(2, '0');
+    final month = dt.month.toString().padLeft(2, '0');
+    return '$time · $day/$month/${dt.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasDueDate = task.dueDate != null;
+    final hasDescription = task.description.isNotEmpty;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(17),
@@ -160,24 +194,27 @@ class _DescriptionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            task.description,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: AppColors.slate500,
-              height: 1.6,
+          if (hasDescription)
+            Text(
+              task.description,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: AppColors.slate500,
+                height: 1.6,
+              ),
             ),
-          ),
-          if (task.reminderTime != null) ...[
+          if (hasDescription && hasDueDate) ...[
             const SizedBox(height: 12),
             const Divider(height: 1),
+          ],
+          if (hasDueDate) ...[
             const SizedBox(height: 12),
             Row(
               children: [
-                const Icon(Icons.access_time,
+                const Icon(Icons.calendar_today_outlined,
                     size: 16, color: AppColors.slate400),
                 const SizedBox(width: AppSpacing.sm),
                 Text(
-                  '${task.reminderTime} hoje',
+                  _formatDueDate(task.dueDate!),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.slate900,
@@ -191,6 +228,8 @@ class _DescriptionCard extends StatelessWidget {
     );
   }
 }
+
+// ------------------------------------------------------------------ Step row
 
 class _StepRow extends ConsumerWidget {
   const _StepRow({required this.task, required this.step});
@@ -252,6 +291,8 @@ class _StepRow extends ConsumerWidget {
   }
 }
 
+// ------------------------------------------------------------------ Botões
+
 class _CompleteButton extends ConsumerWidget {
   const _CompleteButton({required this.task});
 
@@ -265,6 +306,8 @@ class _CompleteButton extends ConsumerWidget {
       label: 'Marcar como Concluída',
       icon: Icons.check_circle_outline,
       isLoading: isLoading,
+      customBackgroundColor: AppColors.success,
+      customForegroundColor: Colors.white,
       onPressed: () => _confirmComplete(context, ref),
     );
   }
@@ -323,6 +366,8 @@ class _CompletedBanner extends StatelessWidget {
     );
   }
 }
+
+// ------------------------------------------------------------------ Badge
 
 class _Badge extends StatelessWidget {
   const _Badge({

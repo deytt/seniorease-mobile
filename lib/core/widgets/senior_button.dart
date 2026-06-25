@@ -18,6 +18,8 @@ class SeniorButton extends StatelessWidget {
     this.isLoading = false,
     this.isExpanded = true,
     this.semanticLabel,
+    this.customBackgroundColor,
+    this.customForegroundColor,
   });
 
   final String label;
@@ -28,6 +30,12 @@ class SeniorButton extends StatelessWidget {
   final bool isLoading;
   final bool isExpanded;
   final String? semanticLabel;
+
+  /// Substitui a cor de fundo calculada pelo variant.
+  final Color? customBackgroundColor;
+
+  /// Substitui a cor do texto/ícone calculada pelo variant.
+  final Color? customForegroundColor;
 
   @override
   Widget build(BuildContext context) {
@@ -126,6 +134,7 @@ class SeniorButton extends StatelessWidget {
         _ => AppColors.slate100,
       };
     }
+    if (customBackgroundColor != null) return customBackgroundColor!;
     return switch (variant) {
       SeniorButtonVariant.primary => AppColors.primary,
       SeniorButtonVariant.secondary => Colors.white,
@@ -137,6 +146,7 @@ class SeniorButton extends StatelessWidget {
 
   Color _foregroundColor(bool isDisabled) {
     if (isDisabled) return AppColors.slate400;
+    if (customForegroundColor != null) return customForegroundColor!;
     return switch (variant) {
       SeniorButtonVariant.primary => Colors.white,
       SeniorButtonVariant.secondary => AppColors.primary,
