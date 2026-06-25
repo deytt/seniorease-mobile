@@ -11,6 +11,26 @@ Color priorityColor(TaskPriority priority) => switch (priority) {
       TaskPriority.low => AppColors.success,
     };
 
+/// Formata a data/hora da tarefa de forma legível.
+String _formatDueDate(DateTime dt) {
+  final now = DateTime.now();
+  final isToday =
+      dt.year == now.year && dt.month == now.month && dt.day == now.day;
+  final isTomorrow =
+      dt.year == now.year && dt.month == now.month && dt.day == now.day + 1;
+
+  final hour = dt.hour.toString().padLeft(2, '0');
+  final min = dt.minute.toString().padLeft(2, '0');
+  final time = '$hour:$min';
+
+  if (isToday) return '$time · Hoje';
+  if (isTomorrow) return '$time · Amanhã';
+
+  final day = dt.day.toString().padLeft(2, '0');
+  final month = dt.month.toString().padLeft(2, '0');
+  return '$time · $day/$month/${dt.year}';
+}
+
 /// Card de tarefa na lista (node 15:7134).
 class TaskCard extends StatelessWidget {
   const TaskCard({
@@ -32,7 +52,8 @@ class TaskCard extends StatelessWidget {
 
     return Semantics(
       button: true,
-      label: task.title,
+      label: '${task.title}. ${task.priority.fullLabel}. Categoria: ${task.category.label}.'
+          '${task.dueDate != null ? ' Data: ${_formatDueDate(task.dueDate!)}.' : ''}',
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -70,37 +91,48 @@ class TaskCard extends StatelessWidget {
                               isDone ? TextDecoration.lineThrough : null,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
+                      // Linha 1: Prioridade + Categoria
                       Row(
                         children: [
-                          if (task.reminderTime != null) ...[
-                            Text(
-                              task.reminderTime!,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: AppColors.slate400,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(width: AppSpacing.sm),
-                          ],
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: pColor,
-                              shape: BoxShape.circle,
-                            ),
+                          _CardBadge(
+                            label: task.priority.fullLabel,
+                            color: pColor,
+                            background: pColor.withValues(alpha: 0.12),
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            task.priority.label,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: pColor,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          const SizedBox(width: AppSpacing.xs + 2),
+                          _CardBadge(
+                            label: task.category.label,
+                            color: AppColors.secondary,
+                            background: AppColors.secondaryLight,
                           ),
                         ],
                       ),
+                      // Linha 2: Data e hora (se definida)
+                      if (task.dueDate != null) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today_outlined,
+                              size: 11,
+                              color: isDone
+                                  ? AppColors.slate400
+                                  : AppColors.slate500,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _formatDueDate(task.dueDate!),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: isDone
+                                    ? AppColors.slate400
+                                    : AppColors.slate500,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -112,6 +144,37 @@ class TaskCard extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CardBadge extends StatelessWidget {
+  const _CardBadge({
+    required this.label,
+    required this.color,
+    required this.background,
+  });
+
+  final String label;
+  final Color color;
+  final Color background;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w600,
+          fontSize: 11,
         ),
       ),
     );
