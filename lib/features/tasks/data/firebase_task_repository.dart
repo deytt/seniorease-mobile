@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mobile/features/tasks/domain/entities/task.dart';
+import 'package:mobile/features/tasks/domain/entities/task_filter.dart';
 import 'package:mobile/features/tasks/domain/entities/task_step.dart';
 import 'package:mobile/features/tasks/domain/repositories/task_repository.dart';
 
@@ -18,42 +19,70 @@ class FirebaseTaskRepository implements TaskRepository {
       _tasks.doc(taskId).collection('steps');
 
   @override
-  Stream<List<Task>> watchTasks(String userId) => _tasks
-      .where('userId', isEqualTo: userId)
-      .snapshots()
-      .map((snap) {
-        final tasks = snap.docs
-            .map((doc) => Task.fromMap(doc.id, doc.data()))
-            .toList();
-        // Ordena em memória (evita índice composto no Firestore):
-        // 1. Pendentes/em progresso antes de concluídas.
-        // 2. Dentro de pendentes: dueDate ascendente (mais próxima primeiro);
-        //    tarefas sem dueDate vão para o fim das pendentes.
-        // 3. Dentro de concluídas: completedAt descendente (mais recente primeiro).
-        tasks.sort((a, b) {
-          final aDone = a.isCompleted;
-          final bDone = b.isCompleted;
-          if (aDone != bDone) return aDone ? 1 : -1;
+  Stream<List<Task>> watchTasks(String userId) =>
+      watchTasksFiltered(userId, TaskFilter.empty);
 
-          if (aDone) {
-            // Ambas concluídas → mais recentemente concluída primeiro
-            final aAt = a.completedAt ?? a.updatedAt;
-            final bAt = b.completedAt ?? b.updatedAt;
-            return bAt.compareTo(aAt);
-          }
+  @override
+  Stream<List<Task>> watchTasksFiltered(String userId, TaskFilter filter) {
+    // Ponto de partida: filtro por utilizador.
+    Query<Map<String, dynamic>> query =
+        _tasks.where('userId', isEqualTo: userId);
 
-          // Ambas pendentes → por dueDate ascendente; null vai para o fim
-          final aDue = a.dueDate;
-          final bDue = b.dueDate;
-          if (aDue == null && bDue == null) {
-            return b.createdAt.compareTo(a.createdAt);
-          }
-          if (aDue == null) return 1;
-          if (bDue == null) return -1;
-          return aDue.compareTo(bDue);
-        });
-        return tasks;
+    // Filtro por categoria (equality — não precisa de composite index sozinho).
+    if (filter.category != null) {
+      query = query.where('category',
+          isEqualTo: filter.category!.toFirestore());
+    }
+
+    // Filtro por prioridade (equality — não precisa de composite index sozinho).
+    if (filter.priority != null) {
+      query = query.where('priority',
+          isEqualTo: filter.priority!.toFirestore());
+    }
+
+    // Filtro "hoje": range query em dueDate — requer composite index com userId
+    // (e category/priority se combinados). Ver firebaseSchema.md § Indexes.
+    if (filter.isToday) {
+      final now = DateTime.now();
+      final startOfDay = DateTime(now.year, now.month, now.day);
+      final endOfDay = startOfDay.add(const Duration(days: 1));
+      query = query
+          .where('dueDate',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+          .where('dueDate', isLessThan: Timestamp.fromDate(endOfDay));
+    }
+
+    return query.snapshots().map((snap) {
+      final tasks =
+          snap.docs.map((doc) => Task.fromMap(doc.id, doc.data())).toList();
+
+      // Ordena em memória (mantém o mesmo critério do watchTasks):
+      // 1. Pendentes/em progresso antes de concluídas.
+      // 2. Dentro de pendentes: dueDate ascendente; null vai para o fim.
+      // 3. Dentro de concluídas: completedAt descendente.
+      tasks.sort((a, b) {
+        final aDone = a.isCompleted;
+        final bDone = b.isCompleted;
+        if (aDone != bDone) return aDone ? 1 : -1;
+
+        if (aDone) {
+          final aAt = a.completedAt ?? a.updatedAt;
+          final bAt = b.completedAt ?? b.updatedAt;
+          return bAt.compareTo(aAt);
+        }
+
+        final aDue = a.dueDate;
+        final bDue = b.dueDate;
+        if (aDue == null && bDue == null) {
+          return b.createdAt.compareTo(a.createdAt);
+        }
+        if (aDue == null) return 1;
+        if (bDue == null) return -1;
+        return aDue.compareTo(bDue);
       });
+      return tasks;
+    });
+  }
 
   @override
   Stream<Task> watchTask(String taskId) {

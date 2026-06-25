@@ -1,10 +1,15 @@
 import 'package:mobile/features/tasks/domain/entities/task.dart';
+import 'package:mobile/features/tasks/domain/entities/task_filter.dart';
 import 'package:mobile/features/tasks/domain/entities/task_step.dart';
 
 abstract interface class TaskRepository {
   /// Stream de todas as tarefas do utilizador (sem os passos), ordenadas por
   /// data de criação descendente.
   Stream<List<Task>> watchTasks(String userId);
+
+  /// Stream filtrada de tarefas aplicando os critérios de [filter] na query Firestore.
+  /// Quando [filter] está vazio, comporta-se como [watchTasks].
+  Stream<List<Task>> watchTasksFiltered(String userId, TaskFilter filter);
 
   /// Stream de uma tarefa individual, incluindo os seus passos.
   Stream<Task> watchTask(String taskId);
