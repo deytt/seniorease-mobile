@@ -9,6 +9,10 @@ import 'package:mobile/features/auth/presentation/screens/login_screen.dart';
 import 'package:mobile/features/auth/presentation/screens/register_screen.dart';
 import 'package:mobile/features/home/presentation/screens/home_screen.dart';
 import 'package:mobile/features/profile/presentation/screens/settings_screen.dart';
+import 'package:mobile/features/tasks/presentation/screens/create_task_screen.dart';
+import 'package:mobile/features/tasks/presentation/screens/guided_task_screen.dart';
+import 'package:mobile/features/tasks/presentation/screens/task_details_screen.dart';
+import 'package:mobile/features/tasks/presentation/screens/task_list_screen.dart';
 
 abstract final class AppRoutes {
   static const home = '/';
@@ -17,9 +21,13 @@ abstract final class AppRoutes {
   static const forgotPassword = '/forgot-password';
   static const accessibility = '/accessibility';
   static const tasks = '/tasks';
+  static const createTask = '/tasks/create';
   static const reminders = '/reminders';
   static const history = '/history';
   static const settings = '/settings';
+
+  static String taskDetails(String id) => '/tasks/$id';
+  static String guidedTask(String id) => '/tasks/$id/guided';
 }
 
 final _authRoutes = {
@@ -71,6 +79,22 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AccessibilityScreen(),
       ),
 
+      // Tarefas — rotas full-screen (fora da shell, sem bottom nav)
+      GoRoute(
+        path: AppRoutes.createTask,
+        builder: (context, state) => const CreateTaskScreen(),
+      ),
+      GoRoute(
+        path: '/tasks/:id',
+        builder: (context, state) =>
+            TaskDetailsScreen(taskId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/tasks/:id/guided',
+        builder: (context, state) =>
+            GuidedTaskScreen(taskId: state.pathParameters['id']!),
+      ),
+
       // Shell com bottom nav
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
@@ -88,8 +112,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.tasks,
-                builder: (context, state) =>
-                    const _PlaceholderScreen(title: 'Tarefas'),
+                builder: (context, state) => const TaskListScreen(),
               ),
             ],
           ),
