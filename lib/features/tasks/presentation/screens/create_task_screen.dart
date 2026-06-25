@@ -195,6 +195,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
               label: 'Nome da Tarefa *',
               hint: 'O que precisa de fazer?',
               textInputAction: TextInputAction.next,
+              maxLength: 30,
               validator: (value) => (value == null || value.trim().isEmpty)
                   ? 'Por favor, escreva um nome para a tarefa'
                   : null,
@@ -300,6 +301,7 @@ class _DescriptionField extends StatelessWidget {
         controller: controller,
         minLines: 3,
         maxLines: 5,
+        maxLength: 100,
         textInputAction: TextInputAction.newline,
         style: theme.textTheme.bodyLarge?.copyWith(
           color: theme.colorScheme.onSurface,

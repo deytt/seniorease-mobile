@@ -52,6 +52,7 @@ class StepEditorField extends StatelessWidget {
         Expanded(
           child: TextField(
             controller: controller,
+            maxLength: 30,
             style: theme.textTheme.bodyLarge?.copyWith(
               color: theme.colorScheme.onSurface,
             ),
