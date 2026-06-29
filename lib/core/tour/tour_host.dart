@@ -12,8 +12,10 @@ import 'package:showcaseview/showcaseview.dart';
 /// - regista um scope nomeado do `showcaseview` em [initState] e remove-o em
 ///   [dispose] (cada tela tem o seu scope porque o `IndexedStack` mantém várias
 ///   telas vivas em simultâneo);
-/// - configura o tooltip "sénior" (botões Anterior/Próximo + Sair, semântica
-///   ativa, auto-scroll para garantir que o alvo está visível antes de mostrar);
+/// - configura o tooltip "sénior" (botões Anterior/Próximo, semântica ativa,
+///   auto-scroll ágil e condicional para trazer o alvo à vista entre passos —
+///   ver [startTour]); o botão de fechar (X) vive dentro do próprio balão —
+///   ver [SeniorShowcase];
 /// - observa o [tourSignalProvider] e inicia o tutorial quando a Central pede
 ///   este [tourId];
 /// - marca o tutorial como "visto" no fim, através do [TourGate] (port de core).
@@ -35,52 +37,64 @@ mixin TourHost<T extends ConsumerStatefulWidget> on ConsumerState<T> {
       scope: tourScope,
       semanticEnable: true,
       enableAutoScroll: true,
+      // Scroll de re-centragem entre passos mais curto → arranque mais ágil
+      // (o padrão da lib é 300ms). O 1.º passo nem chega a fazer scroll — ver
+      // [startTour].
+      scrollDuration: const Duration(milliseconds: 150),
       // Ignora passos cujo alvo não está na árvore (ex.: lista de tarefas vazia).
       skipIfTargetNotPresent: true,
       blurValue: 1,
       globalTooltipActionConfig: const TooltipActionConfig(
         position: TooltipActionPosition.inside,
         alignment: MainAxisAlignment.spaceBetween,
-        actionGap: 12,
-        gapBetweenContentAndAction: 14,
+        actionGap: 8,
+        gapBetweenContentAndAction: 16,
+        crossAxisAlignment: CrossAxisAlignment.center,
       ),
+      // Apenas navegação: "Anterior" à esquerda (oculto no 1.º passo) e
+      // "Próximo" (ação primária) à direita. A saída do tutorial é feita pelo
+      // botão X no canto superior do balão (ver [SeniorShowcase]).
       globalTooltipActions: [
         TooltipActionButton(
           type: TooltipDefaultActionType.previous,
           name: 'Anterior',
           backgroundColor: Colors.white.withValues(alpha: 0.18),
-          textStyle: const TextStyle(color: Colors.white),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          textStyle: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
           hideActionWidgetForShowcase: [tourKeys.first],
         ),
         const TooltipActionButton(
           type: TooltipDefaultActionType.next,
           name: 'Próximo',
           backgroundColor: Colors.white,
+          padding: EdgeInsets.symmetric(horizontal: 18, vertical: 10),
           textStyle: TextStyle(
             color: AppColors.primaryDark,
             fontWeight: FontWeight.bold,
           ),
         ),
       ],
-      globalFloatingActionWidget: (_) => FloatingActionWidget(
-        left: 16,
-        bottom: 24,
-        child: _SkipTourButton(
-          onTap: () => ShowcaseView.getNamed(tourScope).dismiss(),
-        ),
-      ),
       onFinish: _markSeen,
+      // Fechar pelo X também conta como "visto" — não voltamos a oferecer.
+      onDismiss: (_) => _markSeen(),
     );
 
-    // Tela acabou de ser construída (ex.: aberta a partir da Central): consome o
-    // sinal corrente, se for para nós.
-    final current = ref.read(tourSignalProvider);
-    if (current == tourId) {
-      ref.read(tourSignalProvider.notifier).clear();
-      startTour();
-    }
+    // Consome o sinal corrente quando a tela é aberta a partir da Central
+    // (ex.: rota recém-empurrada). Adiado para depois do build — modificar um
+    // provider durante initState/build é proibido pelo Riverpod.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (ref.read(tourSignalProvider) == tourId) {
+        ref.read(tourSignalProvider.notifier).clear();
+        startTour();
+      }
+    });
 
-    // Tela já viva (ex.: aba do IndexedStack): reage a pedidos futuros.
+    // Tela já viva (ex.: aba do IndexedStack): reage a pedidos futuros. O
+    // callback corre fora da fase de build, logo é seguro limpar o sinal aqui.
     ref.listenManual<TourId?>(tourSignalProvider, (previous, next) {
       if (next == tourId) {
         ref.read(tourSignalProvider.notifier).clear();
@@ -91,10 +105,22 @@ mixin TourHost<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
   /// Inicia o tutorial desta tela. Adiado para o próximo frame para garantir que
   /// os alvos já estão renderizados (boa prática do briefing).
+  ///
+  /// Auto-scroll condicional: o 1.º passo é sempre um elemento do topo da tela
+  /// (o botão de ajuda só é alcançável com o topo à vista), por isso saltamos o
+  /// scroll de re-centragem que atrasava o arranque do tour. Para os passos
+  /// seguintes mantemos o auto-scroll, pois o alvo pode estar fora do ecrã.
+  ///
+  /// O `enableAutoScroll` é lido de forma síncrona dentro de `startShowCase` (no
+  /// arranque do passo 0), logo desligá-lo antes e voltar a ligá-lo a seguir
+  /// afeta apenas o 1.º passo. Degradação segura: se a leitura ocorresse mais
+  /// tarde, mantinha-se o comportamento atual (scroll também no passo 0).
   void startTour() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ShowcaseView.getNamed(tourScope).startShowCase(tourKeys);
+      final view = ShowcaseView.getNamed(tourScope)..enableAutoScroll = false;
+      view.startShowCase(tourKeys);
+      view.enableAutoScroll = true;
     });
   }
 
@@ -106,39 +132,5 @@ mixin TourHost<T extends ConsumerStatefulWidget> on ConsumerState<T> {
   void dispose() {
     ShowcaseView.getNamed(tourScope).unregister();
     super.dispose();
-  }
-}
-
-class _SkipTourButton extends StatelessWidget {
-  const _SkipTourButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: 'Sair do guia',
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(50),
-        elevation: 2,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(50),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            child: Text(
-              'Sair do guia',
-              style: TextStyle(
-                color: AppColors.primaryDark,
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }
