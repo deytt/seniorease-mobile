@@ -7,6 +7,7 @@ import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:mobile/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:mobile/features/auth/presentation/screens/login_screen.dart';
 import 'package:mobile/features/auth/presentation/screens/register_screen.dart';
+import 'package:mobile/features/guides/presentation/screens/guides_screen.dart';
 import 'package:mobile/features/home/presentation/screens/home_screen.dart';
 import 'package:mobile/features/profile/presentation/screens/settings_screen.dart';
 import 'package:mobile/features/tasks/presentation/screens/create_task_screen.dart';
@@ -20,6 +21,7 @@ abstract final class AppRoutes {
   static const register = '/register';
   static const forgotPassword = '/forgot-password';
   static const accessibility = '/accessibility';
+  static const guides = '/guides';
   static const tasks = '/tasks';
   static const createTask = '/tasks/create';
   static const reminders = '/reminders';
@@ -77,6 +79,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.accessibility,
         builder: (context, state) => const AccessibilityScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.guides,
+        builder: (context, state) => const GuidesScreen(),
       ),
 
       // Tarefas — rotas full-screen (fora da shell, sem bottom nav)

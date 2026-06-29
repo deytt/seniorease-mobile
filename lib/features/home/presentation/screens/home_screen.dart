@@ -1,14 +1,77 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/senior_system_ui.dart';
+import 'package:mobile/core/tour/tour_dialogs.dart';
+import 'package:mobile/core/tour/tour_gate.dart';
+import 'package:mobile/core/tour/tour_host.dart';
+import 'package:mobile/core/tour/tour_id.dart';
+import 'package:mobile/core/tour/tour_signal_provider.dart';
 import 'package:mobile/features/home/presentation/widgets/home_header.dart';
 import 'package:mobile/features/home/presentation/widgets/quick_actions_grid.dart';
 import 'package:mobile/features/home/presentation/widgets/reminders_section.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with TourHost<HomeScreen> {
+  static const String _scope = 'home';
+
+  final _nextActivityShowcaseKey = GlobalKey();
+  final _newTaskShowcaseKey = GlobalKey();
+  final _accessibilityShowcaseKey = GlobalKey();
+
+  @override
+  String get tourScope => _scope;
+
+  @override
+  TourId get tourId => TourId.home;
+
+  @override
+  List<GlobalKey> get tourKeys => [
+        _nextActivityShowcaseKey,
+        _newTaskShowcaseKey,
+        _accessibilityShowcaseKey,
+      ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeOfferWelcome());
+  }
+
+  /// Boas-vindas no primeiro arranque: pergunta se pode mostrar o essencial.
+  /// A decisão (e a persistência cross-device) é toda do [TourGate].
+  Future<void> _maybeOfferWelcome() async {
+    if (!mounted) return;
+    if (ref.read(tourSessionProvider)) return;
+
+    final gate = ref.read(tourGateProvider);
+    if (!await gate.isInitialOnboardingPending()) return;
+    if (!mounted) return;
+
+    ref.read(tourSessionProvider.notifier).markAutoOffered();
+
+    final accepted = await showTourInviteDialog(
+      context,
+      title: 'Bem-vindo ao SeniorEase!',
+      message:
+          'Quer que eu mostre, com calma, como usar as funções principais? Pode rever este guia quando quiser.',
+      acceptLabel: 'Começar agora',
+      declineLabel: 'Agora não',
+    );
+
+    // Concluído quer aceite ou recuse — não volta a aparecer automaticamente.
+    await gate.completeInitialOnboarding();
+    if (accepted && mounted) startTour();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +84,11 @@ class HomeScreen extends StatelessWidget {
             // Header gradiente (inclui StatusBar + saudação + next activity)
             SafeArea(
               bottom: false,
-              child: const HomeHeader(),
+              child: HomeHeader(
+                tourScope: _scope,
+                nextActivityShowcaseKey: _nextActivityShowcaseKey,
+                onHelp: startTour,
+              ),
             ),
             // Corpo com scroll
             Expanded(
@@ -31,7 +98,11 @@ class HomeScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: AppSpacing.sm),
-                    const QuickActionsGrid(),
+                    QuickActionsGrid(
+                      tourScope: _scope,
+                      newTaskShowcaseKey: _newTaskShowcaseKey,
+                      accessibilityShowcaseKey: _accessibilityShowcaseKey,
+                    ),
                     const SizedBox(height: AppSpacing.lg),
                     const RemindersSection(),
                     const SizedBox(height: AppSpacing.md),

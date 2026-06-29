@@ -7,6 +7,10 @@ import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/theme/senior_system_ui.dart';
+import 'package:mobile/core/tour/senior_showcase.dart';
+import 'package:mobile/core/tour/tour_host.dart';
+import 'package:mobile/core/tour/tour_help_button.dart';
+import 'package:mobile/core/tour/tour_id.dart';
 import 'package:mobile/core/widgets/senior_toast.dart';
 import 'package:mobile/features/tasks/domain/entities/task.dart';
 import 'package:mobile/features/tasks/domain/entities/task_filter.dart';
@@ -14,11 +18,33 @@ import 'package:mobile/features/tasks/presentation/providers/tasks_provider.dart
 import 'package:mobile/features/tasks/presentation/widgets/task_card.dart';
 import 'package:mobile/features/tasks/presentation/widgets/task_filter_sheet.dart';
 
-class TaskListScreen extends ConsumerWidget {
+class TaskListScreen extends ConsumerStatefulWidget {
   const TaskListScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TaskListScreen> createState() => _TaskListScreenState();
+}
+
+class _TaskListScreenState extends ConsumerState<TaskListScreen>
+    with TourHost<TaskListScreen> {
+  static const String _scope = 'taskList';
+
+  final _createShowcaseKey = GlobalKey();
+  final _filterShowcaseKey = GlobalKey();
+  final _firstCardShowcaseKey = GlobalKey();
+
+  @override
+  String get tourScope => _scope;
+
+  @override
+  TourId get tourId => TourId.taskList;
+
+  @override
+  List<GlobalKey> get tourKeys =>
+      [_createShowcaseKey, _filterShowcaseKey, _firstCardShowcaseKey];
+
+  @override
+  Widget build(BuildContext context) {
     final tasksAsync = ref.watch(filteredTasksStreamProvider);
     final filter = ref.watch(taskFilterProvider);
 
@@ -35,6 +61,10 @@ class TaskListScreen extends ConsumerWidget {
               doneCount: allTasks.where((t) => t.isCompleted).length,
               totalCount: allTasks.length,
               activeFilterCount: filter.activeCount,
+              scope: _scope,
+              createShowcaseKey: _createShowcaseKey,
+              filterShowcaseKey: _filterShowcaseKey,
+              onHelp: startTour,
               onCreate: () => context.push(AppRoutes.createTask),
               onOpenFilter: () => _openFilterSheet(context, ref, filter),
             ),
@@ -50,7 +80,11 @@ class TaskListScreen extends ConsumerWidget {
                   error: (_, _) => const _ErrorState(),
                   data: (tasks) => tasks.isEmpty
                       ? _EmptyState(hasFilter: !filter.isEmpty)
-                      : _TaskList(tasks: tasks),
+                      : _TaskList(
+                          tasks: tasks,
+                          scope: _scope,
+                          firstCardShowcaseKey: _firstCardShowcaseKey,
+                        ),
                 ),
               ),
             ),
@@ -109,6 +143,10 @@ class _Header extends StatelessWidget {
     required this.doneCount,
     required this.totalCount,
     required this.activeFilterCount,
+    required this.scope,
+    required this.createShowcaseKey,
+    required this.filterShowcaseKey,
+    required this.onHelp,
     required this.onCreate,
     required this.onOpenFilter,
   });
@@ -116,6 +154,10 @@ class _Header extends StatelessWidget {
   final int doneCount;
   final int totalCount;
   final int activeFilterCount;
+  final String scope;
+  final GlobalKey createShowcaseKey;
+  final GlobalKey filterShowcaseKey;
+  final VoidCallback onHelp;
   final VoidCallback onCreate;
   final VoidCallback onOpenFilter;
 
@@ -160,38 +202,55 @@ class _Header extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
+                // Botão de ajuda (rever tutorial desta tela)
+                TourHelpButton(onPressed: onHelp),
+                const SizedBox(width: AppSpacing.sm),
                 // Botão de filtro com badge
-                Semantics(
-                  button: true,
-                  label: activeFilterCount > 0
-                      ? 'Filtros ($activeFilterCount activos)'
-                      : 'Filtrar tarefas',
-                  child: _FilterButton(
-                    activeCount: activeFilterCount,
-                    onTap: onOpenFilter,
+                SeniorShowcase(
+                  showcaseKey: filterShowcaseKey,
+                  scope: scope,
+                  title: 'Filtre as suas tarefas',
+                  description:
+                      'Toque aqui para ver só as tarefas de hoje, ou de uma categoria.',
+                  child: Semantics(
+                    button: true,
+                    label: activeFilterCount > 0
+                        ? 'Filtros ($activeFilterCount activos)'
+                        : 'Filtrar tarefas',
+                    child: _FilterButton(
+                      activeCount: activeFilterCount,
+                      onTap: onOpenFilter,
+                    ),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 // Botão nova tarefa
-                Semantics(
-                  button: true,
-                  label: 'Nova tarefa',
-                  child: Material(
-                    color: AppColors.primary,
-                    borderRadius:
-                        BorderRadius.circular(AppTheme.borderRadius),
-                    child: InkWell(
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        onCreate();
-                      },
+                SeniorShowcase(
+                  showcaseKey: createShowcaseKey,
+                  scope: scope,
+                  title: 'Criar uma nova tarefa',
+                  description:
+                      'Toque no "+" sempre que quiser adicionar uma nova tarefa.',
+                  child: Semantics(
+                    button: true,
+                    label: 'Nova tarefa',
+                    child: Material(
+                      color: AppColors.primary,
                       borderRadius:
                           BorderRadius.circular(AppTheme.borderRadius),
-                      child: const SizedBox(
-                        width: 44,
-                        height: 44,
-                        child:
-                            Icon(Icons.add, color: Colors.white, size: 22),
+                      child: InkWell(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          onCreate();
+                        },
+                        borderRadius:
+                            BorderRadius.circular(AppTheme.borderRadius),
+                        child: const SizedBox(
+                          width: 44,
+                          height: 44,
+                          child:
+                              Icon(Icons.add, color: Colors.white, size: 22),
+                        ),
                       ),
                     ),
                   ),
@@ -411,32 +470,56 @@ class _ActiveChip extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _TaskList extends ConsumerWidget {
-  const _TaskList({required this.tasks});
+  const _TaskList({
+    required this.tasks,
+    required this.scope,
+    required this.firstCardShowcaseKey,
+  });
 
   final List<Task> tasks;
+  final String scope;
+  final GlobalKey firstCardShowcaseKey;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
-        for (final task in tasks) ...[
-          TaskCard(
-            task: task,
-            onTap: () => context.push('/tasks/${task.id}'),
-            onToggleComplete: () {
-              if (!task.isCompleted) {
-                ref
-                    .read(tasksControllerProvider.notifier)
-                    .completeTask(task.id);
-              }
-            },
-          ),
+        for (var i = 0; i < tasks.length; i++) ...[
+          _buildCard(context, ref, tasks[i], isFirst: i == 0),
           const SizedBox(height: 12),
         ],
         const SizedBox(height: 4),
         _GuidedModePromo(tasks: tasks),
       ],
+    );
+  }
+
+  Widget _buildCard(
+    BuildContext context,
+    WidgetRef ref,
+    Task task, {
+    required bool isFirst,
+  }) {
+    final card = TaskCard(
+      task: task,
+      onTap: () => context.push('/tasks/${task.id}'),
+      onToggleComplete: () {
+        if (!task.isCompleted) {
+          ref.read(tasksControllerProvider.notifier).completeTask(task.id);
+        }
+      },
+    );
+
+    if (!isFirst) return card;
+
+    return SeniorShowcase(
+      showcaseKey: firstCardShowcaseKey,
+      scope: scope,
+      title: 'As suas tarefas',
+      description:
+          'Cada cartão é uma tarefa. Toque para ver os detalhes, ou no círculo para marcar como concluída.',
+      child: card,
     );
   }
 }
