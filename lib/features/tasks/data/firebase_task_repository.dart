@@ -7,8 +7,8 @@ import 'package:mobile/features/tasks/domain/entities/task_step.dart';
 import 'package:mobile/features/tasks/domain/repositories/task_repository.dart';
 
 class FirebaseTaskRepository implements TaskRepository {
-  FirebaseTaskRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+  FirebaseTaskRepository({required FirebaseFirestore firestore})
+      : _firestore = firestore;
 
   final FirebaseFirestore _firestore;
 

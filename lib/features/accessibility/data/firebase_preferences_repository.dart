@@ -3,8 +3,8 @@ import 'package:mobile/features/accessibility/domain/entities/user_preferences.d
 import 'package:mobile/features/accessibility/domain/repositories/preferences_repository.dart';
 
 class FirebasePreferencesRepository implements PreferencesRepository {
-  FirebasePreferencesRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+  FirebasePreferencesRepository({required FirebaseFirestore firestore})
+      : _firestore = firestore;
 
   final FirebaseFirestore _firestore;
 

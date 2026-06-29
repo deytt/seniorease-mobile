@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/firebase/firebase_providers.dart';
 import 'package:mobile/features/guides/data/firebase_onboarding_repository.dart';
 import 'package:mobile/features/guides/data/local_tutorial_state_repository.dart';
 import 'package:mobile/features/guides/domain/repositories/onboarding_repository.dart';
@@ -14,8 +15,11 @@ import 'package:mobile/features/guides/domain/usecases/should_offer_tutorial_use
 final tutorialStateRepositoryProvider =
     Provider<TutorialStateRepository>((ref) => LocalTutorialStateRepository());
 
-final onboardingRepositoryProvider =
-    Provider<OnboardingRepository>((ref) => FirebaseOnboardingRepository());
+final onboardingRepositoryProvider = Provider<OnboardingRepository>(
+  (ref) => FirebaseOnboardingRepository(
+    firestore: ref.watch(firebaseFirestoreProvider),
+  ),
+);
 
 // --- Use cases ---
 
