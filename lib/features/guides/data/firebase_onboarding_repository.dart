@@ -4,8 +4,8 @@ import 'package:mobile/features/guides/domain/repositories/onboarding_repository
 /// Implementação Firestore do onboarding inicial — collection própria da feature
 /// `guides` (`onboarding/{userId}`), partilhada com o projeto Web (ADR-013).
 class FirebaseOnboardingRepository implements OnboardingRepository {
-  FirebaseOnboardingRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+  FirebaseOnboardingRepository({required FirebaseFirestore firestore})
+      : _firestore = firestore;
 
   final FirebaseFirestore _firestore;
 

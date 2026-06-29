@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/firebase/firebase_providers.dart';
 import 'package:mobile/features/auth/data/firebase_auth_repository.dart';
 import 'package:mobile/features/auth/domain/entities/user.dart';
 import 'package:mobile/features/auth/domain/repositories/auth_repository.dart';
@@ -10,7 +11,10 @@ import 'package:mobile/features/auth/domain/usecases/sign_up_use_case.dart';
 // --- Repositório ---
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return FirebaseAuthRepository();
+  return FirebaseAuthRepository(
+    firebaseAuth: ref.watch(firebaseAuthProvider),
+    firestore: ref.watch(firebaseFirestoreProvider),
+  );
 });
 
 // --- Use cases ---

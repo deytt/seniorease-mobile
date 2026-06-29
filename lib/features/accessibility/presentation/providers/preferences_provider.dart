@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/firebase/firebase_providers.dart';
 import 'package:mobile/features/accessibility/data/firebase_preferences_repository.dart';
 import 'package:mobile/features/accessibility/domain/entities/user_preferences.dart';
 import 'package:mobile/features/accessibility/domain/repositories/preferences_repository.dart';
@@ -9,7 +10,9 @@ import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
 // --- Repositório ---
 
 final preferencesRepositoryProvider = Provider<PreferencesRepository>((ref) {
-  return FirebasePreferencesRepository();
+  return FirebasePreferencesRepository(
+    firestore: ref.watch(firebaseFirestoreProvider),
+  );
 });
 
 // --- Use cases ---

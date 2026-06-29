@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/firebase/firebase_providers.dart';
 import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:mobile/features/tasks/data/firebase_task_repository.dart';
 import 'package:mobile/features/tasks/domain/entities/task.dart';
@@ -16,7 +17,7 @@ import 'package:mobile/features/tasks/domain/usecases/get_tasks_use_case.dart';
 // --- Repositório ---
 
 final taskRepositoryProvider = Provider<TaskRepository>((ref) {
-  return FirebaseTaskRepository();
+  return FirebaseTaskRepository(firestore: ref.watch(firebaseFirestoreProvider));
 });
 
 // --- Use cases ---
