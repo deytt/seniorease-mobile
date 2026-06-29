@@ -4,10 +4,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
+import 'package:mobile/core/tour/senior_showcase.dart';
+import 'package:mobile/core/tour/tour_dialogs.dart';
+import 'package:mobile/core/tour/tour_gate.dart';
+import 'package:mobile/core/tour/tour_host.dart';
+import 'package:mobile/core/tour/tour_id.dart';
+import 'package:mobile/core/tour/tour_signal_provider.dart';
 import 'package:mobile/core/widgets/senior_button.dart';
 import 'package:mobile/core/widgets/senior_input.dart';
 import 'package:mobile/core/widgets/senior_screen_scaffold.dart';
 import 'package:mobile/core/widgets/senior_toast.dart';
+import 'package:mobile/core/tour/tour_help_button.dart';
 import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:mobile/features/tasks/domain/entities/task.dart';
 import 'package:mobile/features/tasks/domain/entities/task_step.dart';
@@ -23,10 +30,58 @@ class CreateTaskScreen extends ConsumerStatefulWidget {
   ConsumerState<CreateTaskScreen> createState() => _CreateTaskScreenState();
 }
 
-class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
+class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
+    with TourHost<CreateTaskScreen> {
+  static const String _scope = 'createTask';
+
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
+
+  // Alvos do tutorial guiado.
+  final _titleShowcaseKey = GlobalKey();
+  final _stepsShowcaseKey = GlobalKey();
+  final _createShowcaseKey = GlobalKey();
+
+  @override
+  String get tourScope => _scope;
+
+  @override
+  TourId get tourId => TourId.createTask;
+
+  @override
+  List<GlobalKey> get tourKeys =>
+      [_titleShowcaseKey, _stepsShowcaseKey, _createShowcaseKey];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeOfferFirstUse());
+  }
+
+  /// Na primeira utilização (apenas em Modo Básico), pergunta se pode mostrar
+  /// como criar uma tarefa. A decisão de "quando" é toda do [TourGate].
+  Future<void> _maybeOfferFirstUse() async {
+    if (!mounted) return;
+    if (ref.read(tourSessionProvider)) return;
+
+    final gate = ref.read(tourGateProvider);
+    if (!await gate.shouldOfferFirstUse(TourId.createTask)) return;
+    if (!mounted) return;
+
+    ref.read(tourSessionProvider.notifier).markAutoOffered();
+    await gate.markOffered(TourId.createTask);
+    if (!mounted) return;
+
+    final accepted = await showTourInviteDialog(
+      context,
+      title: 'Vamos fazer juntos?',
+      message: 'Posso mostrar rapidamente como criar uma tarefa?',
+      acceptLabel: 'Sim',
+      declineLabel: 'Agora não',
+    );
+    if (accepted && mounted) startTour();
+  }
 
   // 1 passo pré-aberto por defeito
   final List<TextEditingController> _stepControllers = [
@@ -185,20 +240,28 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
     return SeniorScreenScaffold(
       title: 'Nova Tarefa',
       backIcon: Icons.close,
+      trailing: TourHelpButton(onPressed: startTour),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.md),
           children: [
-            SeniorInput(
-              controller: _titleController,
-              label: 'Nome da Tarefa *',
-              hint: 'O que precisa de fazer?',
-              textInputAction: TextInputAction.next,
-              maxLength: 30,
-              validator: (value) => (value == null || value.trim().isEmpty)
-                  ? 'Por favor, escreva um nome para a tarefa'
-                  : null,
+            SeniorShowcase(
+              showcaseKey: _titleShowcaseKey,
+              scope: _scope,
+              title: 'Dê um nome à tarefa',
+              description:
+                  'Escreva aqui o que precisa de fazer. Por exemplo: "Tomar o remédio".',
+              child: SeniorInput(
+                controller: _titleController,
+                label: 'Nome da Tarefa *',
+                hint: 'O que precisa de fazer?',
+                textInputAction: TextInputAction.next,
+                maxLength: 30,
+                validator: (value) => (value == null || value.trim().isEmpty)
+                    ? 'Por favor, escreva um nome para a tarefa'
+                    : null,
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
             _DescriptionField(controller: _descriptionController),
@@ -240,18 +303,32 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            _StepsSection(
-              controllers: _stepControllers,
-              errorText: _stepsError,
-              onAdd: _addStep,
-              onRemove: _removeStep,
+            SeniorShowcase(
+              showcaseKey: _stepsShowcaseKey,
+              scope: _scope,
+              title: 'Divida em passos simples',
+              description:
+                  'Escreva cada passo da tarefa. Assim fica mais fácil de seguir, um de cada vez.',
+              child: _StepsSection(
+                controllers: _stepControllers,
+                errorText: _stepsError,
+                onAdd: _addStep,
+                onRemove: _removeStep,
+              ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            SeniorButton(
-              label: 'Criar Tarefa',
-              icon: Icons.add,
-              isLoading: isSaving,
-              onPressed: _submit,
+            SeniorShowcase(
+              showcaseKey: _createShowcaseKey,
+              scope: _scope,
+              title: 'Guarde a sua tarefa',
+              description:
+                  'Quando terminar, toque aqui para guardar. Pronto, é só isso!',
+              child: SeniorButton(
+                label: 'Criar Tarefa',
+                icon: Icons.add,
+                isLoading: isSaving,
+                onPressed: _submit,
+              ),
             ),
           ],
         ),

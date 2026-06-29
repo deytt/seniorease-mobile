@@ -221,6 +221,13 @@ class _NavCard extends StatelessWidget {
             ),
             Builder(
               builder: (ctx) => SettingsNavRow(
+                icon: Icons.menu_book_outlined,
+                label: 'Guias do aplicativo',
+                onTap: () => context.push(AppRoutes.guides),
+              ),
+            ),
+            Builder(
+              builder: (ctx) => SettingsNavRow(
                 icon: Icons.people_outline,
                 label: 'Membros da Família',
                 onTap: () {},

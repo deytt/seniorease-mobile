@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile/app/router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
+import 'package:mobile/core/tour/senior_showcase.dart';
 import 'package:mobile/core/widgets/senior_modal.dart';
 import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:mobile/features/tasks/domain/entities/task.dart';
@@ -12,7 +13,18 @@ import 'package:mobile/features/tasks/presentation/providers/tasks_provider.dart
 
 /// Header gradiente com saudação dinâmica, nome do utilizador e botão SOS.
 class HomeHeader extends ConsumerWidget {
-  const HomeHeader({super.key});
+  const HomeHeader({
+    super.key,
+    this.tourScope,
+    this.nextActivityShowcaseKey,
+    this.onHelp,
+  });
+
+  /// Quando fornecidos, o cartão "Próxima atividade" torna-se alvo do tutorial
+  /// guiado e é mostrado um botão de ajuda no header.
+  final String? tourScope;
+  final GlobalKey? nextActivityShowcaseKey;
+  final VoidCallback? onHelp;
 
   static String _greeting() {
     final hour = DateTime.now().hour;
@@ -76,12 +88,59 @@ class HomeHeader extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
+              if (onHelp != null) ...[
+                _HeaderHelpButton(onTap: onHelp!),
+                const SizedBox(width: AppSpacing.sm),
+              ],
               _SosButton(),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          _NextActivityCard(nextTask: ref.watch(nextPendingTaskProvider)),
+          _buildNextActivity(ref),
         ],
+      ),
+    );
+  }
+
+  Widget _buildNextActivity(WidgetRef ref) {
+    final card = _NextActivityCard(nextTask: ref.watch(nextPendingTaskProvider));
+    if (tourScope == null || nextActivityShowcaseKey == null) return card;
+    return SeniorShowcase(
+      showcaseKey: nextActivityShowcaseKey!,
+      scope: tourScope!,
+      title: 'A sua próxima atividade',
+      description:
+          'Aqui aparece sempre a próxima tarefa. Toque em "Iniciar" para começar com ajuda passo a passo.',
+      child: card,
+    );
+  }
+}
+
+/// Botão de ajuda em versão clara, para o header gradiente da Tela Inicial.
+class _HeaderHelpButton extends StatelessWidget {
+  const _HeaderHelpButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Ver como funciona esta tela',
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: const Icon(Icons.help_outline, color: Colors.white, size: 22),
+        ),
       ),
     );
   }
