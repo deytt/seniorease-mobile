@@ -215,7 +215,7 @@ class _Header extends StatelessWidget {
                   child: Semantics(
                     button: true,
                     label: activeFilterCount > 0
-                        ? 'Filtros ($activeFilterCount activos)'
+                        ? 'Filtros ($activeFilterCount ativos)'
                         : 'Filtrar tarefas',
                     child: _FilterButton(
                       activeCount: activeFilterCount,
@@ -423,7 +423,7 @@ class _ActiveChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: 'Filtro activo: $label. Toque para remover.',
+      label: 'Filtro ativo: $label. Toque para remover.',
       button: true,
       child: GestureDetector(
         onTap: () {
@@ -655,8 +655,8 @@ class _EmptyState extends StatelessWidget {
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     hasFilter
-                        ? 'Tente remover ou alterar os filtros activos.'
-                        : 'Toque no botão "+" para criar a sua primeira tarefa.',
+                        ? 'Tente remover ou alterar os filtros ativos.'
+                        : 'Toque no botão "+" para criar sua primeira tarefa.',
                     style: theme.textTheme.bodyLarge,
                     textAlign: TextAlign.center,
                   ),

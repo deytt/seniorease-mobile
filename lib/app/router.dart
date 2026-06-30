@@ -12,6 +12,8 @@ import 'package:mobile/features/home/presentation/screens/home_screen.dart';
 import 'package:mobile/features/profile/presentation/screens/about_screen.dart';
 import 'package:mobile/features/profile/presentation/screens/profile_screen.dart';
 import 'package:mobile/features/profile/presentation/screens/settings_screen.dart';
+import 'package:mobile/features/reminders/presentation/screens/create_reminder_screen.dart';
+import 'package:mobile/features/reminders/presentation/screens/reminders_screen.dart';
 import 'package:mobile/features/tasks/presentation/screens/create_task_screen.dart';
 import 'package:mobile/features/tasks/presentation/screens/guided_task_screen.dart';
 import 'package:mobile/features/tasks/presentation/screens/task_details_screen.dart';
@@ -29,6 +31,7 @@ abstract final class AppRoutes {
   static const tasks = '/tasks';
   static const createTask = '/tasks/create';
   static const reminders = '/reminders';
+  static const createReminder = '/reminders/create';
   static const history = '/history';
   static const settings = '/settings';
 
@@ -103,6 +106,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const CreateTaskScreen(),
       ),
       GoRoute(
+        path: AppRoutes.createReminder,
+        builder: (context, state) => const CreateReminderScreen(),
+      ),
+      GoRoute(
         path: '/tasks/:id',
         builder: (context, state) =>
             TaskDetailsScreen(taskId: state.pathParameters['id']!),
@@ -138,8 +145,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.reminders,
-                builder: (context, state) =>
-                    const _PlaceholderScreen(title: 'Lembretes'),
+                builder: (context, state) => const RemindersScreen(),
               ),
             ],
           ),

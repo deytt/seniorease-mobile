@@ -1,0 +1,86 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:mobile/features/reminders/data/firebase_reminder_repository.dart';
+import 'package:mobile/features/reminders/domain/entities/reminder.dart';
+import 'package:mobile/features/reminders/domain/entities/reminder_category.dart';
+import 'package:mobile/features/reminders/domain/entities/reminder_filter.dart';
+
+void main() {
+  late FakeFirebaseFirestore db;
+  late FirebaseReminderRepository repo;
+
+  setUp(() {
+    db = FakeFirebaseFirestore();
+    repo = FirebaseReminderRepository(firestore: db);
+  });
+
+  Future<void> seedReminder(
+    String id, {
+    String userId = 'u1',
+    String category = 'medication',
+    DateTime? scheduledAt,
+    bool isRead = false,
+  }) {
+    final at = scheduledAt ?? DateTime(2026, 6, 30, 8);
+    return db.collection('reminders').doc(id).set({
+      'userId': userId,
+      'title': 'Lembrete $id',
+      'message': 'Detalhe',
+      'category': category,
+      'scheduledAt': Timestamp.fromDate(at),
+      'isRead': isRead,
+      'createdAt': Timestamp.fromDate(DateTime(2026, 6, 1)),
+    });
+  }
+
+  test('watchRemindersFiltered hoje devolve apenas lembretes do dia', () async {
+    final today = DateTime(2026, 6, 30, 10);
+    await seedReminder('r1', scheduledAt: today);
+    await seedReminder('r2', scheduledAt: today.add(const Duration(days: 1)));
+
+    final items = await repo
+        .watchRemindersFiltered('u1', ReminderListFilter.today)
+        .first;
+
+    expect(items.length, 1);
+    expect(items.first.id, 'r1');
+  });
+
+  test('watchRemindersFiltered medicação filtra por categoria', () async {
+    final today = DateTime(2026, 6, 30, 10);
+    await seedReminder('r1', category: 'medication', scheduledAt: today);
+    await seedReminder(
+      'r2',
+      category: 'appointment',
+      scheduledAt: today,
+    );
+
+    final items = await repo
+        .watchRemindersFiltered('u1', ReminderListFilter.medication)
+        .first;
+
+    expect(items.length, 1);
+    expect(items.first.id, 'r1');
+  });
+
+  test('createReminder e markAsRead', () async {
+    final reminder = Reminder(
+      id: '',
+      userId: 'u1',
+      title: 'Medicação',
+      message: 'Tomar com água',
+      category: ReminderCategory.medication,
+      scheduledAt: DateTime(2026, 6, 30, 12),
+      isRead: false,
+      createdAt: DateTime(2026, 6, 1),
+    );
+
+    final id = await repo.createReminder(reminder);
+    await repo.markAsRead(id, isRead: true);
+
+    final doc = await db.collection('reminders').doc(id).get();
+    expect(doc.data()?['isRead'], isTrue);
+    expect(doc.data()?['title'], 'Medicação');
+  });
+}

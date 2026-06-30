@@ -291,7 +291,7 @@ class _FilterToggleTile extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      label: selected ? '$label, activo' : label,
+      label: selected ? '$label, ativo' : label,
       child: Material(
         color: selected
             ? AppColors.primary.withValues(alpha: 0.08)
