@@ -67,4 +67,19 @@ const List<TutorialInfo> kTutorials = [
     icon: Icons.settings_accessibility,
     route: AppRoutes.accessibility,
   ),
+  TutorialInfo(
+    id: TourId.settings,
+    title: 'Conhecer as Definições',
+    description: 'Veja onde mudar as suas preferências e onde fica cada coisa.',
+    icon: Icons.settings_outlined,
+    route: AppRoutes.settings,
+    isShellTab: true,
+  ),
+  TutorialInfo(
+    id: TourId.about,
+    title: 'Sobre a aplicação',
+    description: 'Veja a versão e como abrir o SeniorEase no computador.',
+    icon: Icons.info_outline,
+    route: AppRoutes.about,
+  ),
 ];

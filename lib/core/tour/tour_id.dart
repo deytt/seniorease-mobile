@@ -13,7 +13,9 @@ enum TourId {
   taskList,
   taskDetails,
   accessibility,
-  settings;
+  settings,
+  guides,
+  about;
 
   /// Chave estável usada na persistência local (shared_preferences).
   String get storageKey => name;

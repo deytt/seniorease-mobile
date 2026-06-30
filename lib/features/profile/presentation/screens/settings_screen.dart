@@ -6,16 +6,42 @@ import 'package:mobile/app/router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/senior_system_ui.dart';
+import 'package:mobile/core/tour/senior_showcase.dart';
+import 'package:mobile/core/tour/tour_host.dart';
+import 'package:mobile/core/tour/tour_id.dart';
 import 'package:mobile/core/widgets/senior_button.dart';
 import 'package:mobile/core/widgets/senior_modal.dart';
 import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:mobile/features/profile/presentation/widgets/settings_nav_row.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen>
+    with TourHost<SettingsScreen> {
+  static const String _scope = 'settings';
+
+  // Alvos do tutorial guiado (na ordem de exibição; o 1.º está no topo).
+  final _navShowcaseKey = GlobalKey();
+  final _helpShowcaseKey = GlobalKey();
+  final _signOutShowcaseKey = GlobalKey();
+
+  @override
+  String get tourScope => _scope;
+
+  @override
+  TourId get tourId => TourId.settings;
+
+  @override
+  List<GlobalKey> get tourKeys =>
+      [_navShowcaseKey, _helpShowcaseKey, _signOutShowcaseKey];
+
+  @override
+  Widget build(BuildContext context) {
     final user = ref.watch(authStateProvider).asData?.value;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -27,6 +53,7 @@ class SettingsScreen extends ConsumerWidget {
             _ProfileBanner(
               name: user?.name ?? '',
               email: user?.email ?? '',
+              onHelp: startTour,
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -35,14 +62,32 @@ class SettingsScreen extends ConsumerWidget {
                   children: [
                     const SizedBox(height: AppSpacing.md),
                     // Card de navegação
-                    _NavCard(),
+                    Padding(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                      child: SeniorShowcase(
+                        showcaseKey: _navShowcaseKey,
+                        scope: _scope,
+                        title: 'Atalhos das definições',
+                        description:
+                            'Aqui abre a acessibilidade, os guias do aplicativo e a página Sobre.',
+                        child: _NavCard(),
+                      ),
+                    ),
                     const SizedBox(height: AppSpacing.md),
                     // Card "Precisa de Ajuda?"
                     Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppSpacing.md,
                       ),
-                      child: _HelpCard(),
+                      child: SeniorShowcase(
+                        showcaseKey: _helpShowcaseKey,
+                        scope: _scope,
+                        title: 'Precisa de ajuda?',
+                        description:
+                            'Tem sempre o nosso telefone de apoio à mão, a qualquer hora.',
+                        child: _HelpCard(),
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     // Botão "Sair da Conta"
@@ -50,11 +95,18 @@ class SettingsScreen extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppSpacing.md,
                       ),
-                      child: SeniorButton(
-                        label: 'Sair da Conta',
-                        variant: SeniorButtonVariant.destructive,
-                        icon: Icons.logout,
-                        onPressed: () => _confirmSignOut(context, ref),
+                      child: SeniorShowcase(
+                        showcaseKey: _signOutShowcaseKey,
+                        scope: _scope,
+                        title: 'Sair da conta',
+                        description:
+                            'Quando quiser sair, toque aqui. Pedimos sempre confirmação antes.',
+                        child: SeniorButton(
+                          label: 'Sair da Conta',
+                          variant: SeniorButtonVariant.destructive,
+                          icon: Icons.logout,
+                          onPressed: _confirmSignOut,
+                        ),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xl),
@@ -68,7 +120,7 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmSignOut(BuildContext context, WidgetRef ref) async {
+  Future<void> _confirmSignOut() async {
     HapticFeedback.mediumImpact();
     final confirmed = await showSeniorConfirmDialog(
       context: context,
@@ -78,9 +130,9 @@ class SettingsScreen extends ConsumerWidget {
       cancelLabel: 'Cancelar',
       isDestructive: true,
     );
-    if (confirmed == true && context.mounted) {
+    if (confirmed == true && mounted) {
       await ref.read(authControllerProvider.notifier).signOut();
-      if (context.mounted) {
+      if (mounted) {
         context.go(AppRoutes.login);
       }
     }
@@ -90,10 +142,15 @@ class SettingsScreen extends ConsumerWidget {
 // ------------------------------------------------------------------ Profile Banner
 
 class _ProfileBanner extends StatelessWidget {
-  const _ProfileBanner({required this.name, required this.email});
+  const _ProfileBanner({
+    required this.name,
+    required this.email,
+    this.onHelp,
+  });
 
   final String name;
   final String email;
+  final VoidCallback? onHelp;
 
   String get _initials {
     final parts = name.trim().split(' ').where((w) => w.isNotEmpty).toList();
@@ -126,13 +183,27 @@ class _ProfileBanner extends StatelessWidget {
           ),
           child: Column(
             children: [
-              // Título
-              Text(
-                'Definições',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+              // Título + botão de ajuda (à direita)
+              Row(
+                children: [
+                  const SizedBox(width: 44),
+                  Expanded(
+                    child: Text(
+                      'Definições',
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 44,
+                    child: onHelp != null
+                        ? _HeaderHelpButton(onTap: onHelp!)
+                        : null,
+                  ),
+                ],
               ),
               const SizedBox(height: AppSpacing.lg),
               // Avatar
@@ -183,64 +254,76 @@ class _ProfileBanner extends StatelessWidget {
   }
 }
 
+/// Botão de ajuda em versão clara, para o header gradiente das Definições.
+class _HeaderHelpButton extends StatelessWidget {
+  const _HeaderHelpButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Ver como funciona esta tela',
+      child: GestureDetector(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          onTap();
+        },
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: const Icon(Icons.help_outline, color: Colors.white, size: 22),
+        ),
+      ),
+    );
+  }
+}
+
 // ------------------------------------------------------------------ Nav Card
 
 class _NavCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          border: Border.all(color: Theme.of(context).colorScheme.outline),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          children: [
-            Builder(
-              builder: (ctx) => SettingsNavRow(
-                icon: Icons.person_outline,
-                label: 'Informação Pessoal',
-                onTap: () {},
-              ),
-            ),
-            Builder(
-              builder: (ctx) => SettingsNavRow(
-                icon: Icons.notifications_outlined,
-                label: 'Preferências de Notificação',
-                onTap: () {},
-              ),
-            ),
-            Builder(
-              builder: (ctx) => SettingsNavRow(
-                icon: Icons.accessibility_new_outlined,
-                label: 'Preferências de Acessibilidade',
-                onTap: () => context.push(AppRoutes.accessibility),
-              ),
-            ),
-            Builder(
-              builder: (ctx) => SettingsNavRow(
-                icon: Icons.menu_book_outlined,
-                label: 'Guias do aplicativo',
-                onTap: () => context.push(AppRoutes.guides),
-              ),
-            ),
-            Builder(
-              builder: (ctx) => SettingsNavRow(
-                icon: Icons.people_outline,
-                label: 'Membros da Família',
-                onTap: () {},
-              ),
-            ),
-            SettingsNavRow(
-              icon: Icons.lock_outline,
-              label: 'Segurança',
-              onTap: () {},
-              showDivider: false,
-            ),
-          ],
-        ),
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          SettingsNavRow(
+            icon: Icons.person_outline,
+            label: 'Informação Pessoal',
+            onTap: () {},
+          ),
+          SettingsNavRow(
+            icon: Icons.notifications_outlined,
+            label: 'Preferências de Notificação',
+            onTap: () {},
+          ),
+          SettingsNavRow(
+            icon: Icons.accessibility_new_outlined,
+            label: 'Preferências de Acessibilidade',
+            onTap: () => context.push(AppRoutes.accessibility),
+          ),
+          SettingsNavRow(
+            icon: Icons.menu_book_outlined,
+            label: 'Guias do aplicativo',
+            onTap: () => context.push(AppRoutes.guides),
+          ),
+          SettingsNavRow(
+            icon: Icons.info_outline,
+            label: 'Sobre',
+            onTap: () => context.push(AppRoutes.about),
+            showDivider: false,
+          ),
+        ],
       ),
     );
   }
