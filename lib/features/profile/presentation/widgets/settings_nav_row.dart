@@ -10,12 +10,17 @@ class SettingsNavRow extends StatelessWidget {
     required this.label,
     this.onTap,
     this.showDivider = true,
+    this.showAlert = false,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback? onTap;
   final bool showDivider;
+
+  /// Exibe um ícone de alerta (exclamação) à esquerda do chevron, sinalizando
+  /// que há ações pendentes nesta tela (ex.: conta por verificar).
+  final bool showAlert;
 
   @override
   Widget build(BuildContext context) {
@@ -52,6 +57,17 @@ class SettingsNavRow extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (showAlert) ...[
+                  Semantics(
+                    label: 'Tem ações pendentes',
+                    child: const Icon(
+                      Icons.error_outline,
+                      color: AppColors.warning,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                ],
                 Icon(
                   Icons.chevron_right,
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.35),

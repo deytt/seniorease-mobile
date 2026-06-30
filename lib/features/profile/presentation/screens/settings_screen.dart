@@ -79,7 +79,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
                         title: 'Atalhos das definições',
                         description:
                             'Aqui abre a acessibilidade, os guias do aplicativo e a página Sobre.',
-                        child: _NavCard(),
+                        child: _NavCard(
+                          securityAlert: user != null && !user.emailVerified,
+                        ),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
@@ -328,6 +330,10 @@ class _HeaderHelpButton extends StatelessWidget {
 // ------------------------------------------------------------------ Nav Card
 
 class _NavCard extends StatelessWidget {
+  const _NavCard({this.securityAlert = false});
+
+  final bool securityAlert;
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -342,6 +348,12 @@ class _NavCard extends StatelessWidget {
             icon: Icons.person_outline,
             label: 'Perfil',
             onTap: () => context.push(AppRoutes.profile),
+          ),
+          SettingsNavRow(
+            icon: Icons.security_outlined,
+            label: 'Segurança',
+            showAlert: securityAlert,
+            onTap: () => context.push(AppRoutes.security),
           ),
           SettingsNavRow(
             icon: Icons.notifications_outlined,
