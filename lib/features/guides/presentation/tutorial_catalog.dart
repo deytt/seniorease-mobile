@@ -60,4 +60,11 @@ const List<TutorialInfo> kTutorials = [
     route: AppRoutes.tasks,
     isShellTab: true,
   ),
+  TutorialInfo(
+    id: TourId.accessibility,
+    title: 'Ajustar a acessibilidade',
+    description: 'Mude o tamanho da letra, as cores e o modo de uso.',
+    icon: Icons.settings_accessibility,
+    route: AppRoutes.accessibility,
+  ),
 ];
