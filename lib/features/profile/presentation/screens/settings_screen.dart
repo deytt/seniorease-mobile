@@ -12,6 +12,7 @@ import 'package:mobile/core/tour/tour_id.dart';
 import 'package:mobile/core/widgets/senior_button.dart';
 import 'package:mobile/core/widgets/senior_modal.dart';
 import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:mobile/features/profile/presentation/providers/profile_provider.dart';
 import 'package:mobile/features/profile/presentation/widgets/settings_nav_row.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -43,6 +44,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(authStateProvider).asData?.value;
+    final profile = ref.watch(profileProvider).asData?.value;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SeniorSystemUi.headerOverlay,
@@ -51,8 +53,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
         body: Column(
           children: [
             _ProfileBanner(
-              name: user?.name ?? '',
-              email: user?.email ?? '',
+              name: profile?.name.isNotEmpty == true
+                  ? profile!.name
+                  : (user?.name ?? ''),
+              email: profile?.email.isNotEmpty == true
+                  ? profile!.email
+                  : (user?.email ?? ''),
+              phone: profile?.hasPhone == true ? profile!.phone : null,
+              photoUrl: profile?.hasPhoto == true ? profile!.photoUrl : null,
               onHelp: startTour,
             ),
             Expanded(
@@ -145,11 +153,15 @@ class _ProfileBanner extends StatelessWidget {
   const _ProfileBanner({
     required this.name,
     required this.email,
+    this.phone,
+    this.photoUrl,
     this.onHelp,
   });
 
   final String name;
   final String email;
+  final String? phone;
+  final String? photoUrl;
   final VoidCallback? onHelp;
 
   String get _initials {
@@ -206,7 +218,7 @@ class _ProfileBanner extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppSpacing.lg),
-              // Avatar
+              // Avatar — foto de perfil quando existir, senão as iniciais
               Container(
                 width: 80,
                 height: 80,
@@ -217,17 +229,25 @@ class _ProfileBanner extends StatelessWidget {
                     color: Colors.white.withValues(alpha: 0.4),
                     width: 3,
                   ),
+                  image: photoUrl != null && photoUrl!.trim().isNotEmpty
+                      ? DecorationImage(
+                          image: NetworkImage(photoUrl!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
-                child: Center(
-                  child: Text(
-                    _initials,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                child: photoUrl != null && photoUrl!.trim().isNotEmpty
+                    ? null
+                    : Center(
+                        child: Text(
+                          _initials,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
@@ -246,6 +266,27 @@ class _ProfileBanner extends StatelessWidget {
                   fontSize: 14,
                 ),
               ),
+              if (phone != null && phone!.trim().isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.phone,
+                      size: 14,
+                      color: Colors.white.withValues(alpha: 0.75),
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Text(
+                      phone!,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.75),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
@@ -299,8 +340,8 @@ class _NavCard extends StatelessWidget {
         children: [
           SettingsNavRow(
             icon: Icons.person_outline,
-            label: 'Informação Pessoal',
-            onTap: () {},
+            label: 'Perfil',
+            onTap: () => context.push(AppRoutes.profile),
           ),
           SettingsNavRow(
             icon: Icons.notifications_outlined,

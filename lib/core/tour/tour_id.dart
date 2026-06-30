@@ -15,7 +15,8 @@ enum TourId {
   accessibility,
   settings,
   guides,
-  about;
+  about,
+  profile;
 
   /// Chave estável usada na persistência local (shared_preferences).
   String get storageKey => name;

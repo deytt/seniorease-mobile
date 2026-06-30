@@ -76,6 +76,13 @@ const List<TutorialInfo> kTutorials = [
     isShellTab: true,
   ),
   TutorialInfo(
+    id: TourId.profile,
+    title: 'Ver e mudar o seu perfil',
+    description: 'Aprenda a mudar a sua foto e os seus dados pessoais.',
+    icon: Icons.person_outline,
+    route: AppRoutes.profile,
+  ),
+  TutorialInfo(
     id: TourId.about,
     title: 'Sobre a aplicação',
     description: 'Veja a versão e como abrir o SeniorEase no computador.',
