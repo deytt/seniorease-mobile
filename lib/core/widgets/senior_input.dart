@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
@@ -16,6 +17,7 @@ class SeniorInput extends StatefulWidget {
     this.textInputAction,
     this.obscureText = false,
     this.enabled = true,
+    this.readOnly = false,
     this.autocorrect = true,
     this.onChanged,
     this.onSubmitted,
@@ -23,6 +25,7 @@ class SeniorInput extends StatefulWidget {
     this.semanticLabel,
     this.compactLabel = false,
     this.maxLength,
+    this.inputFormatters,
   });
 
   final TextEditingController? controller;
@@ -35,8 +38,13 @@ class SeniorInput extends StatefulWidget {
   final TextInputAction? textInputAction;
   final bool obscureText;
   final bool enabled;
+
+  /// Campo só de leitura: mantém o estilo de campo activo (não acinzentado),
+  /// mas impede a edição. Usado, por exemplo, no e-mail do perfil.
+  final bool readOnly;
   final bool autocorrect;
   final int? maxLength;
+  final List<TextInputFormatter>? inputFormatters;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
   final FormFieldValidator<String>? validator;
@@ -89,11 +97,13 @@ class _SeniorInputState extends State<SeniorInput> {
             child: TextFormField(
               controller: widget.controller,
               enabled: widget.enabled,
+              readOnly: widget.readOnly,
               obscureText: _obscure,
               autocorrect: widget.autocorrect,
               keyboardType: widget.keyboardType,
               textInputAction: widget.textInputAction,
               maxLength: widget.maxLength,
+              inputFormatters: widget.inputFormatters,
               onChanged: widget.onChanged,
               onFieldSubmitted: widget.onSubmitted,
               validator: widget.validator,
