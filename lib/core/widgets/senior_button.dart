@@ -15,6 +15,7 @@ class SeniorButton extends StatelessWidget {
     this.variant = SeniorButtonVariant.primary,
     this.size = SeniorButtonSize.large,
     this.icon,
+    this.leading,
     this.isLoading = false,
     this.isExpanded = true,
     this.semanticLabel,
@@ -27,6 +28,10 @@ class SeniorButton extends StatelessWidget {
   final SeniorButtonVariant variant;
   final SeniorButtonSize size;
   final IconData? icon;
+
+  /// Widget opcional exibido antes do texto (ex.: logo de marca). Tem
+  /// prioridade sobre [icon] quando ambos são fornecidos.
+  final Widget? leading;
   final bool isLoading;
   final bool isExpanded;
   final String? semanticLabel;
@@ -85,7 +90,10 @@ class SeniorButton extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          if (icon != null) ...[
+                          if (leading != null) ...[
+                            leading!,
+                            const SizedBox(width: AppSpacing.sm),
+                          ] else if (icon != null) ...[
                             Icon(
                               icon,
                               size: variant == SeniorButtonVariant.outline ? 16 : 20,

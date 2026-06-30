@@ -49,5 +49,16 @@
 	<string>Precisamos de aceder às suas fotos para escolher a sua foto de perfil.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Precisamos de aceder à câmara para tirar a sua foto de perfil.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.98401811269-8p2965kff2nd0ahvfqdpdv907l090rj7</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
