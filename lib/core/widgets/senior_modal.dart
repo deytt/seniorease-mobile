@@ -35,20 +35,26 @@ Future<bool?> showSeniorConfirmDialog({
           AppSpacing.lg,
         ),
         actions: [
-          SeniorButton(
-            label: cancelLabel,
-            variant: SeniorButtonVariant.secondary,
-            isExpanded: false,
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-          ),
-          const SizedBox(width: AppSpacing.sm),
-          SeniorButton(
-            label: confirmLabel,
-            variant: isDestructive
-                ? SeniorButtonVariant.destructive
-                : SeniorButtonVariant.primary,
-            isExpanded: false,
-            onPressed: () => Navigator.of(dialogContext).pop(true),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              SeniorButton(
+                label: cancelLabel,
+                variant: SeniorButtonVariant.secondary,
+                isExpanded: false,
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              SeniorButton(
+                label: confirmLabel,
+                variant: isDestructive
+                    ? SeniorButtonVariant.destructive
+                    : SeniorButtonVariant.primary,
+                isExpanded: false,
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+              ),
+            ],
           ),
         ],
       );
