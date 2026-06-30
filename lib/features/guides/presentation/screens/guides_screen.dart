@@ -4,6 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
+import 'package:mobile/core/tour/senior_showcase.dart';
+import 'package:mobile/core/tour/tour_help_button.dart';
+import 'package:mobile/core/tour/tour_host.dart';
+import 'package:mobile/core/tour/tour_id.dart';
 import 'package:mobile/core/tour/tour_signal_provider.dart';
 import 'package:mobile/core/widgets/senior_screen_scaffold.dart';
 import 'package:mobile/features/guides/presentation/tutorial_catalog.dart';
@@ -11,24 +15,67 @@ import 'package:mobile/features/guides/presentation/tutorial_catalog.dart';
 /// Central "Guias do aplicativo": lista todos os tutoriais disponíveis para o
 /// utilizador (re)ver quando quiser. Cada item inicia o respetivo tutorial na
 /// sua tela.
-class GuidesScreen extends ConsumerWidget {
+class GuidesScreen extends ConsumerStatefulWidget {
   const GuidesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GuidesScreen> createState() => _GuidesScreenState();
+}
+
+class _GuidesScreenState extends ConsumerState<GuidesScreen>
+    with TourHost<GuidesScreen> {
+  static const String _scope = 'guides';
+
+  // Alvos do tutorial guiado (na ordem de exibição).
+  final _introShowcaseKey = GlobalKey();
+  final _firstTutorialShowcaseKey = GlobalKey();
+
+  @override
+  String get tourScope => _scope;
+
+  @override
+  TourId get tourId => TourId.guides;
+
+  @override
+  List<GlobalKey> get tourKeys =>
+      [_introShowcaseKey, _firstTutorialShowcaseKey];
+
+  @override
+  Widget build(BuildContext context) {
     return SeniorScreenScaffold(
       title: 'Guias do aplicativo',
       subtitle: 'Aprenda a usar cada parte com calma',
+      trailing: TourHelpButton(onPressed: startTour),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
-          const _IntroCard(),
+          SeniorShowcase(
+            showcaseKey: _introShowcaseKey,
+            scope: _scope,
+            title: 'Central de guias',
+            description:
+                'Aqui estão todos os guias. Escolha um quando precisar.',
+            child: const _IntroCard(),
+          ),
           const SizedBox(height: AppSpacing.md),
-          for (final tutorial in kTutorials) ...[
-            _TutorialCard(
-              info: tutorial,
-              onStart: () => _startTutorial(context, ref, tutorial),
-            ),
+          for (final entry in kTutorials.asMap().entries) ...[
+            if (entry.key == 0)
+              SeniorShowcase(
+                showcaseKey: _firstTutorialShowcaseKey,
+                scope: _scope,
+                title: 'Começar um guia',
+                description:
+                    'Toque num guia e eu mostro-lhe na própria tela, passo a passo.',
+                child: _TutorialCard(
+                  info: entry.value,
+                  onStart: () => _startTutorial(entry.value),
+                ),
+              )
+            else
+              _TutorialCard(
+                info: entry.value,
+                onStart: () => _startTutorial(entry.value),
+              ),
             const SizedBox(height: AppSpacing.sm + 4),
           ],
         ],
@@ -36,11 +83,7 @@ class GuidesScreen extends ConsumerWidget {
     );
   }
 
-  void _startTutorial(
-    BuildContext context,
-    WidgetRef ref,
-    TutorialInfo info,
-  ) {
+  void _startTutorial(TutorialInfo info) {
     HapticFeedback.lightImpact();
     // Pede para iniciar o tutorial e navega para a tela alvo. O `TourHost` da
     // tela consome o sinal e inicia o showcase no próximo frame.
