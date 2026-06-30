@@ -11,6 +11,7 @@ import 'package:mobile/core/widgets/senior_button.dart';
 import 'package:mobile/core/widgets/senior_input.dart';
 import 'package:mobile/core/widgets/senior_logo.dart';
 import 'package:mobile/core/widgets/senior_toast.dart';
+import 'package:mobile/features/auth/domain/auth_exceptions.dart';
 import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -52,6 +53,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       showSeniorToast(
         context,
         title: 'Não foi possível entrar',
+        message: state.error.toString().replaceFirst('Exception: ', ''),
+        variant: SeniorToastVariant.danger,
+      );
+    }
+  }
+
+  Future<void> _submitGoogle() async {
+    await ref.read(authControllerProvider.notifier).signInWithGoogle();
+
+    if (!mounted) return;
+
+    final state = ref.read(authControllerProvider);
+    // Cancelamento do seletor de contas não é um erro — ignora em silêncio.
+    if (state.hasError && state.error is! AuthCancelledException) {
+      showSeniorToast(
+        context,
+        title: 'Não foi possível entrar com o Google',
         message: state.error.toString().replaceFirst('Exception: ', ''),
         variant: SeniorToastVariant.danger,
       );
@@ -195,6 +213,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             ),
                             const Expanded(child: Divider()),
                           ],
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        SeniorButton(
+                          label: 'Entrar com Google',
+                          variant: SeniorButtonVariant.secondary,
+                          customForegroundColor: AppColors.slate600,
+                          leading: Image.asset(
+                            'assets/images/google_logo.png',
+                            width: 22,
+                            height: 22,
+                          ),
+                          onPressed: isLoading ? null : _submitGoogle,
                         ),
                         const SizedBox(height: AppSpacing.md),
                         SeniorButton(

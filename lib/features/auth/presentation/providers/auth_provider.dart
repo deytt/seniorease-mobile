@@ -3,8 +3,11 @@ import 'package:mobile/core/firebase/firebase_providers.dart';
 import 'package:mobile/features/auth/data/firebase_auth_repository.dart';
 import 'package:mobile/features/auth/domain/entities/user.dart';
 import 'package:mobile/features/auth/domain/repositories/auth_repository.dart';
+import 'package:mobile/features/auth/domain/usecases/refresh_email_verification_use_case.dart';
+import 'package:mobile/features/auth/domain/usecases/send_email_verification_use_case.dart';
 import 'package:mobile/features/auth/domain/usecases/send_password_reset_use_case.dart';
 import 'package:mobile/features/auth/domain/usecases/sign_in_use_case.dart';
+import 'package:mobile/features/auth/domain/usecases/sign_in_with_google_use_case.dart';
 import 'package:mobile/features/auth/domain/usecases/sign_out_use_case.dart';
 import 'package:mobile/features/auth/domain/usecases/sign_up_use_case.dart';
 
@@ -14,6 +17,7 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return FirebaseAuthRepository(
     firebaseAuth: ref.watch(firebaseAuthProvider),
     firestore: ref.watch(firebaseFirestoreProvider),
+    googleSignIn: ref.watch(googleSignInProvider),
   );
 });
 
@@ -27,12 +31,26 @@ final signUpUseCaseProvider = Provider<SignUpUseCase>((ref) {
   return SignUpUseCase(ref.watch(authRepositoryProvider));
 });
 
+final signInWithGoogleUseCaseProvider = Provider<SignInWithGoogleUseCase>((ref) {
+  return SignInWithGoogleUseCase(ref.watch(authRepositoryProvider));
+});
+
 final signOutUseCaseProvider = Provider<SignOutUseCase>((ref) {
   return SignOutUseCase(ref.watch(authRepositoryProvider));
 });
 
 final sendPasswordResetUseCaseProvider = Provider<SendPasswordResetUseCase>((ref) {
   return SendPasswordResetUseCase(ref.watch(authRepositoryProvider));
+});
+
+final sendEmailVerificationUseCaseProvider =
+    Provider<SendEmailVerificationUseCase>((ref) {
+  return SendEmailVerificationUseCase(ref.watch(authRepositoryProvider));
+});
+
+final refreshEmailVerificationUseCaseProvider =
+    Provider<RefreshEmailVerificationUseCase>((ref) {
+  return RefreshEmailVerificationUseCase(ref.watch(authRepositoryProvider));
 });
 
 // --- Estado de autenticação ---
@@ -87,6 +105,31 @@ class AuthController extends Notifier<AsyncValue<void>> {
     state = const AsyncLoading();
     state = await AsyncValue.guard(
       () => ref.read(sendPasswordResetUseCaseProvider).call(email: email),
+    );
+  }
+
+  /// Envia o e-mail de verificação para a conta atual. Lança em caso de erro
+  /// para que a UI possa exibir o toast adequado.
+  Future<void> sendEmailVerification() {
+    return ref.read(sendEmailVerificationUseCaseProvider).call();
+  }
+
+  /// Recarrega o utilizador e devolve se o e-mail já foi verificado. Quando
+  /// confirmado, invalida o `authStateProvider` para que o selo e o alerta nas
+  /// Definições se atualizem em toda a app.
+  Future<bool> refreshEmailVerification() async {
+    final verified =
+        await ref.read(refreshEmailVerificationUseCaseProvider).call();
+    if (verified) {
+      ref.invalidate(authStateProvider);
+    }
+    return verified;
+  }
+
+  Future<void> signInWithGoogle() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => ref.read(signInWithGoogleUseCaseProvider).call().then((_) {}),
     );
   }
 

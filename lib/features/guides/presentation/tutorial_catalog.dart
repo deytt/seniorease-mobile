@@ -83,6 +83,13 @@ const List<TutorialInfo> kTutorials = [
     route: AppRoutes.profile,
   ),
   TutorialInfo(
+    id: TourId.security,
+    title: 'Proteger a sua conta',
+    description: 'Veja as opções de biometria, verificação e palavra-passe.',
+    icon: Icons.security_outlined,
+    route: AppRoutes.security,
+  ),
+  TutorialInfo(
     id: TourId.about,
     title: 'Sobre a aplicação',
     description: 'Veja a versão e como abrir o SeniorEase no computador.',

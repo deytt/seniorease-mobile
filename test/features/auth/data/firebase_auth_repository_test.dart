@@ -1,19 +1,25 @@
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:mobile/features/auth/data/firebase_auth_repository.dart';
 
 void main() {
   late FakeFirebaseFirestore db;
 
-  MockUser user() => MockUser(
+  MockUser user({bool isEmailVerified = true}) => MockUser(
         uid: 'u1',
         email: 'a@b.com',
         displayName: 'Ana',
+        isEmailVerified: isEmailVerified,
       );
 
   FirebaseAuthRepository buildRepo(MockFirebaseAuth auth) =>
-      FirebaseAuthRepository(firebaseAuth: auth, firestore: db);
+      FirebaseAuthRepository(
+        firebaseAuth: auth,
+        firestore: db,
+        googleSignIn: GoogleSignIn(),
+      );
 
   setUp(() => db = FakeFirebaseFirestore());
 
@@ -87,6 +93,34 @@ void main() {
       await repo.signOut();
 
       expect(auth.currentUser, isNull);
+    });
+  });
+
+  group('email verification', () {
+    test('mapeia emailVerified do utilizador autenticado', () async {
+      await db.collection('users').doc('u1').set({'name': 'Ana'});
+      final repo = buildRepo(
+        MockFirebaseAuth(
+          mockUser: user(isEmailVerified: false),
+          signedIn: true,
+        ),
+      );
+
+      final mapped = await repo.authStateChanges().first;
+      expect(mapped!.emailVerified, isFalse);
+    });
+
+    test('sendEmailVerification não lança quando autenticado', () async {
+      final repo =
+          buildRepo(MockFirebaseAuth(mockUser: user(), signedIn: true));
+      await expectLater(repo.sendEmailVerification(), completes);
+    });
+
+    test('reloadAndCheckEmailVerified devolve o estado atual', () async {
+      final repo = buildRepo(
+        MockFirebaseAuth(mockUser: user(isEmailVerified: true), signedIn: true),
+      );
+      expect(await repo.reloadAndCheckEmailVerified(), isTrue);
     });
   });
 }

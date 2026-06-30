@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "98401811269-tmf3mr19c6mjo9bctf6k4gaj09ji9nif.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.seniorease.mobile",
+            "certificate_hash": "7e393afc0d0b23a5366290a4260d169739715789"
+          }
+        },
+        {
           "client_id": "98401811269-69e4nd2f8s3da66d6tjb86ast6kjuddp.apps.googleusercontent.com",
           "client_type": 3
         }
