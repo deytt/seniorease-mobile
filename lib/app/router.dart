@@ -11,6 +11,7 @@ import 'package:mobile/features/guides/presentation/screens/guides_screen.dart';
 import 'package:mobile/features/home/presentation/screens/home_screen.dart';
 import 'package:mobile/features/profile/presentation/screens/about_screen.dart';
 import 'package:mobile/features/profile/presentation/screens/profile_screen.dart';
+import 'package:mobile/features/profile/presentation/screens/security_screen.dart';
 import 'package:mobile/features/profile/presentation/screens/settings_screen.dart';
 import 'package:mobile/features/tasks/presentation/screens/create_task_screen.dart';
 import 'package:mobile/features/tasks/presentation/screens/guided_task_screen.dart';
@@ -26,6 +27,7 @@ abstract final class AppRoutes {
   static const guides = '/guides';
   static const about = '/about';
   static const profile = '/profile';
+  static const security = '/security';
   static const tasks = '/tasks';
   static const createTask = '/tasks/create';
   static const reminders = '/reminders';
@@ -95,6 +97,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.profile,
         builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.security,
+        builder: (context, state) => const SecurityScreen(),
       ),
 
       // Tarefas — rotas full-screen (fora da shell, sem bottom nav)
