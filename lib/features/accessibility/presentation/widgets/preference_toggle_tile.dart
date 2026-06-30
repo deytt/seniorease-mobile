@@ -30,7 +30,14 @@ class PreferenceToggleTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           child: Row(
             children: [
-              Text(emoji, style: const TextStyle(fontSize: 20)),
+              SizedBox(
+                width: 28,
+                child: Text(
+                  emoji,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 20),
+                ),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
