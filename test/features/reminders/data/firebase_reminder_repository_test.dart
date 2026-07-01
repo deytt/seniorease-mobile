@@ -35,9 +35,15 @@ void main() {
   }
 
   test('watchRemindersFiltered hoje devolve apenas lembretes do dia', () async {
-    final today = DateTime(2026, 6, 30, 10);
+    // Data relativa ao dia atual — o repositório usa DateTime.now() no range.
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day, 10);
     await seedReminder('r1', scheduledAt: today);
     await seedReminder('r2', scheduledAt: today.add(const Duration(days: 1)));
+    await seedReminder(
+      'r0',
+      scheduledAt: today.subtract(const Duration(days: 1)),
+    );
 
     final items = await repo
         .watchRemindersFiltered('u1', ReminderListFilter.today)
@@ -45,6 +51,21 @@ void main() {
 
     expect(items.length, 1);
     expect(items.first.id, 'r1');
+  });
+
+  test('watchRemindersFiltered devolve os lembretes ordenados por scheduledAt',
+      () async {
+    final now = DateTime.now();
+    final base = DateTime(now.year, now.month, now.day, 6);
+    await seedReminder('late', scheduledAt: base.add(const Duration(hours: 4)));
+    await seedReminder('early', scheduledAt: base);
+    await seedReminder('mid', scheduledAt: base.add(const Duration(hours: 2)));
+
+    final items = await repo
+        .watchRemindersFiltered('u1', ReminderListFilter.today)
+        .first;
+
+    expect(items.map((r) => r.id).toList(), ['early', 'mid', 'late']);
   });
 
   test('watchRemindersFiltered medicação filtra por categoria', () async {

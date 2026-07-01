@@ -167,6 +167,7 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Semantics(
       button: true,
       selected: selected,
@@ -177,14 +178,22 @@ class _FilterChip extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(10),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: selected ? Colors.white : AppColors.slate500,
+          // Área de toque mínima de 48px (WCAG / persona idosa).
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: AppTheme.minTouchTarget,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Center(
+                widthFactor: 1,
+                child: Text(
+                  label,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: selected ? Colors.white : AppColors.slate500,
+                  ),
+                ),
               ),
             ),
           ),

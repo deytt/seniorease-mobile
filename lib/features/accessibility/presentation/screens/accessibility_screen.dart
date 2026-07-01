@@ -150,7 +150,7 @@ class _AccessibilityScreenState extends ConsumerState<AccessibilityScreen>
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Text(
-            'Erro ao carregar as definições.',
+            'Erro ao carregar as configurações.',
             style: theme.textTheme.bodyLarge,
           ),
         ),

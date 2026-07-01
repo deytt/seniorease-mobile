@@ -156,12 +156,7 @@ class _ReminderDismissibleCardState
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       color: AppColors.dangerLight,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        bottomLeft: Radius.circular(16),
-                        topRight: Radius.circular(16),
-                        bottomRight: Radius.circular(16),
-                      ),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: theme.colorScheme.outline),
                     ),
                     child: Semantics(

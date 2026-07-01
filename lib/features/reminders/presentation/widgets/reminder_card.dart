@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile/core/theme/app_colors.dart';
+import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/features/reminders/domain/entities/reminder.dart';
 import 'package:mobile/features/reminders/presentation/widgets/reminder_completed_icon.dart';
 import 'package:mobile/features/reminders/presentation/widgets/reminder_visuals.dart';
@@ -185,7 +186,7 @@ class _TimeBlock extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12,
-              color: muted ? AppColors.slate400 : AppColors.slate400,
+              color: muted ? AppColors.slate400 : AppColors.slate500,
               height: 1.33,
             ),
           ),
@@ -202,26 +203,35 @@ class _DoneButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Semantics(
       button: true,
       label: 'Marcar como concluído',
       child: Material(
         color: AppColors.success,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         child: InkWell(
           onTap: () {
             HapticFeedback.lightImpact();
             onPressed();
           },
-          borderRadius: BorderRadius.circular(14),
-          child: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            child: Text(
-              'Concluir',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
+          borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+          // Área de toque mínima de 48px (WCAG / persona idosa).
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minHeight: AppTheme.minTouchTarget,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Center(
+                widthFactor: 1,
+                child: Text(
+                  'Concluir',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
           ),
