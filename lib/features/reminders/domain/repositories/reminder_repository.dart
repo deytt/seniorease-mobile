@@ -6,7 +6,7 @@ abstract interface class ReminderRepository {
 
   Stream<List<Reminder>> watchRemindersFiltered(
     String userId,
-    ReminderListFilter filter,
+    ReminderFilter filter,
   );
 
   Future<String> createReminder(Reminder reminder);

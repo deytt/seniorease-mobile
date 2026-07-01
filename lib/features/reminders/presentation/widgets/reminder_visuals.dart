@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/features/reminders/domain/entities/reminder_category.dart';
 
-/// Ícone e cores por categoria (Figma `15:7912`).
+/// Ícone e cores por categoria de lembrete.
 ({IconData icon, Color color, Color bg}) reminderCategoryStyle(
   ReminderCategory category,
 ) =>
@@ -13,12 +13,22 @@ import 'package:mobile/features/reminders/domain/entities/reminder_category.dart
           bg: AppColors.danger.withValues(alpha: 0.13),
         ),
       ReminderCategory.appointment => (
-          icon: Icons.people_outline,
+          icon: Icons.event_outlined,
           color: AppColors.secondary,
           bg: AppColors.secondary.withValues(alpha: 0.13),
         ),
-      ReminderCategory.general => (
-          icon: Icons.directions_walk_outlined,
+      ReminderCategory.hydration => (
+          icon: Icons.water_drop_outlined,
+          color: AppColors.primary,
+          bg: AppColors.primary.withValues(alpha: 0.13),
+        ),
+      ReminderCategory.meal => (
+          icon: Icons.restaurant_outlined,
+          color: AppColors.warning,
+          bg: AppColors.warning.withValues(alpha: 0.13),
+        ),
+      ReminderCategory.bills => (
+          icon: Icons.receipt_long_outlined,
           color: AppColors.success,
           bg: AppColors.success.withValues(alpha: 0.13),
         ),

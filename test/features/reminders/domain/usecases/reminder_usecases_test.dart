@@ -45,17 +45,14 @@ void main() {
 
   group('GetFilteredRemindersUseCase', () {
     test('delega para watchRemindersFiltered com o filtro', () {
-      when(() => repo.watchRemindersFiltered('u1', ReminderListFilter.medication))
+      const filter = ReminderFilter(category: ReminderCategory.medication);
+      when(() => repo.watchRemindersFiltered('u1', filter))
           .thenAnswer((_) => Stream.value([reminder]));
 
-      final stream = GetFilteredRemindersUseCase(repo)
-          .call('u1', ReminderListFilter.medication);
+      final stream = GetFilteredRemindersUseCase(repo).call('u1', filter);
 
       expect(stream, emits([reminder]));
-      verify(() => repo.watchRemindersFiltered(
-            'u1',
-            ReminderListFilter.medication,
-          )).called(1);
+      verify(() => repo.watchRemindersFiltered('u1', filter)).called(1);
     });
   });
 

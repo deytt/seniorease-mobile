@@ -21,7 +21,7 @@ Reminder reminder(String id) => Reminder(
       userId: 'u1',
       title: 'T$id',
       message: '',
-      category: ReminderCategory.general,
+      category: ReminderCategory.medication,
       scheduledAt: DateTime(2026, 6, 30, 8),
       isRead: false,
       createdAt: DateTime(2026, 6, 1),
@@ -30,21 +30,20 @@ Reminder reminder(String id) => Reminder(
 void main() {
   setUpAll(() => registerFallbackValue(reminder('fallback')));
 
-  group('ReminderListFilterNotifier', () {
-    test('estado inicial é today e select altera o filtro', () {
+  group('ReminderFilterNotifier', () {
+    test('estado inicial é vazio e update altera o filtro', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      expect(container.read(reminderListFilterProvider), ReminderListFilter.today);
+      expect(container.read(reminderFilterProvider), ReminderFilter.empty);
 
-      container
-          .read(reminderListFilterProvider.notifier)
-          .select(ReminderListFilter.medication);
-
-      expect(
-        container.read(reminderListFilterProvider),
-        ReminderListFilter.medication,
+      const newFilter = ReminderFilter(
+        category: ReminderCategory.medication,
+        isToday: true,
       );
+      container.read(reminderFilterProvider.notifier).update(newFilter);
+
+      expect(container.read(reminderFilterProvider), newFilter);
     });
   });
 

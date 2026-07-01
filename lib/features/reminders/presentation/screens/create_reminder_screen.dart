@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
+import 'package:mobile/core/tour/senior_showcase.dart';
+import 'package:mobile/core/tour/tour_dialogs.dart';
+import 'package:mobile/core/tour/tour_gate.dart';
+import 'package:mobile/core/tour/tour_help_button.dart';
+import 'package:mobile/core/tour/tour_host.dart';
+import 'package:mobile/core/tour/tour_id.dart';
+import 'package:mobile/core/tour/tour_signal_provider.dart';
 import 'package:mobile/core/widgets/senior_button.dart';
 import 'package:mobile/core/widgets/senior_input.dart';
 import 'package:mobile/core/widgets/senior_screen_scaffold.dart';
@@ -11,6 +19,7 @@ import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:mobile/features/reminders/domain/entities/reminder.dart';
 import 'package:mobile/features/reminders/domain/entities/reminder_category.dart';
 import 'package:mobile/features/reminders/presentation/providers/reminders_provider.dart';
+import 'package:mobile/features/reminders/presentation/widgets/reminder_category_dropdown.dart';
 
 class CreateReminderScreen extends ConsumerStatefulWidget {
   const CreateReminderScreen({super.key});
@@ -20,13 +29,67 @@ class CreateReminderScreen extends ConsumerStatefulWidget {
       _CreateReminderScreenState();
 }
 
-class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen> {
+class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen>
+    with TourHost<CreateReminderScreen> {
+  static const String _scope = 'createReminder';
+
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _messageController = TextEditingController();
 
-  ReminderCategory _category = ReminderCategory.general;
-  DateTime _scheduledAt = DateTime.now().add(const Duration(hours: 1));
+  // Alvos do tutorial guiado.
+  final _titleShowcaseKey = GlobalKey();
+  final _categoryShowcaseKey = GlobalKey();
+  final _dateShowcaseKey = GlobalKey();
+  final _saveShowcaseKey = GlobalKey();
+
+  ReminderCategory _category = ReminderCategory.medication;
+  DateTime? _scheduledAt;
+  String? _dateTimeError;
+
+  @override
+  String get tourScope => _scope;
+
+  @override
+  TourId get tourId => TourId.createReminder;
+
+  @override
+  List<GlobalKey> get tourKeys => [
+        _titleShowcaseKey,
+        _categoryShowcaseKey,
+        _dateShowcaseKey,
+        _saveShowcaseKey,
+      ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeOfferFirstUse());
+  }
+
+  /// Na primeira utilização (apenas em Modo Básico), pergunta se pode mostrar
+  /// como criar um lembrete. A decisão de "quando" é toda do [TourGate].
+  Future<void> _maybeOfferFirstUse() async {
+    if (!mounted) return;
+    if (ref.read(tourSessionProvider)) return;
+
+    final gate = ref.read(tourGateProvider);
+    if (!await gate.shouldOfferFirstUse(TourId.createReminder)) return;
+    if (!mounted) return;
+
+    ref.read(tourSessionProvider.notifier).markAutoOffered();
+    await gate.markOffered(TourId.createReminder);
+    if (!mounted) return;
+
+    final accepted = await showTourInviteDialog(
+      context,
+      title: 'Vamos fazer juntos?',
+      message: 'Posso mostrar rapidamente como criar um lembrete?',
+      acceptLabel: 'Sim',
+      declineLabel: 'Agora não',
+    );
+    if (accepted && mounted) startTour();
+  }
 
   @override
   void dispose() {
@@ -36,35 +99,55 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen> {
   }
 
   Future<void> _pickDateTime() async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
     final date = await showDatePicker(
       context: context,
-      initialDate: _scheduledAt,
-      firstDate: DateTime.now().subtract(const Duration(days: 1)),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDate: _scheduledAt ?? now,
+      firstDate: today,
+      lastDate: DateTime(now.year + 5),
       helpText: 'Escolha a data',
     );
     if (date == null || !mounted) return;
 
     final time = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.fromDateTime(_scheduledAt),
+      initialTime: _scheduledAt != null
+          ? TimeOfDay(hour: _scheduledAt!.hour, minute: _scheduledAt!.minute)
+          : TimeOfDay.now(),
       helpText: 'Escolha a hora',
     );
-    if (time == null || !mounted) return;
+    if (time == null) return;
 
     setState(() {
-      _scheduledAt = DateTime(
-        date.year,
-        date.month,
-        date.day,
-        time.hour,
-        time.minute,
-      );
+      _scheduledAt =
+          DateTime(date.year, date.month, date.day, time.hour, time.minute);
+      _dateTimeError = null;
     });
   }
 
+  bool _validateDateTime() {
+    if (_scheduledAt == null) {
+      setState(() => _dateTimeError = 'Defina a data e hora do lembrete');
+      return false;
+    }
+    if (_scheduledAt!.isBefore(DateTime.now())) {
+      setState(
+        () => _dateTimeError = 'A data e hora não pode ser no passado',
+      );
+      return false;
+    }
+    setState(() => _dateTimeError = null);
+    return true;
+  }
+
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    final formOk = _formKey.currentState!.validate();
+    final dateOk = _validateDateTime();
+    if (!formOk || !dateOk) return;
+
+    HapticFeedback.lightImpact();
 
     final user = ref.read(authStateProvider).asData?.value;
     if (user == null) return;
@@ -75,7 +158,7 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen> {
       title: _titleController.text.trim(),
       message: _messageController.text.trim(),
       category: _category,
-      scheduledAt: _scheduledAt,
+      scheduledAt: _scheduledAt!,
       isRead: false,
       createdAt: DateTime.now(),
     );
@@ -105,87 +188,206 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen> {
     context.pop();
   }
 
-  String _formatScheduled() {
-    final d = _scheduledAt;
-    final day = d.day.toString().padLeft(2, '0');
-    final month = d.month.toString().padLeft(2, '0');
-    final hour = d.hour.toString().padLeft(2, '0');
-    final min = d.minute.toString().padLeft(2, '0');
-    return '$day/$month/${d.year} às $hour:$min';
+  String _formatScheduled(DateTime dt) {
+    final day = dt.day.toString().padLeft(2, '0');
+    final month = dt.month.toString().padLeft(2, '0');
+    final hour = dt.hour.toString().padLeft(2, '0');
+    final min = dt.minute.toString().padLeft(2, '0');
+    return '$day/$month/${dt.year}  $hour:$min';
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final isSaving = ref.watch(remindersControllerProvider).isLoading;
 
     return SeniorScreenScaffold(
       title: 'Novo Lembrete',
+      backIcon: Icons.close,
+      trailing: TourHelpButton(onPressed: startTour),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.md),
           children: [
-            SeniorInput(
-              label: 'Título',
-              controller: _titleController,
-              maxLength: 40,
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Indique um título' : null,
+            SeniorShowcase(
+              showcaseKey: _titleShowcaseKey,
+              scope: _scope,
+              title: 'Dê um nome ao lembrete',
+              description:
+                  'Escreva aqui o que quer lembrar. Por exemplo: "Tomar o remédio".',
+              child: SeniorInput(
+                controller: _titleController,
+                label: 'Título *',
+                hint: 'O que quer lembrar?',
+                textInputAction: TextInputAction.next,
+                maxLength: 30,
+                validator: (value) => (value == null || value.trim().isEmpty)
+                    ? 'Por favor, escreva um título para o lembrete'
+                    : null,
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
             SeniorInput(
-              label: 'Mensagem',
               controller: _messageController,
+              label: 'Mensagem',
+              hint: 'Adicione mais detalhes (opcional)',
               maxLength: 100,
             ),
             const SizedBox(height: AppSpacing.md),
-            Text(
-              'Categoria',
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
+            SeniorShowcase(
+              showcaseKey: _categoryShowcaseKey,
+              scope: _scope,
+              title: 'Escolha a categoria',
+              description:
+                  'A categoria ajuda a organizar e a encontrar os seus lembretes depois.',
+              child: _LabeledField(
+                label: 'Categoria',
+                child: ReminderCategoryDropdown(
+                  value: _category,
+                  onChanged: (c) => setState(() => _category = c),
+                ),
               ),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: ReminderCategory.values.map((cat) {
-                final selected = _category == cat;
-                return FilterChip(
-                  label: Text(cat.label),
-                  selected: selected,
-                  onSelected: (_) => setState(() => _category = cat),
-                  selectedColor: AppColors.primaryLight,
-                  checkmarkColor: AppColors.primary,
-                );
-              }).toList(),
+            const SizedBox(height: AppSpacing.md),
+            SeniorShowcase(
+              showcaseKey: _dateShowcaseKey,
+              scope: _scope,
+              title: 'Quando quer ser lembrado?',
+              description:
+                  'Toque para escolher o dia e a hora do seu lembrete.',
+              child: _LabeledField(
+                label: 'Data e Hora',
+                child: _DateTimePickerField(
+                  scheduledAt: _scheduledAt,
+                  label: _scheduledAt != null
+                      ? _formatScheduled(_scheduledAt!)
+                      : 'Definir data e hora',
+                  errorText: _dateTimeError,
+                  onTap: _pickDateTime,
+                ),
+              ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            Text(
-              'Data e hora',
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
+            SeniorShowcase(
+              showcaseKey: _saveShowcaseKey,
+              scope: _scope,
+              title: 'Salve o lembrete',
+              description:
+                  'Quando terminar, toque aqui para salvar. Pronto, é só isso!',
+              child: SeniorButton(
+                label: 'Salvar lembrete',
+                icon: Icons.add,
+                isLoading: isSaving,
+                onPressed: _save,
               ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            SeniorButton(
-              label: _formatScheduled(),
-              variant: SeniorButtonVariant.outline,
-              icon: Icons.calendar_today_outlined,
-              onPressed: _pickDateTime,
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            SeniorButton(
-              label: 'Salvar lembrete',
-              isLoading: isSaving,
-              onPressed: _save,
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+// ------------------------------------------------------------------ Widgets internos
+
+class _LabeledField extends StatelessWidget {
+  const _LabeledField({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: AppColors.slate900,
+              ),
+        ),
+        const SizedBox(height: 6),
+        child,
+      ],
+    );
+  }
+}
+
+class _DateTimePickerField extends StatelessWidget {
+  const _DateTimePickerField({
+    required this.scheduledAt,
+    required this.label,
+    required this.onTap,
+    this.errorText,
+  });
+
+  final DateTime? scheduledAt;
+  final String label;
+  final VoidCallback onTap;
+  final String? errorText;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hasError = errorText != null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: Ink(
+              height: 54,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                border: Border.all(
+                  color:
+                      hasError ? AppColors.danger : theme.colorScheme.outline,
+                  width: hasError ? 1.5 : 1,
+                ),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today_outlined,
+                    color: hasError ? AppColors.danger : AppColors.slate400,
+                    size: 20,
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: scheduledAt != null
+                            ? theme.colorScheme.onSurface
+                            : AppColors.slate400,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (hasError) ...[
+          const SizedBox(height: 4),
+          Padding(
+            padding: const EdgeInsets.only(left: 12),
+            child: Text(
+              errorText!,
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: AppColors.danger),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

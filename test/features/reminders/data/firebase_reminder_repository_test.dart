@@ -46,7 +46,7 @@ void main() {
     );
 
     final items = await repo
-        .watchRemindersFiltered('u1', ReminderListFilter.today)
+        .watchRemindersFiltered('u1', const ReminderFilter(isToday: true))
         .first;
 
     expect(items.length, 1);
@@ -61,9 +61,8 @@ void main() {
     await seedReminder('early', scheduledAt: base);
     await seedReminder('mid', scheduledAt: base.add(const Duration(hours: 2)));
 
-    final items = await repo
-        .watchRemindersFiltered('u1', ReminderListFilter.today)
-        .first;
+    final items =
+        await repo.watchRemindersFiltered('u1', ReminderFilter.empty).first;
 
     expect(items.map((r) => r.id).toList(), ['early', 'mid', 'late']);
   });
@@ -78,11 +77,41 @@ void main() {
     );
 
     final items = await repo
-        .watchRemindersFiltered('u1', ReminderListFilter.medication)
+        .watchRemindersFiltered(
+          'u1',
+          const ReminderFilter(category: ReminderCategory.medication),
+        )
         .first;
 
     expect(items.length, 1);
     expect(items.first.id, 'r1');
+  });
+
+  test('watchRemindersFiltered combina categoria + hoje', () async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day, 10);
+    // Medicação hoje → incluído.
+    await seedReminder('r1', category: 'medication', scheduledAt: today);
+    // Medicação amanhã → excluído (fora do range de hoje).
+    await seedReminder(
+      'r2',
+      category: 'medication',
+      scheduledAt: today.add(const Duration(days: 1)),
+    );
+    // Consulta hoje → excluído (categoria diferente).
+    await seedReminder('r3', category: 'appointment', scheduledAt: today);
+
+    final items = await repo
+        .watchRemindersFiltered(
+          'u1',
+          const ReminderFilter(
+            category: ReminderCategory.medication,
+            isToday: true,
+          ),
+        )
+        .first;
+
+    expect(items.map((r) => r.id).toList(), ['r1']);
   });
 
   test('createReminder e markAsRead', () async {

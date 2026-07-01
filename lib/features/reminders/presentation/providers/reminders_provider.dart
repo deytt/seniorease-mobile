@@ -42,18 +42,18 @@ final deleteReminderUseCaseProvider = Provider<DeleteReminderUseCase>((ref) {
   return DeleteReminderUseCase(ref.watch(reminderRepositoryProvider));
 });
 
-// --- Filtro activo (chips exclusivos) ---
+// --- Filtro activo (combinável: categoria + hoje) ---
 
-final reminderListFilterProvider =
-    NotifierProvider<ReminderListFilterNotifier, ReminderListFilter>(
-  ReminderListFilterNotifier.new,
+final reminderFilterProvider =
+    NotifierProvider<ReminderFilterNotifier, ReminderFilter>(
+  ReminderFilterNotifier.new,
 );
 
-class ReminderListFilterNotifier extends Notifier<ReminderListFilter> {
+class ReminderFilterNotifier extends Notifier<ReminderFilter> {
   @override
-  ReminderListFilter build() => ReminderListFilter.today;
+  ReminderFilter build() => ReminderFilter.empty;
 
-  void select(ReminderListFilter filter) => state = filter;
+  void update(ReminderFilter filter) => state = filter;
 }
 
 // --- Swipe de exclusão (apenas um card aberto por vez) ---
@@ -87,7 +87,7 @@ final remindersStreamProvider = StreamProvider<List<Reminder>>((ref) {
 final filteredRemindersStreamProvider = StreamProvider<List<Reminder>>((ref) {
   final userId = ref.watch(authStateProvider).asData?.value?.id;
   if (userId == null) return Stream.value(const []);
-  final filter = ref.watch(reminderListFilterProvider);
+  final filter = ref.watch(reminderFilterProvider);
   return ref.read(getFilteredRemindersUseCaseProvider).call(userId, filter);
 });
 

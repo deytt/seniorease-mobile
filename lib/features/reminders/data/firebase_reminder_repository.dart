@@ -14,12 +14,12 @@ class FirebaseReminderRepository implements ReminderRepository {
 
   @override
   Stream<List<Reminder>> watchReminders(String userId) =>
-      watchRemindersFiltered(userId, ReminderListFilter.today);
+      watchRemindersFiltered(userId, ReminderFilter.empty);
 
   @override
   Stream<List<Reminder>> watchRemindersFiltered(
     String userId,
-    ReminderListFilter filter,
+    ReminderFilter filter,
   ) {
     Query<Map<String, dynamic>> query =
         _reminders.where('userId', isEqualTo: userId);

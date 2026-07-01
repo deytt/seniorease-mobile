@@ -7,6 +7,6 @@ class GetFilteredRemindersUseCase {
 
   final ReminderRepository _repository;
 
-  Stream<List<Reminder>> call(String userId, ReminderListFilter filter) =>
+  Stream<List<Reminder>> call(String userId, ReminderFilter filter) =>
       _repository.watchRemindersFiltered(userId, filter);
 }

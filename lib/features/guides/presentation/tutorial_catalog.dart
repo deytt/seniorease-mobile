@@ -61,6 +61,21 @@ const List<TutorialInfo> kTutorials = [
     isShellTab: true,
   ),
   TutorialInfo(
+    id: TourId.remindersList,
+    title: 'Ver os seus lembretes',
+    description: 'Saiba como filtrar e acompanhar os seus lembretes.',
+    icon: Icons.notifications_none_outlined,
+    route: AppRoutes.reminders,
+    isShellTab: true,
+  ),
+  TutorialInfo(
+    id: TourId.createReminder,
+    title: 'Como criar um lembrete',
+    description: 'Aprenda passo a passo a criar o seu primeiro lembrete.',
+    icon: Icons.add_alert_outlined,
+    route: AppRoutes.createReminder,
+  ),
+  TutorialInfo(
     id: TourId.accessibility,
     title: 'Ajustar a acessibilidade',
     description: 'Mude o tamanho da letra, as cores e o modo de uso.',

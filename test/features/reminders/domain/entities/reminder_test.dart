@@ -98,8 +98,8 @@ void main() {
       expect(reminder.taskId, isNull);
       expect(reminder.title, '');
       expect(reminder.message, '');
-      // Categoria desconhecida cai no fallback general.
-      expect(reminder.category, ReminderCategory.general);
+      // Categoria desconhecida cai no fallback (medication).
+      expect(reminder.category, ReminderCategory.medication);
       expect(reminder.isRead, isFalse);
       expect(reminder.scheduledAt, isA<DateTime>());
       expect(reminder.createdAt, isA<DateTime>());

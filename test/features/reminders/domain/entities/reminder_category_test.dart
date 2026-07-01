@@ -12,12 +12,23 @@ void main() {
         ReminderCategory.fromString('appointment'),
         ReminderCategory.appointment,
       );
-      expect(ReminderCategory.fromString('general'), ReminderCategory.general);
+      expect(
+        ReminderCategory.fromString('hydration'),
+        ReminderCategory.hydration,
+      );
+      expect(ReminderCategory.fromString('meal'), ReminderCategory.meal);
+      expect(ReminderCategory.fromString('bills'), ReminderCategory.bills);
     });
 
-    test('usa general como fallback para valores desconhecidos ou vazios', () {
-      expect(ReminderCategory.fromString(''), ReminderCategory.general);
-      expect(ReminderCategory.fromString('xpto'), ReminderCategory.general);
+    test('usa medication como fallback para valores desconhecidos, vazios ou '
+        'legados', () {
+      expect(ReminderCategory.fromString(''), ReminderCategory.medication);
+      expect(ReminderCategory.fromString('xpto'), ReminderCategory.medication);
+      // Valor legado que já não existe no enum.
+      expect(
+        ReminderCategory.fromString('general'),
+        ReminderCategory.medication,
+      );
     });
   });
 
@@ -25,7 +36,9 @@ void main() {
     test('devolve o name do enum', () {
       expect(ReminderCategory.medication.toFirestore(), 'medication');
       expect(ReminderCategory.appointment.toFirestore(), 'appointment');
-      expect(ReminderCategory.general.toFirestore(), 'general');
+      expect(ReminderCategory.hydration.toFirestore(), 'hydration');
+      expect(ReminderCategory.meal.toFirestore(), 'meal');
+      expect(ReminderCategory.bills.toFirestore(), 'bills');
     });
 
     test('é o inverso de fromString', () {
@@ -42,7 +55,9 @@ void main() {
     test('tem rótulo em português para cada categoria', () {
       expect(ReminderCategory.medication.label, 'Medicação');
       expect(ReminderCategory.appointment.label, 'Consulta');
-      expect(ReminderCategory.general.label, 'Geral');
+      expect(ReminderCategory.hydration.label, 'Hidratação');
+      expect(ReminderCategory.meal.label, 'Alimentação');
+      expect(ReminderCategory.bills.label, 'Contas e Pagamentos');
     });
   });
 }
