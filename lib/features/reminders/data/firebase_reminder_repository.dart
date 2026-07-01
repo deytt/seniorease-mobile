@@ -14,12 +14,12 @@ class FirebaseReminderRepository implements ReminderRepository {
 
   @override
   Stream<List<Reminder>> watchReminders(String userId) =>
-      watchRemindersFiltered(userId, ReminderListFilter.today);
+      watchRemindersFiltered(userId, ReminderFilter.empty);
 
   @override
   Stream<List<Reminder>> watchRemindersFiltered(
     String userId,
-    ReminderListFilter filter,
+    ReminderFilter filter,
   ) {
     Query<Map<String, dynamic>> query =
         _reminders.where('userId', isEqualTo: userId);
@@ -29,27 +29,24 @@ class FirebaseReminderRepository implements ReminderRepository {
       query = query.where('category', isEqualTo: category.toFirestore());
     }
 
-    // Filtro "Hoje" em memória — evita composite index userId+scheduledAt
-    // antes do deploy de firestore.indexes.json (ver firebaseSchema.md).
-    final todayRange = filter.isToday ? _todayRange() : null;
+    // Filtro "Hoje" server-side (range em scheduledAt). Requer os composite
+    // indexes de firestore.indexes.json publicados (ver firebaseSchema.md).
+    if (filter.isToday) {
+      final (start, end) = _todayRange();
+      query = query
+          .where('scheduledAt',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+          .where('scheduledAt', isLessThan: Timestamp.fromDate(end));
+    }
 
-    return query.snapshots().map((snap) {
-      var items =
-          snap.docs.map((doc) => Reminder.fromMap(doc.id, doc.data())).toList();
+    // Ordenação server-side por horário agendado.
+    query = query.orderBy('scheduledAt');
 
-      if (todayRange != null) {
-        final (start, end) = todayRange;
-        items = items
-            .where(
-              (r) =>
-                  !r.scheduledAt.isBefore(start) && r.scheduledAt.isBefore(end),
-            )
-            .toList();
-      }
-
-      items.sort((a, b) => a.scheduledAt.compareTo(b.scheduledAt));
-      return items;
-    });
+    return query.snapshots().map(
+          (snap) => snap.docs
+              .map((doc) => Reminder.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
   }
 
   (DateTime start, DateTime end) _todayRange() {
@@ -63,6 +60,11 @@ class FirebaseReminderRepository implements ReminderRepository {
     final ref = _reminders.doc();
     await ref.set(reminder.toMap());
     return ref.id;
+  }
+
+  @override
+  Future<void> updateReminder(Reminder reminder) async {
+    await _reminders.doc(reminder.id).update(reminder.toMap());
   }
 
   @override

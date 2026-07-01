@@ -6,10 +6,12 @@ abstract interface class ReminderRepository {
 
   Stream<List<Reminder>> watchRemindersFiltered(
     String userId,
-    ReminderListFilter filter,
+    ReminderFilter filter,
   );
 
   Future<String> createReminder(Reminder reminder);
+
+  Future<void> updateReminder(Reminder reminder);
 
   Future<void> markAsRead(String reminderId, {required bool isRead});
 

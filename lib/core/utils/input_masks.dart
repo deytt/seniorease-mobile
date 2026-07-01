@@ -9,7 +9,7 @@ import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 /// Vivem em `core/` (sem regra de negócio) para poderem ser reutilizadas por
 /// qualquer feature.
 abstract final class InputMasks {
-  /// Telefone brasileiro com nono dígito: `(19) 9 9999-0034`.
+  /// Telefone brasileiro com nono dígito: `(19) 9 9999-9999`.
   static MaskTextInputFormatter phone() => MaskTextInputFormatter(
         mask: '(##) # ####-####',
         filter: {'#': RegExp(r'[0-9]')},

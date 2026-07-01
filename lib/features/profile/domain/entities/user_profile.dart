@@ -22,7 +22,7 @@ class UserProfile {
   final String name;
   final String email;
 
-  /// Telefone formatado, ex.: `(19) 9 9999-0034`.
+  /// Telefone formatado, ex.: `(19) 9 9999-9999`.
   final String? phone;
 
   /// Data de nascimento como texto mascarado, ex.: `31/12/1950`.

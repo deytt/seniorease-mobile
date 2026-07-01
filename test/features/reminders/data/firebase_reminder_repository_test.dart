@@ -35,16 +35,36 @@ void main() {
   }
 
   test('watchRemindersFiltered hoje devolve apenas lembretes do dia', () async {
-    final today = DateTime(2026, 6, 30, 10);
+    // Data relativa ao dia atual — o repositório usa DateTime.now() no range.
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day, 10);
     await seedReminder('r1', scheduledAt: today);
     await seedReminder('r2', scheduledAt: today.add(const Duration(days: 1)));
+    await seedReminder(
+      'r0',
+      scheduledAt: today.subtract(const Duration(days: 1)),
+    );
 
     final items = await repo
-        .watchRemindersFiltered('u1', ReminderListFilter.today)
+        .watchRemindersFiltered('u1', const ReminderFilter(isToday: true))
         .first;
 
     expect(items.length, 1);
     expect(items.first.id, 'r1');
+  });
+
+  test('watchRemindersFiltered devolve os lembretes ordenados por scheduledAt',
+      () async {
+    final now = DateTime.now();
+    final base = DateTime(now.year, now.month, now.day, 6);
+    await seedReminder('late', scheduledAt: base.add(const Duration(hours: 4)));
+    await seedReminder('early', scheduledAt: base);
+    await seedReminder('mid', scheduledAt: base.add(const Duration(hours: 2)));
+
+    final items =
+        await repo.watchRemindersFiltered('u1', ReminderFilter.empty).first;
+
+    expect(items.map((r) => r.id).toList(), ['early', 'mid', 'late']);
   });
 
   test('watchRemindersFiltered medicação filtra por categoria', () async {
@@ -57,11 +77,41 @@ void main() {
     );
 
     final items = await repo
-        .watchRemindersFiltered('u1', ReminderListFilter.medication)
+        .watchRemindersFiltered(
+          'u1',
+          const ReminderFilter(category: ReminderCategory.medication),
+        )
         .first;
 
     expect(items.length, 1);
     expect(items.first.id, 'r1');
+  });
+
+  test('watchRemindersFiltered combina categoria + hoje', () async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day, 10);
+    // Medicação hoje → incluído.
+    await seedReminder('r1', category: 'medication', scheduledAt: today);
+    // Medicação amanhã → excluído (fora do range de hoje).
+    await seedReminder(
+      'r2',
+      category: 'medication',
+      scheduledAt: today.add(const Duration(days: 1)),
+    );
+    // Consulta hoje → excluído (categoria diferente).
+    await seedReminder('r3', category: 'appointment', scheduledAt: today);
+
+    final items = await repo
+        .watchRemindersFiltered(
+          'u1',
+          const ReminderFilter(
+            category: ReminderCategory.medication,
+            isToday: true,
+          ),
+        )
+        .first;
+
+    expect(items.map((r) => r.id).toList(), ['r1']);
   });
 
   test('createReminder e markAsRead', () async {
@@ -82,5 +132,27 @@ void main() {
     final doc = await db.collection('reminders').doc(id).get();
     expect(doc.data()?['isRead'], isTrue);
     expect(doc.data()?['title'], 'Medicação');
+  });
+
+  test('updateReminder persiste os novos campos', () async {
+    await seedReminder('r1', category: 'medication');
+
+    final updated = Reminder(
+      id: 'r1',
+      userId: 'u1',
+      title: 'Novo título',
+      message: 'Nova mensagem',
+      category: ReminderCategory.appointment,
+      scheduledAt: DateTime(2026, 7, 5, 9),
+      isRead: false,
+      createdAt: DateTime(2026, 6, 1),
+    );
+
+    await repo.updateReminder(updated);
+
+    final doc = await db.collection('reminders').doc('r1').get();
+    expect(doc.data()?['title'], 'Novo título');
+    expect(doc.data()?['message'], 'Nova mensagem');
+    expect(doc.data()?['category'], 'appointment');
   });
 }

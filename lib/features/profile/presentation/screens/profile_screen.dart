@@ -220,7 +220,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         SeniorInput(
                           controller: _phoneController,
                           label: 'Telefone',
-                          hint: '(19) 9 9999-0034',
+                          hint: '(19) 9 9999-9999',
                           prefixIcon: Icons.phone_outlined,
                           keyboardType: TextInputType.phone,
                           inputFormatters: [InputMasks.phone()],
@@ -253,6 +253,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       SeniorInput(
                         controller: _neighborhoodController,
                         label: 'Bairro',
+                        hint: 'Ex.: Centro',
                         prefixIcon: Icons.location_city_outlined,
                         maxLength: 30,
                         textInputAction: TextInputAction.next,
@@ -266,6 +267,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             child: SeniorInput(
                               controller: _streetController,
                               label: 'Rua',
+                              hint: 'Ex.: Rua das Flores',
                               maxLength: 50,
                               compactLabel: true,
                               textInputAction: TextInputAction.next,
@@ -276,6 +278,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             child: SeniorInput(
                               controller: _numberController,
                               label: 'Número',
+                              hint: 'Ex.: 123',
                               compactLabel: true,
                               keyboardType: TextInputType.text,
                               textInputAction: TextInputAction.next,
@@ -301,6 +304,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             child: SeniorInput(
                               controller: _cityController,
                               label: 'Cidade',
+                              hint: 'Ex.: Campinas',
                               maxLength: 30,
                               compactLabel: true,
                               textInputAction: TextInputAction.next,
@@ -311,6 +315,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             child: SeniorInput(
                               controller: _stateController,
                               label: 'Estado',
+                              hint: 'Ex.: SP',
                               maxLength: 30,
                               compactLabel: true,
                               textInputAction: TextInputAction.next,
@@ -322,6 +327,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       SeniorInput(
                         controller: _countryController,
                         label: 'País',
+                        hint: 'Ex.: Brasil',
                         prefixIcon: Icons.public_outlined,
                         maxLength: 30,
                         textInputAction: TextInputAction.done,
