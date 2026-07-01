@@ -1,39 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mobile/app/router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
+import 'package:mobile/features/reminders/domain/entities/reminder.dart';
+import 'package:mobile/features/reminders/domain/entities/reminder_filter.dart';
+import 'package:mobile/features/reminders/presentation/providers/reminders_provider.dart';
+import 'package:mobile/features/reminders/presentation/widgets/reminder_visuals.dart';
 
-/// Secção "Lembretes de Hoje" com placeholder de dados.
-/// Será ligada ao módulo Reminders quando implementado.
-class RemindersSection extends StatelessWidget {
+/// Secção "Lembretes de Hoje" na Home, ligada ao Firestore.
+class RemindersSection extends ConsumerWidget {
   const RemindersSection({super.key});
 
-  static const _items = [
-    _ReminderData(
-      icon: Icons.medication_outlined,
-      color: AppColors.danger,
-      bg: AppColors.dangerLight,
-      title: 'Medicação do almoço',
-      time: '12:00',
-    ),
-    _ReminderData(
-      icon: Icons.video_call_outlined,
-      color: AppColors.secondary,
-      bg: AppColors.secondaryLight,
-      title: 'Videochamada em família',
-      time: '14:00',
-    ),
-    _ReminderData(
-      icon: Icons.directions_walk_outlined,
-      color: AppColors.success,
-      bg: AppColors.successLight,
-      title: 'Caminhada da tarde',
-      time: '17:00',
-    ),
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final items = ref.watch(todayRemindersProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -52,7 +35,7 @@ class RemindersSection extends StatelessWidget {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: () => context.go(AppRoutes.reminders),
               child: Text(
                 'Ver todos',
                 style: theme.textTheme.labelSmall?.copyWith(
@@ -64,89 +47,110 @@ class RemindersSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.sm),
-        ..._items.map((item) => Padding(
+        if (items.isEmpty)
+          Text(
+            'Não tem lembretes para hoje.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.slate500,
+            ),
+          )
+        else
+          ...items.map(
+            (reminder) => Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-              child: _ReminderCard(data: item),
-            )),
+              child: _HomeReminderCard(reminder: reminder),
+            ),
+          ),
       ],
     );
   }
 }
 
-class _ReminderCard extends StatelessWidget {
-  const _ReminderCard({required this.data});
+class _HomeReminderCard extends ConsumerWidget {
+  const _HomeReminderCard({required this.reminder});
 
-  final _ReminderData data;
+  final Reminder reminder;
+
+  void _openInList(BuildContext context, WidgetRef ref) {
+    // Limpa filtros, marca o item para destaque e vai para a aba de lembretes.
+    ref.read(reminderFilterProvider.notifier).update(ReminderFilter.empty);
+    ref.read(highlightReminderIdProvider.notifier).show(reminder.id);
+    context.go(AppRoutes.reminders);
+  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final style = reminderCategoryStyle(reminder.category);
+    final time = formatReminderTime(reminder.scheduledAt);
+    final dayMonth = formatReminderDayMonth(reminder.scheduledAt);
 
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border.all(color: theme.colorScheme.outline),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
+    return Semantics(
+      button: true,
+      label: '${reminder.title}, $dayMonth às $time',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _openInList(context, ref),
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(15),
             decoration: BoxDecoration(
-              color: data.bg,
-              borderRadius: BorderRadius.circular(14),
+              color: theme.colorScheme.surface,
+              border: Border.all(color: theme.colorScheme.outline),
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(data.icon, color: data.color, size: 18),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(
-                  data.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.onSurface,
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: style.bg,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(style.icon, color: style.color, size: 18),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        reminder.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onSurface,
+                          decoration: reminder.isDone
+                              ? TextDecoration.lineThrough
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$dayMonth · $time',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  data.time,
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                  ),
+                Icon(
+                  Icons.chevron_right,
+                  size: 16,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                 ),
               ],
             ),
           ),
-          Icon(
-            Icons.chevron_right,
-            size: 16,
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
-          ),
-        ],
+        ),
       ),
     );
   }
-}
-
-class _ReminderData {
-  const _ReminderData({
-    required this.icon,
-    required this.color,
-    required this.bg,
-    required this.title,
-    required this.time,
-  });
-
-  final IconData icon;
-  final Color color;
-  final Color bg;
-  final String title;
-  final String time;
 }

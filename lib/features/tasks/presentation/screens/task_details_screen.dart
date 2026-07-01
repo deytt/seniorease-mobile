@@ -30,7 +30,7 @@ class TaskDetailsScreen extends ConsumerWidget {
       trailing: task != null
           ? IconButton(
               icon: const Icon(Icons.delete_outline, color: AppColors.danger),
-              tooltip: 'Apagar tarefa',
+              tooltip: 'Excluir tarefa',
               onPressed: () => _confirmDelete(context, ref),
             )
           : null,
@@ -50,10 +50,10 @@ class TaskDetailsScreen extends ConsumerWidget {
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
     final confirmed = await showSeniorConfirmDialog(
       context: context,
-      title: 'Apagar tarefa?',
+      title: 'Excluir tarefa?',
       message:
-          'Tem a certeza que deseja apagar esta tarefa? Esta ação não pode ser desfeita.',
-      confirmLabel: 'Apagar',
+          'Tem certeza de que deseja excluir esta tarefa? Essa ação não pode ser desfeita.',
+      confirmLabel: 'Excluir',
       cancelLabel: 'Cancelar',
       isDestructive: true,
     );
@@ -64,7 +64,7 @@ class TaskDetailsScreen extends ConsumerWidget {
     if (!context.mounted) return;
     showSeniorToast(
       context,
-      title: 'Tarefa apagada',
+      title: 'Tarefa excluída',
       message: 'A tarefa foi removida.',
       variant: SeniorToastVariant.info,
     );

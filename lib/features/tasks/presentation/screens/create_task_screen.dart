@@ -320,9 +320,9 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
             SeniorShowcase(
               showcaseKey: _createShowcaseKey,
               scope: _scope,
-              title: 'Guarde a sua tarefa',
+              title: 'Salve sua tarefa',
               description:
-                  'Quando terminar, toque aqui para guardar. Pronto, é só isso!',
+                  'Quando terminar, toque aqui para salvar. Pronto, é só isso!',
               child: SeniorButton(
                 label: 'Criar Tarefa',
                 icon: Icons.add,

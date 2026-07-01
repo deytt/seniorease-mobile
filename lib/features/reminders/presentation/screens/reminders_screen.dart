@@ -7,27 +7,28 @@ import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/theme/senior_system_ui.dart';
+import 'package:mobile/core/widgets/senior_toast.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
 import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_help_button.dart';
 import 'package:mobile/core/tour/tour_id.dart';
-import 'package:mobile/core/widgets/senior_toast.dart';
-import 'package:mobile/features/tasks/domain/entities/task.dart';
-import 'package:mobile/features/tasks/domain/entities/task_filter.dart';
-import 'package:mobile/features/tasks/presentation/providers/tasks_provider.dart';
-import 'package:mobile/features/tasks/presentation/widgets/task_card.dart';
-import 'package:mobile/features/tasks/presentation/widgets/task_filter_sheet.dart';
+import 'package:mobile/features/reminders/domain/entities/reminder.dart';
+import 'package:mobile/features/reminders/domain/entities/reminder_filter.dart';
+import 'package:mobile/features/reminders/presentation/providers/reminders_provider.dart';
+import 'package:mobile/features/reminders/presentation/widgets/reminder_dismissible_card.dart';
+import 'package:mobile/features/reminders/presentation/widgets/reminder_filter_sheet.dart';
 
-class TaskListScreen extends ConsumerStatefulWidget {
-  const TaskListScreen({super.key});
+/// Lista de lembretes (Figma `15:7912`).
+class RemindersScreen extends ConsumerStatefulWidget {
+  const RemindersScreen({super.key});
 
   @override
-  ConsumerState<TaskListScreen> createState() => _TaskListScreenState();
+  ConsumerState<RemindersScreen> createState() => _RemindersScreenState();
 }
 
-class _TaskListScreenState extends ConsumerState<TaskListScreen>
-    with TourHost<TaskListScreen> {
-  static const String _scope = 'taskList';
+class _RemindersScreenState extends ConsumerState<RemindersScreen>
+    with TourHost<RemindersScreen> {
+  static const String _scope = 'remindersList';
 
   final _createShowcaseKey = GlobalKey();
   final _filterShowcaseKey = GlobalKey();
@@ -37,7 +38,7 @@ class _TaskListScreenState extends ConsumerState<TaskListScreen>
   String get tourScope => _scope;
 
   @override
-  TourId get tourId => TourId.taskList;
+  TourId get tourId => TourId.remindersList;
 
   @override
   List<GlobalKey> get tourKeys =>
@@ -45,11 +46,12 @@ class _TaskListScreenState extends ConsumerState<TaskListScreen>
 
   @override
   Widget build(BuildContext context) {
-    final tasksAsync = ref.watch(filteredTasksStreamProvider);
-    final filter = ref.watch(taskFilterProvider);
+    final remindersAsync = ref.watch(filteredRemindersStreamProvider);
+    final filter = ref.watch(reminderFilterProvider);
 
     // Contagens baseadas na lista sem filtro para o subtítulo do header.
-    final allTasks = ref.watch(tasksStreamProvider).asData?.value ?? const [];
+    final allReminders =
+        ref.watch(remindersStreamProvider).asData?.value ?? const [];
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SeniorSystemUi.headerOverlay,
@@ -58,30 +60,29 @@ class _TaskListScreenState extends ConsumerState<TaskListScreen>
         body: Column(
           children: [
             _Header(
-              doneCount: allTasks.where((t) => t.isCompleted).length,
-              totalCount: allTasks.length,
+              doneCount: allReminders.where((r) => r.isDone).length,
+              totalCount: allReminders.length,
               activeFilterCount: filter.activeCount,
               scope: _scope,
               createShowcaseKey: _createShowcaseKey,
               filterShowcaseKey: _filterShowcaseKey,
               onHelp: startTour,
-              onCreate: () => context.push(AppRoutes.createTask),
-              onOpenFilter: () => _openFilterSheet(context, ref, filter),
+              onCreate: () => context.push(AppRoutes.createReminder),
+              onOpenFilter: () => _openFilterSheet(context, filter),
             ),
-            // Chips de filtros activos (visível apenas quando há filtro)
             if (!filter.isEmpty) _ActiveFilterBar(filter: filter, ref: ref),
             Expanded(
               child: RefreshIndicator(
                 color: AppColors.primary,
-                onRefresh: () => _onRefresh(context, ref),
-                child: tasksAsync.when(
+                onRefresh: () => _onRefresh(context),
+                child: remindersAsync.when(
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
                   error: (_, _) => const _ErrorState(),
-                  data: (tasks) => tasks.isEmpty
+                  data: (reminders) => reminders.isEmpty
                       ? _EmptyState(hasFilter: !filter.isEmpty)
-                      : _TaskList(
-                          tasks: tasks,
+                      : _ReminderList(
+                          reminders: reminders,
                           scope: _scope,
                           firstCardShowcaseKey: _firstCardShowcaseKey,
                         ),
@@ -94,41 +95,38 @@ class _TaskListScreenState extends ConsumerState<TaskListScreen>
     );
   }
 
-  Future<void> _onRefresh(BuildContext context, WidgetRef ref) async {
-    final hadFilters =
-        ref.read(taskFilterProvider) != TaskFilter.empty;
+  Future<void> _onRefresh(BuildContext context) async {
+    final hadFilters = ref.read(reminderFilterProvider) != ReminderFilter.empty;
 
-    // Reset do filtro e refetch completo (sem filtro, ordenação padrão mantida).
-    ref.read(taskFilterProvider.notifier).update(TaskFilter.empty);
-    ref.invalidate(tasksStreamProvider);
-    ref.invalidate(filteredTasksStreamProvider);
+    // Fecha swipes abertos, remove o filtro e refaz o fetch completo.
+    ref.read(openReminderSwipeProvider.notifier).close();
+    ref.read(reminderFilterProvider.notifier).update(ReminderFilter.empty);
+    ref.invalidate(filteredRemindersStreamProvider);
+    ref.invalidate(remindersStreamProvider);
 
     // Aguarda o novo fetch concluir para terminar o indicador de refresh.
     await ref
-        .read(filteredTasksStreamProvider.future)
-        .catchError((_) => <Task>[]);
+        .read(filteredRemindersStreamProvider.future)
+        .catchError((_) => <Reminder>[]);
 
     if (hadFilters && context.mounted) {
       showSeniorToast(
         context,
         title: 'Filtros removidos',
-        message: 'A lista foi atualizada com todas as tarefas.',
+        message: 'A lista foi atualizada com todos os lembretes.',
         variant: SeniorToastVariant.info,
       );
     }
   }
 
-  void _openFilterSheet(
-    BuildContext context,
-    WidgetRef ref,
-    TaskFilter current,
-  ) {
+  void _openFilterSheet(BuildContext context, ReminderFilter current) {
     HapticFeedback.lightImpact();
-    TaskFilterSheet.show(
+    ref.read(openReminderSwipeProvider.notifier).close();
+    ReminderFilterSheet.show(
       context,
       initialFilter: current,
       onApply: (newFilter) {
-        ref.read(taskFilterProvider.notifier).update(newFilter);
+        ref.read(reminderFilterProvider.notifier).update(newFilter);
       },
     );
   }
@@ -185,14 +183,16 @@ class _Header extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Minhas Tarefas',
+                        'Lembretes',
                         style: theme.textTheme.titleLarge,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '$doneCount de $totalCount concluídas hoje',
+                        totalCount == 0
+                            ? 'Nenhum lembrete ainda'
+                            : '$doneCount de $totalCount concluídos',
                         style: theme.textTheme.bodySmall
                             ?.copyWith(color: AppColors.slate500),
                         maxLines: 1,
@@ -202,21 +202,19 @@ class _Header extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                // Botão de ajuda (rever tutorial desta tela)
                 TourHelpButton(onPressed: onHelp),
                 const SizedBox(width: AppSpacing.sm),
-                // Botão de filtro com badge
                 SeniorShowcase(
                   showcaseKey: filterShowcaseKey,
                   scope: scope,
-                  title: 'Filtre as suas tarefas',
+                  title: 'Filtre os seus lembretes',
                   description:
-                      'Toque aqui para ver só as tarefas de hoje, ou de uma categoria.',
+                      'Toque aqui para ver só os lembretes de hoje, ou de uma categoria.',
                   child: Semantics(
                     button: true,
                     label: activeFilterCount > 0
                         ? 'Filtros ($activeFilterCount ativos)'
-                        : 'Filtrar tarefas',
+                        : 'Filtrar lembretes',
                     child: _FilterButton(
                       activeCount: activeFilterCount,
                       onTap: onOpenFilter,
@@ -224,16 +222,15 @@ class _Header extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                // Botão nova tarefa
                 SeniorShowcase(
                   showcaseKey: createShowcaseKey,
                   scope: scope,
-                  title: 'Criar uma nova tarefa',
+                  title: 'Criar um novo lembrete',
                   description:
-                      'Toque no "+" sempre que quiser adicionar uma nova tarefa.',
+                      'Toque no "+" sempre que quiser adicionar um novo lembrete.',
                   child: Semantics(
                     button: true,
-                    label: 'Nova tarefa',
+                    label: 'Novo lembrete',
                     child: Material(
                       color: AppColors.primary,
                       borderRadius:
@@ -344,7 +341,7 @@ class _FilterButton extends StatelessWidget {
 class _ActiveFilterBar extends StatelessWidget {
   const _ActiveFilterBar({required this.filter, required this.ref});
 
-  final TaskFilter filter;
+  final ReminderFilter filter;
   final WidgetRef ref;
 
   @override
@@ -366,38 +363,23 @@ class _ActiveFilterBar extends StatelessWidget {
             ),
             child: Row(
               children: [
-                // Chip "Hoje"
                 if (filter.isToday)
                   _ActiveChip(
                     label: 'Hoje',
                     onRemove: () {
-                      ref.read(taskFilterProvider.notifier).update(
+                      ref.read(reminderFilterProvider.notifier).update(
                             filter.removeToday(),
                           );
                     },
                   ),
                 if (filter.isToday && filter.category != null)
                   const SizedBox(width: 6),
-                // Chip de categoria
                 if (filter.category != null)
                   _ActiveChip(
                     label: filter.category!.label,
                     onRemove: () {
-                      ref.read(taskFilterProvider.notifier).update(
+                      ref.read(reminderFilterProvider.notifier).update(
                             filter.removeCategory(),
-                          );
-                    },
-                  ),
-                if ((filter.isToday || filter.category != null) &&
-                    filter.priority != null)
-                  const SizedBox(width: 6),
-                // Chip de prioridade
-                if (filter.priority != null)
-                  _ActiveChip(
-                    label: _capitalized(filter.priority!.label),
-                    onRemove: () {
-                      ref.read(taskFilterProvider.notifier).update(
-                            filter.removePriority(),
                           );
                     },
                   ),
@@ -409,9 +391,6 @@ class _ActiveFilterBar extends StatelessWidget {
       ),
     );
   }
-
-  String _capitalized(String s) =>
-      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 }
 
 class _ActiveChip extends StatelessWidget {
@@ -432,8 +411,7 @@ class _ActiveChip extends StatelessWidget {
         },
         child: Container(
           constraints: const BoxConstraints(minHeight: 36),
-          padding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             color: AppColors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(50),
@@ -466,156 +444,122 @@ class _ActiveChip extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Lista de tarefas
+// Lista de lembretes
 // ---------------------------------------------------------------------------
 
-class _TaskList extends ConsumerWidget {
-  const _TaskList({
-    required this.tasks,
+class _ReminderList extends ConsumerStatefulWidget {
+  const _ReminderList({
+    required this.reminders,
     required this.scope,
     required this.firstCardShowcaseKey,
   });
 
-  final List<Task> tasks;
+  final List<Reminder> reminders;
   final String scope;
   final GlobalKey firstCardShowcaseKey;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return ListView(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      children: [
-        for (var i = 0; i < tasks.length; i++) ...[
-          _buildCard(context, ref, tasks[i], isFirst: i == 0),
-          const SizedBox(height: 12),
-        ],
-        const SizedBox(height: 4),
-        _GuidedModePromo(tasks: tasks),
-      ],
-    );
-  }
-
-  Widget _buildCard(
-    BuildContext context,
-    WidgetRef ref,
-    Task task, {
-    required bool isFirst,
-  }) {
-    final card = TaskCard(
-      task: task,
-      onTap: () => context.push('/tasks/${task.id}'),
-      onToggleComplete: () {
-        if (!task.isCompleted) {
-          ref.read(tasksControllerProvider.notifier).completeTask(task.id);
-        }
-      },
-    );
-
-    if (!isFirst) return card;
-
-    return SeniorShowcase(
-      showcaseKey: firstCardShowcaseKey,
-      scope: scope,
-      title: 'As suas tarefas',
-      description:
-          'Cada cartão é uma tarefa. Toque para ver os detalhes, ou no círculo para marcar como concluída.',
-      child: card,
-    );
-  }
+  ConsumerState<_ReminderList> createState() => _ReminderListState();
 }
 
-// ---------------------------------------------------------------------------
-// Promo modo guiado
-// ---------------------------------------------------------------------------
-
-class _GuidedModePromo extends StatelessWidget {
-  const _GuidedModePromo({required this.tasks});
-
-  final List<Task> tasks;
+class _ReminderListState extends ConsumerState<_ReminderList> {
+  final GlobalKey _highlightKey = GlobalKey();
+  String? _handledHighlightId;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    ref.listen(filteredRemindersStreamProvider, (previous, next) {
+      final prevList = previous?.asData?.value;
+      final nextList = next.asData?.value;
+      if (prevList == null || nextList == null) return;
 
-    return Container(
-      padding: const EdgeInsets.all(17),
-      decoration: BoxDecoration(
-        color: AppColors.secondaryLight,
-        border: Border.all(color: const Color(0xFF99F6E4)),
-        borderRadius: BorderRadius.circular(AppSpacing.md),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.bolt, color: Color(0xFF0F766E), size: 16),
-              const SizedBox(width: AppSpacing.sm),
-              Text(
-                'Modo Guiado',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF0F766E),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Ajuda passo a passo para concluir qualquer tarefa com facilidade.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF0F766E),
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: Material(
-              color: AppColors.secondary,
-              borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-              child: InkWell(
-                onTap: () => _startGuided(context),
-                borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-                child: const SizedBox(
-                  height: 44,
-                  child: Center(
-                    child: Text(
-                      'Iniciar Modo Guiado →',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+      final prevIds = prevList.map((r) => r.id).toSet();
+      final nextIds = nextList.map((r) => r.id).toSet();
+      if (prevIds != nextIds) {
+        ref.read(openReminderSwipeProvider.notifier).close();
+      }
+    });
+
+    final reminders = widget.reminders;
+    final highlightId = ref.watch(highlightReminderIdProvider);
+    final hintShown = ref.watch(reminderSwipeHintShownProvider);
+
+    // Primeiro card acionável (não concluído) recebe a dica de swipe.
+    final firstActionableId = hintShown
+        ? null
+        : reminders
+            .cast<Reminder?>()
+            .firstWhere((r) => r != null && !r.isDone, orElse: () => null)
+            ?.id;
+
+    _scheduleHighlight(highlightId);
+    if (!hintShown && firstActionableId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ref.read(reminderSwipeHintShownProvider.notifier).markShown();
+        }
+      });
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      itemCount: reminders.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final reminder = reminders[index];
+        final isHighlighted = reminder.id == highlightId;
+        final card = ReminderDismissibleCard(
+          key: ValueKey(reminder.id),
+          reminder: reminder,
+          playHint: reminder.id == firstActionableId,
+          highlighted: isHighlighted,
+          highlightKey: isHighlighted ? _highlightKey : null,
+          onMarkDone: () => ref
+              .read(remindersControllerProvider.notifier)
+              .markRead(reminder.id, isRead: true),
+          onDelete: () async {
+            ref.read(openReminderSwipeProvider.notifier).close();
+            await ref
+                .read(remindersControllerProvider.notifier)
+                .delete(reminder.id);
+          },
+        );
+
+        if (index != 0) return card;
+
+        return SeniorShowcase(
+          showcaseKey: widget.firstCardShowcaseKey,
+          scope: widget.scope,
+          title: 'Os seus lembretes',
+          description:
+              'Arraste o cartão para a esquerda para apagar, para a direita para editar, e toque para ver os detalhes.',
+          child: card,
+        );
+      },
     );
   }
 
-  void _startGuided(BuildContext context) {
-    HapticFeedback.lightImpact();
-    final pending = tasks.where((t) => !t.isCompleted).toList();
-    if (pending.isEmpty) {
-      showSeniorToast(
-        context,
-        title: 'Tudo concluído!',
-        message: 'Não há tarefas pendentes para o modo guiado.',
-        variant: SeniorToastVariant.info,
-      );
-      return;
-    }
-    context.push('/tasks/${pending.first.id}/guided');
+  void _scheduleHighlight(String? highlightId) {
+    if (highlightId == null || highlightId == _handledHighlightId) return;
+    _handledHighlightId = highlightId;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final targetContext = _highlightKey.currentContext;
+      if (targetContext != null) {
+        await Scrollable.ensureVisible(
+          targetContext,
+          alignment: 0.25,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 2000));
+      if (!mounted) return;
+      ref.read(highlightReminderIdProvider.notifier).clear();
+      _handledHighlightId = null;
+    });
   }
 }
-
-// ---------------------------------------------------------------------------
-// Empty / Error states
-// ---------------------------------------------------------------------------
 
 class _EmptyState extends StatelessWidget {
   const _EmptyState({required this.hasFilter});
@@ -626,7 +570,6 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return ListView(
-      // ListView em vez de Center para o RefreshIndicator funcionar corretamente.
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
         SizedBox(
@@ -640,15 +583,15 @@ class _EmptyState extends StatelessWidget {
                   Icon(
                     hasFilter
                         ? Icons.filter_list_off_rounded
-                        : Icons.check_circle_outline,
+                        : Icons.notifications_none_outlined,
                     size: 64,
                     color: theme.colorScheme.primary.withValues(alpha: 0.4),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   Text(
                     hasFilter
-                        ? 'Nenhuma tarefa com estes filtros'
-                        : 'Ainda não tem tarefas',
+                        ? 'Nenhum lembrete com estes filtros'
+                        : 'Sem lembretes por agora',
                     style: theme.textTheme.headlineMedium,
                     textAlign: TextAlign.center,
                   ),
@@ -656,7 +599,7 @@ class _EmptyState extends StatelessWidget {
                   Text(
                     hasFilter
                         ? 'Tente remover ou alterar os filtros ativos.'
-                        : 'Toque no botão "+" para criar sua primeira tarefa.',
+                        : 'Toque no botão "+" para criar seu primeiro lembrete.',
                     style: theme.textTheme.bodyLarge,
                     textAlign: TextAlign.center,
                   ),
@@ -685,7 +628,7 @@ class _ErrorState extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(AppSpacing.xl),
               child: Text(
-                'Algo deu errado ao carregar as suas tarefas. Tente novamente.',
+                'Não foi possível carregar os lembretes. Tente novamente.',
                 style: theme.textTheme.bodyLarge,
                 textAlign: TextAlign.center,
               ),

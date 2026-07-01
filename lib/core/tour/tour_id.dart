@@ -12,6 +12,8 @@ enum TourId {
   createTask,
   taskList,
   taskDetails,
+  remindersList,
+  createReminder,
   accessibility,
   settings,
   guides,

@@ -70,7 +70,7 @@ class QuickActionsGrid extends StatelessWidget {
                   key: accessibilityShowcaseKey,
                   title: 'Ajustar para si',
                   description:
-                      'Aqui pode aumentar as letras e melhorar as cores para ver melhor.',
+                      'Aqui você pode aumentar as letras e melhorar as cores para ver melhor.',
                   child: _ActionCard(
                     icon: Icons.accessibility_new,
                     label: 'Acessibilidade',

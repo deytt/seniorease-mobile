@@ -15,18 +15,24 @@ Future<bool?> showSeniorConfirmDialog({
     context: context,
     barrierDismissible: false,
     builder: (dialogContext) {
+      final theme = Theme.of(dialogContext);
       return AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         ),
         title: Text(
           title,
-          style: Theme.of(dialogContext).textTheme.headlineSmall,
+          style: theme.textTheme.headlineSmall?.copyWith(
+            color: theme.colorScheme.onSurface,
+          ),
         ),
         content: Text(
           message,
-          style: Theme.of(dialogContext).textTheme.bodyLarge,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            color: theme.colorScheme.onSurface,
+          ),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(
           AppSpacing.lg,
