@@ -9,6 +9,7 @@ import 'package:mobile/features/reminders/domain/usecases/delete_reminder_use_ca
 import 'package:mobile/features/reminders/domain/usecases/get_filtered_reminders_use_case.dart';
 import 'package:mobile/features/reminders/domain/usecases/get_reminders_use_case.dart';
 import 'package:mobile/features/reminders/domain/usecases/mark_reminder_read_use_case.dart';
+import 'package:mobile/features/reminders/domain/usecases/update_reminder_use_case.dart';
 
 class MockReminderRepository extends Mock implements ReminderRepository {}
 
@@ -64,6 +65,16 @@ void main() {
 
       expect(id, 'new-id');
       verify(() => repo.createReminder(reminder)).called(1);
+    });
+  });
+
+  group('UpdateReminderUseCase', () {
+    test('delega para updateReminder', () async {
+      when(() => repo.updateReminder(any())).thenAnswer((_) async {});
+
+      await UpdateReminderUseCase(repo).call(reminder);
+
+      verify(() => repo.updateReminder(reminder)).called(1);
     });
   });
 

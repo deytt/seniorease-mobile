@@ -22,7 +22,10 @@ import 'package:mobile/features/reminders/presentation/providers/reminders_provi
 import 'package:mobile/features/reminders/presentation/widgets/reminder_category_dropdown.dart';
 
 class CreateReminderScreen extends ConsumerStatefulWidget {
-  const CreateReminderScreen({super.key});
+  const CreateReminderScreen({super.key, this.initial});
+
+  /// Quando presente, a tela funciona em modo de edição do lembrete indicado.
+  final Reminder? initial;
 
   @override
   ConsumerState<CreateReminderScreen> createState() =>
@@ -47,6 +50,8 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen>
   DateTime? _scheduledAt;
   String? _dateTimeError;
 
+  bool get _isEditing => widget.initial != null;
+
   @override
   String get tourScope => _scope;
 
@@ -64,7 +69,18 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeOfferFirstUse());
+    final initial = widget.initial;
+    if (initial != null) {
+      _titleController.text = initial.title;
+      _messageController.text = initial.message;
+      _category = initial.category;
+      _scheduledAt = initial.scheduledAt;
+    }
+    // A oferta de tour na 1ª utilização só faz sentido na criação.
+    if (!_isEditing) {
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _maybeOfferFirstUse());
+    }
   }
 
   /// Na primeira utilização (apenas em Modo Básico), pergunta se pode mostrar
@@ -149,6 +165,39 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen>
 
     HapticFeedback.lightImpact();
 
+    final controller = ref.read(remindersControllerProvider.notifier);
+
+    if (_isEditing) {
+      final updated = widget.initial!.copyWith(
+        title: _titleController.text.trim(),
+        message: _messageController.text.trim(),
+        category: _category,
+        scheduledAt: _scheduledAt!,
+      );
+
+      final ok = await controller.update(updated);
+      if (!mounted) return;
+
+      if (!ok) {
+        showSeniorToast(
+          context,
+          title: 'Erro',
+          message: 'Não foi possível salvar as alterações.',
+          variant: SeniorToastVariant.danger,
+        );
+        return;
+      }
+
+      showSeniorToast(
+        context,
+        title: 'Lembrete atualizado',
+        message: 'As alterações foram salvas com sucesso.',
+        variant: SeniorToastVariant.success,
+      );
+      context.pop();
+      return;
+    }
+
     final user = ref.read(authStateProvider).asData?.value;
     if (user == null) return;
 
@@ -163,9 +212,7 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen>
       createdAt: DateTime.now(),
     );
 
-    final id = await ref
-        .read(remindersControllerProvider.notifier)
-        .create(reminder);
+    final id = await controller.create(reminder);
 
     if (!mounted) return;
 
@@ -201,7 +248,7 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen>
     final isSaving = ref.watch(remindersControllerProvider).isLoading;
 
     return SeniorScreenScaffold(
-      title: 'Novo Lembrete',
+      title: _isEditing ? 'Editar Lembrete' : 'Novo Lembrete',
       backIcon: Icons.close,
       trailing: TourHelpButton(onPressed: startTour),
       body: Form(
@@ -275,8 +322,8 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen>
               description:
                   'Quando terminar, toque aqui para salvar. Pronto, é só isso!',
               child: SeniorButton(
-                label: 'Salvar lembrete',
-                icon: Icons.add,
+                label: _isEditing ? 'Salvar alterações' : 'Salvar lembrete',
+                icon: _isEditing ? Icons.check : Icons.add,
                 isLoading: isSaving,
                 onPressed: _save,
               ),

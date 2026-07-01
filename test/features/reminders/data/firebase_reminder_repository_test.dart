@@ -133,4 +133,26 @@ void main() {
     expect(doc.data()?['isRead'], isTrue);
     expect(doc.data()?['title'], 'Medicação');
   });
+
+  test('updateReminder persiste os novos campos', () async {
+    await seedReminder('r1', category: 'medication');
+
+    final updated = Reminder(
+      id: 'r1',
+      userId: 'u1',
+      title: 'Novo título',
+      message: 'Nova mensagem',
+      category: ReminderCategory.appointment,
+      scheduledAt: DateTime(2026, 7, 5, 9),
+      isRead: false,
+      createdAt: DateTime(2026, 6, 1),
+    );
+
+    await repo.updateReminder(updated);
+
+    final doc = await db.collection('reminders').doc('r1').get();
+    expect(doc.data()?['title'], 'Novo título');
+    expect(doc.data()?['message'], 'Nova mensagem');
+    expect(doc.data()?['category'], 'appointment');
+  });
 }

@@ -63,6 +63,11 @@ class FirebaseReminderRepository implements ReminderRepository {
   }
 
   @override
+  Future<void> updateReminder(Reminder reminder) async {
+    await _reminders.doc(reminder.id).update(reminder.toMap());
+  }
+
+  @override
   Future<void> markAsRead(String reminderId, {required bool isRead}) async {
     await _reminders.doc(reminderId).update({'isRead': isRead});
   }

@@ -43,3 +43,17 @@ String formatReminderTime(DateTime dt) {
 
 /// Período AM/PM (Figma `15:7912`).
 String formatReminderPeriod(DateTime dt) => dt.hour < 12 ? 'AM' : 'PM';
+
+/// Data do lembrete no formato `dd/MM/yyyy` (ex.: `31/12/2026`).
+String formatReminderDate(DateTime dt) {
+  final day = dt.day.toString().padLeft(2, '0');
+  final month = dt.month.toString().padLeft(2, '0');
+  return '$day/$month/${dt.year}';
+}
+
+/// Data curta do lembrete no formato `dd/MM` (ex.: `31/12`).
+String formatReminderDayMonth(DateTime dt) {
+  final day = dt.day.toString().padLeft(2, '0');
+  final month = dt.month.toString().padLeft(2, '0');
+  return '$day/$month';
+}

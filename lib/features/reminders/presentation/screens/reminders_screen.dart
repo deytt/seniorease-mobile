@@ -7,6 +7,7 @@ import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/theme/senior_system_ui.dart';
+import 'package:mobile/core/widgets/senior_toast.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
 import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_help_button.dart';
@@ -73,12 +74,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen>
             Expanded(
               child: RefreshIndicator(
                 color: AppColors.primary,
-                onRefresh: () async {
-                  ref.read(openReminderSwipeIdProvider.notifier).close();
-                  ref.invalidate(filteredRemindersStreamProvider);
-                  ref.invalidate(remindersStreamProvider);
-                  await ref.read(filteredRemindersStreamProvider.future);
-                },
+                onRefresh: () => _onRefresh(context),
                 child: remindersAsync.when(
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
@@ -99,9 +95,33 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen>
     );
   }
 
+  Future<void> _onRefresh(BuildContext context) async {
+    final hadFilters = ref.read(reminderFilterProvider) != ReminderFilter.empty;
+
+    // Fecha swipes abertos, remove o filtro e refaz o fetch completo.
+    ref.read(openReminderSwipeProvider.notifier).close();
+    ref.read(reminderFilterProvider.notifier).update(ReminderFilter.empty);
+    ref.invalidate(filteredRemindersStreamProvider);
+    ref.invalidate(remindersStreamProvider);
+
+    // Aguarda o novo fetch concluir para terminar o indicador de refresh.
+    await ref
+        .read(filteredRemindersStreamProvider.future)
+        .catchError((_) => <Reminder>[]);
+
+    if (hadFilters && context.mounted) {
+      showSeniorToast(
+        context,
+        title: 'Filtros removidos',
+        message: 'A lista foi atualizada com todos os lembretes.',
+        variant: SeniorToastVariant.info,
+      );
+    }
+  }
+
   void _openFilterSheet(BuildContext context, ReminderFilter current) {
     HapticFeedback.lightImpact();
-    ref.read(openReminderSwipeIdProvider.notifier).close();
+    ref.read(openReminderSwipeProvider.notifier).close();
     ReminderFilterSheet.show(
       context,
       initialFilter: current,
@@ -427,7 +447,7 @@ class _ActiveChip extends StatelessWidget {
 // Lista de lembretes
 // ---------------------------------------------------------------------------
 
-class _ReminderList extends ConsumerWidget {
+class _ReminderList extends ConsumerStatefulWidget {
   const _ReminderList({
     required this.reminders,
     required this.scope,
@@ -439,7 +459,15 @@ class _ReminderList extends ConsumerWidget {
   final GlobalKey firstCardShowcaseKey;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ReminderList> createState() => _ReminderListState();
+}
+
+class _ReminderListState extends ConsumerState<_ReminderList> {
+  final GlobalKey _highlightKey = GlobalKey();
+  String? _handledHighlightId;
+
+  @override
+  Widget build(BuildContext context) {
     ref.listen(filteredRemindersStreamProvider, (previous, next) {
       final prevList = previous?.asData?.value;
       final nextList = next.asData?.value;
@@ -448,9 +476,30 @@ class _ReminderList extends ConsumerWidget {
       final prevIds = prevList.map((r) => r.id).toSet();
       final nextIds = nextList.map((r) => r.id).toSet();
       if (prevIds != nextIds) {
-        ref.read(openReminderSwipeIdProvider.notifier).close();
+        ref.read(openReminderSwipeProvider.notifier).close();
       }
     });
+
+    final reminders = widget.reminders;
+    final highlightId = ref.watch(highlightReminderIdProvider);
+    final hintShown = ref.watch(reminderSwipeHintShownProvider);
+
+    // Primeiro card acionável (não concluído) recebe a dica de swipe.
+    final firstActionableId = hintShown
+        ? null
+        : reminders
+            .cast<Reminder?>()
+            .firstWhere((r) => r != null && !r.isDone, orElse: () => null)
+            ?.id;
+
+    _scheduleHighlight(highlightId);
+    if (!hintShown && firstActionableId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ref.read(reminderSwipeHintShownProvider.notifier).markShown();
+        }
+      });
+    }
 
     return ListView.separated(
       padding: const EdgeInsets.all(AppSpacing.md),
@@ -458,14 +507,18 @@ class _ReminderList extends ConsumerWidget {
       separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final reminder = reminders[index];
+        final isHighlighted = reminder.id == highlightId;
         final card = ReminderDismissibleCard(
           key: ValueKey(reminder.id),
           reminder: reminder,
+          playHint: reminder.id == firstActionableId,
+          highlighted: isHighlighted,
+          highlightKey: isHighlighted ? _highlightKey : null,
           onMarkDone: () => ref
               .read(remindersControllerProvider.notifier)
               .markRead(reminder.id, isRead: true),
           onDelete: () async {
-            ref.read(openReminderSwipeIdProvider.notifier).close();
+            ref.read(openReminderSwipeProvider.notifier).close();
             await ref
                 .read(remindersControllerProvider.notifier)
                 .delete(reminder.id);
@@ -475,15 +528,36 @@ class _ReminderList extends ConsumerWidget {
         if (index != 0) return card;
 
         return SeniorShowcase(
-          showcaseKey: firstCardShowcaseKey,
-          scope: scope,
+          showcaseKey: widget.firstCardShowcaseKey,
+          scope: widget.scope,
           title: 'Os seus lembretes',
           description:
-              'Cada cartão é um lembrete. Deslize para a esquerda para apagar, ou toque em "Concluir".',
+              'Arraste o cartão para a esquerda para apagar, para a direita para editar, e toque para ver os detalhes.',
           child: card,
         );
       },
     );
+  }
+
+  void _scheduleHighlight(String? highlightId) {
+    if (highlightId == null || highlightId == _handledHighlightId) return;
+    _handledHighlightId = highlightId;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final targetContext = _highlightKey.currentContext;
+      if (targetContext != null) {
+        await Scrollable.ensureVisible(
+          targetContext,
+          alignment: 0.25,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 2000));
+      if (!mounted) return;
+      ref.read(highlightReminderIdProvider.notifier).clear();
+      _handledHighlightId = null;
+    });
   }
 }
 

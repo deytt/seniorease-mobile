@@ -11,6 +11,8 @@ abstract interface class ReminderRepository {
 
   Future<String> createReminder(Reminder reminder);
 
+  Future<void> updateReminder(Reminder reminder);
+
   Future<void> markAsRead(String reminderId, {required bool isRead});
 
   Future<void> deleteReminder(String reminderId);
