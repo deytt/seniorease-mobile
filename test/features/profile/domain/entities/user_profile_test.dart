@@ -47,7 +47,7 @@ void main() {
       expect(semDados.hasPhoto, isFalse);
 
       final comDados = semDados.copyWith(
-        phone: '(19) 9 9999-0034',
+        phone: '(19) 9 9999-9999',
         photoUrl: 'http://x/p.jpg',
       );
       expect(comDados.hasPhone, isTrue);
@@ -77,7 +77,7 @@ void main() {
       final profile = UserProfile.fromMap('u1', {
         'name': 'Maria Silva',
         'email': 'm@x.pt',
-        'phone': '(19) 9 9999-0034',
+        'phone': '(19) 9 9999-9999',
         'birthDate': '31/12/1950',
         'photoUrl': 'http://x/p.jpg',
         'address': {'city': 'Campinas', 'state': 'SP'},
@@ -85,7 +85,7 @@ void main() {
 
       expect(profile.id, 'u1');
       expect(profile.name, 'Maria Silva');
-      expect(profile.phone, '(19) 9 9999-0034');
+      expect(profile.phone, '(19) 9 9999-9999');
       expect(profile.birthDate, '31/12/1950');
       expect(profile.address.city, 'Campinas');
       expect(profile.address.state, 'SP');

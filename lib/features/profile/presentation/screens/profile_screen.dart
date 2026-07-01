@@ -220,7 +220,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         SeniorInput(
                           controller: _phoneController,
                           label: 'Telefone',
-                          hint: '(19) 9 9999-0034',
+                          hint: '(19) 9 9999-9999',
                           prefixIcon: Icons.phone_outlined,
                           keyboardType: TextInputType.phone,
                           inputFormatters: [InputMasks.phone()],

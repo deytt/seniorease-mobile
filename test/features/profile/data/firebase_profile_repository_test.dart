@@ -24,13 +24,13 @@ void main() {
       await db.collection('users').doc('u1').set({
         'name': 'Maria Silva',
         'email': 'm@x.pt',
-        'phone': '(19) 9 9999-0034',
+        'phone': '(19) 9 9999-9999',
         'address': {'city': 'Campinas', 'state': 'SP'},
       });
 
       final profile = await repo.watch('u1').first;
       expect(profile.name, 'Maria Silva');
-      expect(profile.phone, '(19) 9 9999-0034');
+      expect(profile.phone, '(19) 9 9999-9999');
       expect(profile.address.city, 'Campinas');
     });
   });
@@ -41,7 +41,7 @@ void main() {
         id: 'u1',
         name: 'Maria Silva',
         email: 'm@x.pt',
-        phone: '(19) 9 9999-0034',
+        phone: '(19) 9 9999-9999',
         address: const Address(city: 'Campinas'),
       );
 
@@ -49,7 +49,7 @@ void main() {
 
       final doc = await db.collection('users').doc('u1').get();
       expect(doc.data()!['name'], 'Maria Silva');
-      expect(doc.data()!['phone'], '(19) 9 9999-0034');
+      expect(doc.data()!['phone'], '(19) 9 9999-9999');
       expect((doc.data()!['address'] as Map)['city'], 'Campinas');
     });
 
