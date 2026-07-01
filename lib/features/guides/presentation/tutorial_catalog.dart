@@ -48,7 +48,7 @@ const List<TutorialInfo> kTutorials = [
   TutorialInfo(
     id: TourId.createTask,
     title: 'Como criar uma tarefa',
-    description: 'Aprenda passo a passo a criar a sua primeira tarefa.',
+    description: 'Aprenda passo a passo a criar sua primeira tarefa.',
     icon: Icons.add_task,
     route: AppRoutes.createTask,
   ),
@@ -61,6 +61,21 @@ const List<TutorialInfo> kTutorials = [
     isShellTab: true,
   ),
   TutorialInfo(
+    id: TourId.remindersList,
+    title: 'Ver os seus lembretes',
+    description: 'Saiba como filtrar e acompanhar os seus lembretes.',
+    icon: Icons.notifications_none_outlined,
+    route: AppRoutes.reminders,
+    isShellTab: true,
+  ),
+  TutorialInfo(
+    id: TourId.createReminder,
+    title: 'Como criar um lembrete',
+    description: 'Aprenda passo a passo a criar o seu primeiro lembrete.',
+    icon: Icons.add_alert_outlined,
+    route: AppRoutes.createReminder,
+  ),
+  TutorialInfo(
     id: TourId.accessibility,
     title: 'Ajustar a acessibilidade',
     description: 'Mude o tamanho da letra, as cores e o modo de uso.',
@@ -69,7 +84,7 @@ const List<TutorialInfo> kTutorials = [
   ),
   TutorialInfo(
     id: TourId.settings,
-    title: 'Conhecer as Definições',
+    title: 'Conhecer as configurações',
     description: 'Veja onde mudar as suas preferências e onde fica cada coisa.',
     icon: Icons.settings_outlined,
     route: AppRoutes.settings,
@@ -77,8 +92,8 @@ const List<TutorialInfo> kTutorials = [
   ),
   TutorialInfo(
     id: TourId.profile,
-    title: 'Ver e mudar o seu perfil',
-    description: 'Aprenda a mudar a sua foto e os seus dados pessoais.',
+    title: 'Ver e mudar seu perfil',
+    description: 'Aprenda a mudar sua foto e seus dados pessoais.',
     icon: Icons.person_outline,
     route: AppRoutes.profile,
   ),

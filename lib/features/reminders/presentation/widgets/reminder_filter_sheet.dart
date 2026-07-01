@@ -3,35 +3,34 @@ import 'package:flutter/services.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
-import 'package:mobile/features/tasks/domain/entities/task.dart';
-import 'package:mobile/features/tasks/domain/entities/task_filter.dart';
+import 'package:mobile/features/reminders/domain/entities/reminder_category.dart';
+import 'package:mobile/features/reminders/domain/entities/reminder_filter.dart';
 
-/// Bottom sheet de filtros para a lista de tarefas.
+/// Bottom sheet de filtros para a lista de lembretes.
 ///
-/// Recebe o [initialFilter] activo e devolve o novo [TaskFilter] via [onApply].
-/// O estado local do sheet não afecta a lista até o utilizador tocar em "Aplicar".
-class TaskFilterSheet extends StatefulWidget {
-  const TaskFilterSheet({
+/// Recebe o [initialFilter] activo e devolve o novo [ReminderFilter] via
+/// [onApply]. O estado local do sheet não afecta a lista até o utilizador tocar
+/// em "Aplicar".
+class ReminderFilterSheet extends StatefulWidget {
+  const ReminderFilterSheet({
     required this.initialFilter,
     required this.onApply,
     super.key,
   });
 
-  final TaskFilter initialFilter;
-  final ValueChanged<TaskFilter> onApply;
+  final ReminderFilter initialFilter;
+  final ValueChanged<ReminderFilter> onApply;
 
-  /// Abre o sheet e aguarda o resultado. Retorna o filtro aplicado ou `null`
-  /// se o utilizador fechou sem aplicar.
   static Future<void> show(
     BuildContext context, {
-    required TaskFilter initialFilter,
-    required ValueChanged<TaskFilter> onApply,
+    required ReminderFilter initialFilter,
+    required ValueChanged<ReminderFilter> onApply,
   }) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => TaskFilterSheet(
+      builder: (_) => ReminderFilterSheet(
         initialFilter: initialFilter,
         onApply: onApply,
       ),
@@ -39,11 +38,11 @@ class TaskFilterSheet extends StatefulWidget {
   }
 
   @override
-  State<TaskFilterSheet> createState() => _TaskFilterSheetState();
+  State<ReminderFilterSheet> createState() => _ReminderFilterSheetState();
 }
 
-class _TaskFilterSheetState extends State<TaskFilterSheet> {
-  late TaskFilter _filter;
+class _ReminderFilterSheetState extends State<ReminderFilterSheet> {
+  late ReminderFilter _filter;
 
   @override
   void initState() {
@@ -56,7 +55,7 @@ class _TaskFilterSheetState extends State<TaskFilterSheet> {
     setState(() => _filter = _filter.copyWith(isToday: !_filter.isToday));
   }
 
-  void _toggleCategory(TaskCategory cat) {
+  void _toggleCategory(ReminderCategory cat) {
     HapticFeedback.selectionClick();
     setState(() {
       _filter = _filter.copyWith(
@@ -65,18 +64,9 @@ class _TaskFilterSheetState extends State<TaskFilterSheet> {
     });
   }
 
-  void _togglePriority(TaskPriority prio) {
-    HapticFeedback.selectionClick();
-    setState(() {
-      _filter = _filter.copyWith(
-        priority: _filter.priority == prio ? null : prio,
-      );
-    });
-  }
-
   void _clear() {
     HapticFeedback.lightImpact();
-    setState(() => _filter = TaskFilter.empty);
+    setState(() => _filter = ReminderFilter.empty);
   }
 
   void _apply() {
@@ -99,7 +89,6 @@ class _TaskFilterSheetState extends State<TaskFilterSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Handle
           Center(
             child: Container(
               margin: const EdgeInsets.only(top: 12, bottom: 4),
@@ -111,7 +100,6 @@ class _TaskFilterSheetState extends State<TaskFilterSheet> {
               ),
             ),
           ),
-          // Título
           Padding(
             padding: const EdgeInsets.fromLTRB(
               AppSpacing.lg,
@@ -123,7 +111,7 @@ class _TaskFilterSheetState extends State<TaskFilterSheet> {
               children: [
                 Expanded(
                   child: Text(
-                    'Filtrar Tarefas',
+                    'Filtrar Lembretes',
                     style: theme.textTheme.titleMedium
                         ?.copyWith(fontWeight: FontWeight.bold),
                   ),
@@ -152,25 +140,22 @@ class _TaskFilterSheetState extends State<TaskFilterSheet> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // --- Secção Hoje ---
-                _SectionLabel(label: 'Data'),
+                const _SectionLabel(label: 'Data'),
                 const SizedBox(height: AppSpacing.sm),
                 _FilterToggleTile(
                   icon: Icons.today_rounded,
-                  label: 'Tarefas de Hoje',
-                  subtitle: 'Mostrar apenas tarefas agendadas para hoje',
+                  label: 'Lembretes de Hoje',
+                  subtitle: 'Mostrar apenas lembretes agendados para hoje',
                   selected: _filter.isToday,
                   onTap: _toggleToday,
                 ),
                 const SizedBox(height: AppSpacing.lg),
-
-                // --- Secção Categoria ---
-                _SectionLabel(label: 'Categoria'),
+                const _SectionLabel(label: 'Categoria'),
                 const SizedBox(height: AppSpacing.sm),
                 Wrap(
                   spacing: AppSpacing.sm,
                   runSpacing: AppSpacing.sm,
-                  children: TaskCategory.values
+                  children: ReminderCategory.values
                       .map(
                         (cat) => _FilterChip(
                           label: cat.label,
@@ -180,37 +165,10 @@ class _TaskFilterSheetState extends State<TaskFilterSheet> {
                       )
                       .toList(),
                 ),
-                const SizedBox(height: AppSpacing.lg),
-
-                // --- Secção Prioridade ---
-                _SectionLabel(label: 'Prioridade'),
-                const SizedBox(height: AppSpacing.sm),
-                Row(
-                  children: [
-                    _PriorityChip(
-                      priority: TaskPriority.high,
-                      selected: _filter.priority == TaskPriority.high,
-                      onTap: () => _togglePriority(TaskPriority.high),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    _PriorityChip(
-                      priority: TaskPriority.medium,
-                      selected: _filter.priority == TaskPriority.medium,
-                      onTap: () => _togglePriority(TaskPriority.medium),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    _PriorityChip(
-                      priority: TaskPriority.low,
-                      selected: _filter.priority == TaskPriority.low,
-                      onTap: () => _togglePriority(TaskPriority.low),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
           const Divider(height: 1, thickness: 1, color: AppColors.slate200),
-          // Footer com botões
           Padding(
             padding: EdgeInsets.fromLTRB(
               AppSpacing.lg,
@@ -269,7 +227,6 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-/// Tile com toggle de texto longo (ex: "Tarefas de Hoje").
 class _FilterToggleTile extends StatelessWidget {
   const _FilterToggleTile({
     required this.icon,
@@ -359,7 +316,6 @@ class _FilterToggleTile extends StatelessWidget {
   }
 }
 
-/// Chip de filtro genérico para categorias.
 class _FilterChip extends StatelessWidget {
   const _FilterChip({
     required this.label,
@@ -405,79 +361,6 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-/// Chip de prioridade com cor indicativa.
-class _PriorityChip extends StatelessWidget {
-  const _PriorityChip({
-    required this.priority,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final TaskPriority priority;
-  final bool selected;
-  final VoidCallback onTap;
-
-  Color get _accentColor => switch (priority) {
-        TaskPriority.high => AppColors.danger,
-        TaskPriority.medium => AppColors.warning,
-        TaskPriority.low => AppColors.success,
-      };
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final color = _accentColor;
-
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: selected
-          ? '${priority.label}, seleccionado'
-          : 'Prioridade ${priority.label}',
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          constraints: const BoxConstraints(minHeight: 44),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(
-            color: selected ? color.withValues(alpha: 0.12) : Colors.transparent,
-            borderRadius: BorderRadius.circular(50),
-            border: Border.all(
-              color: selected ? color : AppColors.slate300,
-              width: selected ? 2 : 1.5,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                _capitalize(priority.label),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: selected ? color : AppColors.slate600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  String _capitalize(String s) =>
-      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
-}
-
 enum _SheetButtonVariant { primary, outline }
 
 class _SheetButton extends StatelessWidget {
@@ -510,8 +393,7 @@ class _SheetButton extends StatelessWidget {
             decoration: isPrimary
                 ? null
                 : BoxDecoration(
-                    borderRadius:
-                        BorderRadius.circular(AppTheme.borderRadius),
+                    borderRadius: BorderRadius.circular(AppTheme.borderRadius),
                     border: Border.all(color: AppColors.slate300, width: 1.5),
                   ),
             child: Center(

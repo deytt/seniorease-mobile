@@ -108,7 +108,7 @@ class _AccessibilityScreenState extends ConsumerState<AccessibilityScreen>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Erro ao guardar as definições. Tenta novamente.',
+            'Erro ao salvar as configurações. Tente novamente.',
             style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
           ),
           backgroundColor: Theme.of(context).colorScheme.surface,
@@ -117,7 +117,7 @@ class _AccessibilityScreenState extends ConsumerState<AccessibilityScreen>
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Definições guardadas com sucesso.'),
+          content: Text('Configurações salvas com sucesso.'),
           backgroundColor: AppColors.successDark,
         ),
       );
@@ -142,7 +142,7 @@ class _AccessibilityScreenState extends ConsumerState<AccessibilityScreen>
     final theme = Theme.of(context);
 
     return SeniorScreenScaffold(
-      title: 'Definições de Acessibilidade',
+      title: 'Configurações de Acessibilidade',
       backIcon: Icons.chevron_left,
       onBack: () => Navigator.of(context).pop(),
       trailing: TourHelpButton(onPressed: startTour),
@@ -150,7 +150,7 @@ class _AccessibilityScreenState extends ConsumerState<AccessibilityScreen>
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
           child: Text(
-            'Erro ao carregar as definições.',
+            'Erro ao carregar as configurações.',
             style: theme.textTheme.bodyLarge,
           ),
         ),
@@ -294,11 +294,11 @@ class _Body extends StatelessWidget {
           SeniorShowcase(
             showcaseKey: saveShowcaseKey,
             scope: tourScope,
-            title: 'Guardar as suas escolhas',
+            title: 'Salvar suas escolhas',
             description:
-                'No fim, toque aqui para guardar. As mudanças passam a valer em todo o app.',
+                'No fim, toque aqui para salvar. As mudanças passam a valer em todo o app.',
             child: SeniorButton(
-              label: 'Guardar Definições',
+              label: 'Salvar configurações',
               isLoading: isSaving,
               onPressed: onSave,
             ),

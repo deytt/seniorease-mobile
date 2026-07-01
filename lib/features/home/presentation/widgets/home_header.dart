@@ -37,7 +37,7 @@ class HomeHeader extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final user = ref.watch(authStateProvider).asData?.value;
-    final firstName = user?.name.split(' ').firstOrNull ?? 'Utilizador';
+    final firstName = user?.name.split(' ').firstOrNull ?? 'Usuário';
 
     return Container(
       width: double.infinity,

@@ -135,7 +135,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     final confirmed = await showSeniorConfirmDialog(
       context: context,
       title: 'Sair da conta',
-      message: 'Tens a certeza que queres sair da conta SeniorEase?',
+      message: 'Tem certeza de que deseja sair da conta SeniorEase?',
       confirmLabel: 'Sim, sair',
       cancelLabel: 'Cancelar',
       isDestructive: true,
@@ -203,7 +203,7 @@ class _ProfileBanner extends StatelessWidget {
                   const SizedBox(width: 44),
                   Expanded(
                     child: Text(
-                      'Definições',
+                      'Configurações',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.titleLarge?.copyWith(
                         color: Colors.white,
@@ -253,7 +253,7 @@ class _ProfileBanner extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                name.isNotEmpty ? name : 'Utilizador',
+                name.isNotEmpty ? name : 'Usuário',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,

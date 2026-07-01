@@ -132,7 +132,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     final accepted = await showTourInviteDialog(
       context,
       title: 'Vamos fazer juntos?',
-      message: 'Posso mostrar rapidamente como ver e mudar os seus dados?',
+      message: 'Posso mostrar rapidamente como ver e mudar seus dados?',
       acceptLabel: 'Sim',
       declineLabel: 'Agora não',
     );
@@ -151,7 +151,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
     return SeniorScreenScaffold(
       title: 'Perfil',
-      subtitle: 'Veja e atualize os seus dados',
+      subtitle: 'Veja e atualize seus dados',
       trailing: TourHelpButton(onPressed: startTour),
       body: profile == null
           ? const Center(child: CircularProgressIndicator())
@@ -182,7 +182,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     scope: _scope,
                     title: 'Os seus dados',
                     description:
-                        'Aqui pode escrever o seu nome, telefone e outros dados. O e-mail não muda.',
+                        'Aqui você pode escrever seu nome, telefone e outros dados. O e-mail não muda.',
                     child: _SectionCard(
                       title: 'Informações Pessoais',
                       icon: Icons.person_outline,
@@ -220,7 +220,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         SeniorInput(
                           controller: _phoneController,
                           label: 'Telefone',
-                          hint: '(19) 9 9999-0034',
+                          hint: '(19) 9 9999-9999',
                           prefixIcon: Icons.phone_outlined,
                           keyboardType: TextInputType.phone,
                           inputFormatters: [InputMasks.phone()],
@@ -253,6 +253,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       SeniorInput(
                         controller: _neighborhoodController,
                         label: 'Bairro',
+                        hint: 'Ex.: Centro',
                         prefixIcon: Icons.location_city_outlined,
                         maxLength: 30,
                         textInputAction: TextInputAction.next,
@@ -266,6 +267,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             child: SeniorInput(
                               controller: _streetController,
                               label: 'Rua',
+                              hint: 'Ex.: Rua das Flores',
                               maxLength: 50,
                               compactLabel: true,
                               textInputAction: TextInputAction.next,
@@ -276,6 +278,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             child: SeniorInput(
                               controller: _numberController,
                               label: 'Número',
+                              hint: 'Ex.: 123',
                               compactLabel: true,
                               keyboardType: TextInputType.text,
                               textInputAction: TextInputAction.next,
@@ -301,6 +304,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             child: SeniorInput(
                               controller: _cityController,
                               label: 'Cidade',
+                              hint: 'Ex.: Campinas',
                               maxLength: 30,
                               compactLabel: true,
                               textInputAction: TextInputAction.next,
@@ -311,6 +315,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                             child: SeniorInput(
                               controller: _stateController,
                               label: 'Estado',
+                              hint: 'Ex.: SP',
                               maxLength: 30,
                               compactLabel: true,
                               textInputAction: TextInputAction.next,
@@ -322,6 +327,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       SeniorInput(
                         controller: _countryController,
                         label: 'País',
+                        hint: 'Ex.: Brasil',
                         prefixIcon: Icons.public_outlined,
                         maxLength: 30,
                         textInputAction: TextInputAction.done,
@@ -334,11 +340,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   SeniorShowcase(
                     showcaseKey: _saveShowcaseKey,
                     scope: _scope,
-                    title: 'Guardar alterações',
+                    title: 'Salvar alterações',
                     description:
-                        'Quando terminar, toque aqui para guardar os seus dados.',
+                        'Quando terminar, toque aqui para salvar seus dados.',
                     child: SeniorButton(
-                      label: 'Guardar alterações',
+                      label: 'Salvar alterações',
                       icon: Icons.check,
                       isLoading: saving,
                       onPressed: saving ? null : () => _save(profile),
@@ -458,7 +464,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       showSeniorToast(
         context,
         title: 'Falta o nome',
-        message: 'Escreva o seu nome completo antes de guardar.',
+        message: 'Escreva seu nome completo antes de salvar.',
         variant: SeniorToastVariant.warning,
       );
       return;
@@ -488,8 +494,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     if (state is AsyncError) {
       showSeniorToast(
         context,
-        title: 'Erro ao guardar',
-        message: 'Não foi possível guardar os seus dados. Tente novamente.',
+        title: 'Erro ao salvar',
+        message: 'Não foi possível salvar seus dados. Tente novamente.',
         variant: SeniorToastVariant.danger,
       );
     } else {
@@ -567,7 +573,7 @@ class _ProfileHeaderCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            profile.name.isNotEmpty ? profile.name : 'Utilizador',
+            profile.name.isNotEmpty ? profile.name : 'Usuário',
             textAlign: TextAlign.center,
             style: theme.textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,

@@ -13,6 +13,9 @@ import 'package:mobile/features/profile/presentation/screens/about_screen.dart';
 import 'package:mobile/features/profile/presentation/screens/profile_screen.dart';
 import 'package:mobile/features/profile/presentation/screens/security_screen.dart';
 import 'package:mobile/features/profile/presentation/screens/settings_screen.dart';
+import 'package:mobile/features/reminders/domain/entities/reminder.dart';
+import 'package:mobile/features/reminders/presentation/screens/create_reminder_screen.dart';
+import 'package:mobile/features/reminders/presentation/screens/reminders_screen.dart';
 import 'package:mobile/features/tasks/presentation/screens/create_task_screen.dart';
 import 'package:mobile/features/tasks/presentation/screens/guided_task_screen.dart';
 import 'package:mobile/features/tasks/presentation/screens/task_details_screen.dart';
@@ -31,11 +34,13 @@ abstract final class AppRoutes {
   static const tasks = '/tasks';
   static const createTask = '/tasks/create';
   static const reminders = '/reminders';
+  static const createReminder = '/reminders/create';
   static const history = '/history';
   static const settings = '/settings';
 
   static String taskDetails(String id) => '/tasks/$id';
   static String guidedTask(String id) => '/tasks/$id/guided';
+  static String editReminder(String id) => '/reminders/$id/edit';
 }
 
 final _authRoutes = {
@@ -109,6 +114,15 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const CreateTaskScreen(),
       ),
       GoRoute(
+        path: AppRoutes.createReminder,
+        builder: (context, state) => const CreateReminderScreen(),
+      ),
+      GoRoute(
+        path: '/reminders/:id/edit',
+        builder: (context, state) =>
+            CreateReminderScreen(initial: state.extra as Reminder?),
+      ),
+      GoRoute(
         path: '/tasks/:id',
         builder: (context, state) =>
             TaskDetailsScreen(taskId: state.pathParameters['id']!),
@@ -144,8 +158,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.reminders,
-                builder: (context, state) =>
-                    const _PlaceholderScreen(title: 'Lembretes'),
+                builder: (context, state) => const RemindersScreen(),
               ),
             ],
           ),
