@@ -76,6 +76,14 @@ const List<TutorialInfo> kTutorials = [
     route: AppRoutes.createReminder,
   ),
   TutorialInfo(
+    id: TourId.history,
+    title: 'Ver o seu histórico',
+    description: 'Acompanhe as suas conquistas e a sua sequência de dias ativos.',
+    icon: Icons.history_outlined,
+    route: AppRoutes.history,
+    isShellTab: true,
+  ),
+  TutorialInfo(
     id: TourId.accessibility,
     title: 'Ajustar a acessibilidade',
     description: 'Mude o tamanho da letra, as cores e o modo de uso.',

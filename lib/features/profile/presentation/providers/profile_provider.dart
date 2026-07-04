@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/firebase/firebase_providers.dart';
+import 'package:mobile/core/history/history_recorder.dart';
 import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:mobile/features/profile/data/firebase_profile_photo_storage.dart';
 import 'package:mobile/features/profile/data/firebase_profile_repository.dart';
@@ -69,6 +70,12 @@ class ProfileController extends Notifier<AsyncValue<void>> {
     state = await AsyncValue.guard(
       () => ref.read(saveUserProfileUseCaseProvider).call(profile),
     );
+    if (!state.hasError) {
+      await ref.read(historyRecorderProvider).record(
+            type: HistoryActionType.profileUpdated,
+            title: 'Atualizou o seu perfil',
+          );
+    }
   }
 
   /// Faz upload da foto e devolve o URL público (ou `null` em caso de erro).

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/firebase/firebase_providers.dart';
+import 'package:mobile/core/history/history_recorder.dart';
 import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:mobile/features/tasks/data/firebase_task_repository.dart';
 import 'package:mobile/features/tasks/domain/entities/task.dart';
@@ -128,14 +129,33 @@ class TasksController extends Notifier<AsyncValue<void>> {
       () => ref.read(createTaskUseCaseProvider).call(task, steps),
     );
     state = result.whenData((_) {});
-    return result.asData?.value;
+    final id = result.asData?.value;
+    if (id != null) {
+      await ref.read(historyRecorderProvider).record(
+            type: HistoryActionType.taskCreated,
+            title: 'Criou a tarefa: ${task.title}',
+            entityId: id,
+            category: task.category.toFirestore(),
+          );
+    }
+    return id;
   }
 
   Future<void> delete(String taskId) async {
+    // Captura os dados antes de apagar (depois já não existem).
+    final task = _findTask(taskId);
     state = const AsyncLoading();
     state = await AsyncValue.guard(
       () => ref.read(deleteTaskUseCaseProvider).call(taskId),
     );
+    if (!state.hasError && task != null) {
+      await ref.read(historyRecorderProvider).record(
+            type: HistoryActionType.taskDeleted,
+            title: 'Removeu a tarefa: ${task.title}',
+            entityId: taskId,
+            category: task.category.toFirestore(),
+          );
+    }
   }
 
   Future<void> setStepCompleted(
@@ -149,6 +169,15 @@ class TasksController extends Notifier<AsyncValue<void>> {
           .read(completeStepUseCaseProvider)
           .call(taskId, stepId, isCompleted: isCompleted),
     );
+    if (!state.hasError && isCompleted) {
+      final task = _findTask(taskId);
+      await ref.read(historyRecorderProvider).record(
+            type: HistoryActionType.taskStepCompleted,
+            title: 'Concluiu um passo de: ${task?.title ?? 'uma tarefa'}',
+            entityId: taskId,
+            category: task?.category.toFirestore(),
+          );
+    }
   }
 
   Future<void> completeTask(String taskId) async {
@@ -156,5 +185,24 @@ class TasksController extends Notifier<AsyncValue<void>> {
     state = await AsyncValue.guard(
       () => ref.read(completeTaskUseCaseProvider).call(taskId),
     );
+    if (!state.hasError) {
+      final task = _findTask(taskId);
+      await ref.read(historyRecorderProvider).record(
+            type: HistoryActionType.taskCompleted,
+            title: 'Concluiu: ${task?.title ?? 'uma tarefa'}',
+            entityId: taskId,
+            category: task?.category.toFirestore(),
+          );
+    }
+  }
+
+  /// Procura uma tarefa na cache do stream (sem passos, mas com título e
+  /// categoria — suficiente para o registo de histórico).
+  Task? _findTask(String taskId) {
+    final tasks = ref.read(tasksStreamProvider).asData?.value ?? const [];
+    for (final task in tasks) {
+      if (task.id == taskId) return task;
+    }
+    return null;
   }
 }

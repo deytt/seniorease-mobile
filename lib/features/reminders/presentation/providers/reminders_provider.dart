@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/firebase/firebase_providers.dart';
+import 'package:mobile/core/history/history_recorder.dart';
 import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:mobile/features/reminders/data/firebase_reminder_repository.dart';
 import 'package:mobile/features/reminders/domain/entities/reminder.dart';
@@ -173,7 +174,16 @@ class RemindersController extends Notifier<AsyncValue<void>> {
       () => ref.read(createReminderUseCaseProvider).call(reminder),
     );
     state = result.whenData((_) {});
-    return result.asData?.value;
+    final id = result.asData?.value;
+    if (id != null) {
+      await ref.read(historyRecorderProvider).record(
+            type: HistoryActionType.reminderCreated,
+            title: 'Criou o lembrete: ${reminder.title}',
+            entityId: id,
+            category: reminder.category.toFirestore(),
+          );
+    }
+    return id;
   }
 
   Future<bool> update(Reminder reminder) async {
@@ -181,7 +191,16 @@ class RemindersController extends Notifier<AsyncValue<void>> {
     state = await AsyncValue.guard(
       () => ref.read(updateReminderUseCaseProvider).call(reminder),
     );
-    return !state.hasError;
+    final ok = !state.hasError;
+    if (ok) {
+      await ref.read(historyRecorderProvider).record(
+            type: HistoryActionType.reminderEdited,
+            title: 'Editou o lembrete: ${reminder.title}',
+            entityId: reminder.id,
+            category: reminder.category.toFirestore(),
+          );
+    }
+    return ok;
   }
 
   Future<void> markRead(String reminderId, {required bool isRead}) async {
@@ -191,12 +210,42 @@ class RemindersController extends Notifier<AsyncValue<void>> {
           .read(markReminderReadUseCaseProvider)
           .call(reminderId, isRead: isRead),
     );
+    // Marcar como lido/concluído é uma "conclusão" — conta para streak/semana.
+    if (!state.hasError && isRead) {
+      final reminder = _findReminder(reminderId);
+      await ref.read(historyRecorderProvider).record(
+            type: HistoryActionType.reminderCompleted,
+            title: 'Concluiu o lembrete: ${reminder?.title ?? ''}'.trim(),
+            entityId: reminderId,
+            category: reminder?.category.toFirestore(),
+          );
+    }
   }
 
   Future<void> delete(String reminderId) async {
+    // Captura os dados antes de apagar.
+    final reminder = _findReminder(reminderId);
     state = const AsyncLoading();
     state = await AsyncValue.guard(
       () => ref.read(deleteReminderUseCaseProvider).call(reminderId),
     );
+    if (!state.hasError && reminder != null) {
+      await ref.read(historyRecorderProvider).record(
+            type: HistoryActionType.reminderDeleted,
+            title: 'Removeu o lembrete: ${reminder.title}',
+            entityId: reminderId,
+            category: reminder.category.toFirestore(),
+          );
+    }
+  }
+
+  /// Procura um lembrete na cache do stream (para o registo de histórico).
+  Reminder? _findReminder(String reminderId) {
+    final reminders =
+        ref.read(remindersStreamProvider).asData?.value ?? const [];
+    for (final reminder in reminders) {
+      if (reminder.id == reminderId) return reminder;
+    }
+    return null;
   }
 }

@@ -8,6 +8,7 @@ import 'package:mobile/features/auth/presentation/screens/forgot_password_screen
 import 'package:mobile/features/auth/presentation/screens/login_screen.dart';
 import 'package:mobile/features/auth/presentation/screens/register_screen.dart';
 import 'package:mobile/features/guides/presentation/screens/guides_screen.dart';
+import 'package:mobile/features/history/presentation/screens/history_screen.dart';
 import 'package:mobile/features/home/presentation/screens/home_screen.dart';
 import 'package:mobile/features/profile/presentation/screens/about_screen.dart';
 import 'package:mobile/features/profile/presentation/screens/profile_screen.dart';
@@ -166,8 +167,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: AppRoutes.history,
-                builder: (context, state) =>
-                    const _PlaceholderScreen(title: 'Histórico'),
+                builder: (context, state) => const HistoryScreen(),
               ),
             ],
           ),
@@ -184,41 +184,6 @@ final routerProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
-
-class _PlaceholderScreen extends StatelessWidget {
-  const _PlaceholderScreen({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.construction_outlined,
-              size: 64,
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Em breve',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class GoRouterRefreshNotifier extends ChangeNotifier {
   GoRouterRefreshNotifier(Ref ref) {

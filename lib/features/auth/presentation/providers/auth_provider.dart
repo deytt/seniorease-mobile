@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/firebase/firebase_providers.dart';
+import 'package:mobile/core/history/history_recorder.dart';
 import 'package:mobile/features/auth/data/firebase_auth_repository.dart';
 import 'package:mobile/features/auth/domain/entities/user.dart';
 import 'package:mobile/features/auth/domain/repositories/auth_repository.dart';
@@ -65,6 +66,9 @@ final authControllerProvider =
     NotifierProvider<AuthController, AsyncValue<void>>(AuthController.new);
 
 class AuthController extends Notifier<AsyncValue<void>> {
+  /// Evita registar o evento de verificação de conta mais do que uma vez.
+  bool _verificationLogged = false;
+
   @override
   AsyncValue<void> build() => const AsyncData(null);
 
@@ -121,6 +125,15 @@ class AuthController extends Notifier<AsyncValue<void>> {
     final verified =
         await ref.read(refreshEmailVerificationUseCaseProvider).call();
     if (verified) {
+      // Regista antes de invalidar (a seguir o userId fica momentaneamente
+      // indisponível enquanto o authState recarrega).
+      if (!_verificationLogged) {
+        _verificationLogged = true;
+        await ref.read(historyRecorderProvider).record(
+              type: HistoryActionType.accountVerified,
+              title: 'Verificou a sua conta',
+            );
+      }
       ref.invalidate(authStateProvider);
     }
     return verified;

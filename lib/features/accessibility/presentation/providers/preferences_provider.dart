@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/firebase/firebase_providers.dart';
+import 'package:mobile/core/history/history_recorder.dart';
 import 'package:mobile/features/accessibility/data/firebase_preferences_repository.dart';
 import 'package:mobile/features/accessibility/domain/entities/user_preferences.dart';
 import 'package:mobile/features/accessibility/domain/repositories/preferences_repository.dart';
@@ -48,6 +49,10 @@ final accessibilityControllerProvider =
 );
 
 class AccessibilityController extends Notifier<AsyncValue<void>> {
+  /// Evita registar múltiplos eventos de histórico quando o utilizador ajusta
+  /// vários controlos seguidos: regista apenas 1 vez por sessão.
+  bool _accessibilityLogged = false;
+
   @override
   AsyncValue<void> build() => const AsyncData(null);
 
@@ -56,5 +61,12 @@ class AccessibilityController extends Notifier<AsyncValue<void>> {
     state = await AsyncValue.guard(
       () => ref.read(savePreferencesUseCaseProvider).call(preferences),
     );
+    if (!state.hasError && !_accessibilityLogged) {
+      _accessibilityLogged = true;
+      await ref.read(historyRecorderProvider).record(
+            type: HistoryActionType.accessibilityChanged,
+            title: 'Ajustou as opções de acessibilidade',
+          );
+    }
   }
 }
