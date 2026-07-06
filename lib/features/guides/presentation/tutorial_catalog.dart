@@ -137,4 +137,12 @@ const List<TutorialInfo> kTutorials = [
     icon: Icons.info_outline,
     route: AppRoutes.about,
   ),
+  TutorialInfo(
+    id: TourId.notificationPreferences,
+    title: 'Preferências de Notificação',
+    description:
+        'Configure quando e como quer ser avisado das suas tarefas e lembretes.',
+    icon: Icons.notifications_active_outlined,
+    route: AppRoutes.notificationPreferences,
+  ),
 ];

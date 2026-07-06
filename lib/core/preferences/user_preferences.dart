@@ -79,6 +79,50 @@ enum InterfaceMode {
   String toFirestore() => name;
 }
 
+/// Antecedência com que o utilizador recebe a notificação push antes de uma
+/// tarefa ou lembrete.
+enum NotificationOffset {
+  min15,
+  min30,
+  hour1,
+  hour6,
+  day1;
+
+  /// Minutos de antecedência usados pelo backend para calcular o horário de envio.
+  int get minutes => switch (this) {
+        NotificationOffset.min15 => 15,
+        NotificationOffset.min30 => 30,
+        NotificationOffset.hour1 => 60,
+        NotificationOffset.hour6 => 360,
+        NotificationOffset.day1 => 1440,
+      };
+
+  /// Rótulo exibido na UI de Preferências de Notificação.
+  String get label => switch (this) {
+        NotificationOffset.min15 => '15 minutos antes',
+        NotificationOffset.min30 => '30 minutos antes',
+        NotificationOffset.hour1 => '1 hora antes',
+        NotificationOffset.hour6 => '6 horas antes',
+        NotificationOffset.day1 => '1 dia antes',
+      };
+
+  static NotificationOffset fromString(String value) => switch (value) {
+        '15m' => NotificationOffset.min15,
+        '1h' => NotificationOffset.hour1,
+        '6h' => NotificationOffset.hour6,
+        '1d' => NotificationOffset.day1,
+        _ => NotificationOffset.min30,
+      };
+
+  String toFirestore() => switch (this) {
+        NotificationOffset.min15 => '15m',
+        NotificationOffset.min30 => '30m',
+        NotificationOffset.hour1 => '1h',
+        NotificationOffset.hour6 => '6h',
+        NotificationOffset.day1 => '1d',
+      };
+}
+
 class UserPreferences {
   const UserPreferences({
     required this.userId,
@@ -89,9 +133,11 @@ class UserPreferences {
     required this.interfaceMode,
     required this.audioFeedbackEnabled,
     required this.largeTouchTargets,
-    required this.remindersEnabled,
+    required this.tasksNotificationsEnabled,
+    required this.taskNotificationOffset,
+    required this.remindersNotificationsEnabled,
+    required this.reminderNotificationOffset,
     required this.updatedAt,
-    this.notificationTime,
   });
 
   final String userId;
@@ -118,8 +164,18 @@ class UserPreferences {
   /// Touch targets de 64×64px em vez de 48×48px
   final bool largeTouchTargets;
 
-  final bool remindersEnabled;
-  final String? notificationTime;
+  /// Ativa notificações push para tarefas
+  final bool tasksNotificationsEnabled;
+
+  /// Antecedência com que o push de tarefa é enviado
+  final NotificationOffset taskNotificationOffset;
+
+  /// Ativa notificações push para lembretes
+  final bool remindersNotificationsEnabled;
+
+  /// Antecedência com que o push de lembrete é enviado
+  final NotificationOffset reminderNotificationOffset;
+
   final DateTime updatedAt;
 
   /// Preferências padrão (usadas offline ou antes do Firestore responder)
@@ -132,7 +188,10 @@ class UserPreferences {
         interfaceMode: InterfaceMode.advanced,
         audioFeedbackEnabled: false,
         largeTouchTargets: false,
-        remindersEnabled: true,
+        tasksNotificationsEnabled: true,
+        taskNotificationOffset: NotificationOffset.min30,
+        remindersNotificationsEnabled: true,
+        reminderNotificationOffset: NotificationOffset.min30,
         updatedAt: DateTime.now(),
       );
 
@@ -145,8 +204,10 @@ class UserPreferences {
     InterfaceMode? interfaceMode,
     bool? audioFeedbackEnabled,
     bool? largeTouchTargets,
-    bool? remindersEnabled,
-    String? notificationTime,
+    bool? tasksNotificationsEnabled,
+    NotificationOffset? taskNotificationOffset,
+    bool? remindersNotificationsEnabled,
+    NotificationOffset? reminderNotificationOffset,
     DateTime? updatedAt,
   }) =>
       UserPreferences(
@@ -158,8 +219,14 @@ class UserPreferences {
         interfaceMode: interfaceMode ?? this.interfaceMode,
         audioFeedbackEnabled: audioFeedbackEnabled ?? this.audioFeedbackEnabled,
         largeTouchTargets: largeTouchTargets ?? this.largeTouchTargets,
-        remindersEnabled: remindersEnabled ?? this.remindersEnabled,
-        notificationTime: notificationTime ?? this.notificationTime,
+        tasksNotificationsEnabled:
+            tasksNotificationsEnabled ?? this.tasksNotificationsEnabled,
+        taskNotificationOffset:
+            taskNotificationOffset ?? this.taskNotificationOffset,
+        remindersNotificationsEnabled:
+            remindersNotificationsEnabled ?? this.remindersNotificationsEnabled,
+        reminderNotificationOffset:
+            reminderNotificationOffset ?? this.reminderNotificationOffset,
         updatedAt: updatedAt ?? this.updatedAt,
       );
 
@@ -172,8 +239,10 @@ class UserPreferences {
         'interfaceMode': interfaceMode.toFirestore(),
         'audioFeedbackEnabled': audioFeedbackEnabled,
         'largeTouchTargets': largeTouchTargets,
-        'remindersEnabled': remindersEnabled,
-        'notificationTime': notificationTime,
+        'tasksNotificationsEnabled': tasksNotificationsEnabled,
+        'taskNotificationOffset': taskNotificationOffset.toFirestore(),
+        'remindersNotificationsEnabled': remindersNotificationsEnabled,
+        'reminderNotificationOffset': reminderNotificationOffset.toFirestore(),
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
@@ -182,16 +251,23 @@ class UserPreferences {
         userId: userId,
         fontSize: FontSizeScale.fromString(map['fontSize'] as String? ?? ''),
         darkMode: map['darkMode'] as bool? ?? false,
-        contrast:
-            ContrastMode.fromString(map['contrast'] as String? ?? ''),
+        contrast: ContrastMode.fromString(map['contrast'] as String? ?? ''),
         spacing: SpacingMode.fromString(map['spacing'] as String? ?? ''),
         interfaceMode:
             InterfaceMode.fromString(map['interfaceMode'] as String? ?? ''),
         audioFeedbackEnabled:
             map['audioFeedbackEnabled'] as bool? ?? false,
         largeTouchTargets: map['largeTouchTargets'] as bool? ?? false,
-        remindersEnabled: map['remindersEnabled'] as bool? ?? true,
-        notificationTime: map['notificationTime'] as String?,
+        tasksNotificationsEnabled:
+            map['tasksNotificationsEnabled'] as bool? ?? true,
+        taskNotificationOffset: NotificationOffset.fromString(
+          map['taskNotificationOffset'] as String? ?? '',
+        ),
+        remindersNotificationsEnabled:
+            map['remindersNotificationsEnabled'] as bool? ?? true,
+        reminderNotificationOffset: NotificationOffset.fromString(
+          map['reminderNotificationOffset'] as String? ?? '',
+        ),
         updatedAt:
             (map['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       );

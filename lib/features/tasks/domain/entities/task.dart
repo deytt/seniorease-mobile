@@ -88,9 +88,9 @@ class Task {
     required this.createdAt,
     required this.updatedAt,
     this.steps = const [],
-    this.reminderTime,
     this.dueDate,
     this.completedAt,
+    this.notified = false,
   });
 
   final String id;
@@ -104,12 +104,14 @@ class Task {
   /// Passos ordenados por `order`. Vazio quando não carregados.
   final List<TaskStep> steps;
 
-  /// Horário de lembrete no formato "HH:mm" (ex: "08:00").
-  final String? reminderTime;
   final DateTime? dueDate;
   final DateTime? completedAt;
   final DateTime createdAt;
   final DateTime updatedAt;
+
+  /// true após a Cloud Function ter enviado o push de aviso desta tarefa.
+  /// Reposto a false se dueDate for alterada.
+  final bool notified;
 
   bool get isCompleted => status.isCompleted;
 
@@ -132,11 +134,11 @@ class Task {
     TaskCategory? category,
     TaskStatus? status,
     List<TaskStep>? steps,
-    String? reminderTime,
     DateTime? dueDate,
     DateTime? completedAt,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? notified,
   }) =>
       Task(
         id: id ?? this.id,
@@ -147,11 +149,11 @@ class Task {
         category: category ?? this.category,
         status: status ?? this.status,
         steps: steps ?? this.steps,
-        reminderTime: reminderTime ?? this.reminderTime,
         dueDate: dueDate ?? this.dueDate,
         completedAt: completedAt ?? this.completedAt,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
+        notified: notified ?? this.notified,
       );
 
   /// Mapa para gravação no Firestore. Não inclui `steps` (subcollection).
@@ -162,10 +164,10 @@ class Task {
         'priority': priority.toFirestore(),
         'category': category.toFirestore(),
         'status': status.toFirestore(),
-        'reminderTime': reminderTime,
         'dueDate': dueDate != null ? Timestamp.fromDate(dueDate!) : null,
         'completedAt':
             completedAt != null ? Timestamp.fromDate(completedAt!) : null,
+        'notified': notified,
         'createdAt': Timestamp.fromDate(createdAt),
         'updatedAt': FieldValue.serverTimestamp(),
       };
@@ -184,9 +186,9 @@ class Task {
         category: TaskCategory.fromString(map['category'] as String? ?? ''),
         status: TaskStatus.fromString(map['status'] as String? ?? ''),
         steps: steps,
-        reminderTime: map['reminderTime'] as String?,
         dueDate: (map['dueDate'] as Timestamp?)?.toDate(),
         completedAt: (map['completedAt'] as Timestamp?)?.toDate(),
+        notified: map['notified'] as bool? ?? false,
         createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
         updatedAt: (map['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       );
