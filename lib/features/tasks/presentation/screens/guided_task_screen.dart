@@ -6,6 +6,10 @@ import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/theme/senior_system_ui.dart';
+import 'package:mobile/core/tour/senior_showcase.dart';
+import 'package:mobile/core/tour/tour_help_button.dart';
+import 'package:mobile/core/tour/tour_host.dart';
+import 'package:mobile/core/tour/tour_id.dart';
 import 'package:mobile/features/tasks/domain/entities/task.dart';
 import 'package:mobile/features/tasks/presentation/providers/tasks_provider.dart';
 import 'package:mobile/features/tasks/presentation/widgets/celebration_overlay.dart';
@@ -20,10 +24,27 @@ class GuidedTaskScreen extends ConsumerStatefulWidget {
   ConsumerState<GuidedTaskScreen> createState() => _GuidedTaskScreenState();
 }
 
-class _GuidedTaskScreenState extends ConsumerState<GuidedTaskScreen> {
+class _GuidedTaskScreenState extends ConsumerState<GuidedTaskScreen>
+    with TourHost<GuidedTaskScreen> {
+  static const String _scope = 'guidedTask';
+
   int _currentIndex = 0;
   bool _initialized = false;
   bool _finishing = false;
+
+  final _progressShowcaseKey = GlobalKey();
+  final _stepCardShowcaseKey = GlobalKey();
+  final _footerShowcaseKey = GlobalKey();
+
+  @override
+  String get tourScope => _scope;
+
+  @override
+  TourId get tourId => TourId.guidedTask;
+
+  @override
+  List<GlobalKey> get tourKeys =>
+      [_progressShowcaseKey, _stepCardShowcaseKey, _footerShowcaseKey];
 
   /// Início inteligente: começa no primeiro passo ainda não concluído.
   void _ensureInit(Task task) {
@@ -97,8 +118,13 @@ class _GuidedTaskScreenState extends ConsumerState<GuidedTaskScreen> {
               return _GuidedBody(
                 task: task,
                 currentIndex: index,
+                scope: _scope,
+                progressShowcaseKey: _progressShowcaseKey,
+                stepCardShowcaseKey: _stepCardShowcaseKey,
+                footerShowcaseKey: _footerShowcaseKey,
                 onNext: () => _onNext(task),
                 onBack: _onBack,
+                onHelp: startTour,
               );
             },
           ),
@@ -112,14 +138,24 @@ class _GuidedBody extends StatelessWidget {
   const _GuidedBody({
     required this.task,
     required this.currentIndex,
+    required this.scope,
+    required this.progressShowcaseKey,
+    required this.stepCardShowcaseKey,
+    required this.footerShowcaseKey,
     required this.onNext,
     required this.onBack,
+    required this.onHelp,
   });
 
   final Task task;
   final int currentIndex;
+  final String scope;
+  final GlobalKey progressShowcaseKey;
+  final GlobalKey stepCardShowcaseKey;
+  final GlobalKey footerShowcaseKey;
   final VoidCallback onNext;
   final VoidCallback onBack;
+  final VoidCallback onHelp;
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +167,13 @@ class _GuidedBody extends StatelessWidget {
 
     return Column(
       children: [
-        _Header(current: currentIndex + 1, total: total),
+        _Header(
+          current: currentIndex + 1,
+          total: total,
+          scope: scope,
+          progressShowcaseKey: progressShowcaseKey,
+          onHelp: onHelp,
+        ),
         GuidedProgressHeader(steps: task.steps, currentIndex: currentIndex),
         Expanded(
           child: Padding(
@@ -139,55 +181,69 @@ class _GuidedBody extends StatelessWidget {
               horizontal: AppSpacing.lg,
               vertical: AppSpacing.xl,
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 80,
-                  height: 80,
-                  alignment: Alignment.center,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primaryLight,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Text(
-                    '${step.order}',
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 36,
+            child: SeniorShowcase(
+              showcaseKey: stepCardShowcaseKey,
+              scope: scope,
+              title: 'Passo atual',
+              description:
+                  'Leia com calma o que precisa de fazer neste passo. Quando terminar, toque em "Próximo".',
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 80,
+                    height: 80,
+                    alignment: Alignment.center,
+                    decoration: const BoxDecoration(
+                      color: AppColors.primaryLight,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '${step.order}',
+                      style: const TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 36,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                Text(
-                  step.title,
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(
+                    step.title,
+                    textAlign: TextAlign.center,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.headlineLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  step.instruction.isNotEmpty
-                      ? step.instruction
-                      : 'Quando terminar este passo, toque em «Próximo».',
-                  textAlign: TextAlign.center,
-                  maxLines: 5,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyLarge,
-                ),
-              ],
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
+                    step.instruction.isNotEmpty
+                        ? step.instruction
+                        : 'Quando terminar este passo, toque em «Próximo».',
+                    textAlign: TextAlign.center,
+                    maxLines: 5,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-        _Footer(
-          isFirst: isFirst,
-          isLast: isLast,
-          onBack: onBack,
-          onNext: onNext,
+        SeniorShowcase(
+          showcaseKey: footerShowcaseKey,
+          scope: scope,
+          title: 'Navegar entre passos',
+          description:
+              '"Anterior" volta ao passo anterior. "Próximo" avança e conclui o passo atual. No último passo aparece "Concluir".',
+          child: _Footer(
+            isFirst: isFirst,
+            isLast: isLast,
+            onBack: onBack,
+            onNext: onNext,
+          ),
         ),
       ],
     );
@@ -195,10 +251,19 @@ class _GuidedBody extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.current, required this.total});
+  const _Header({
+    required this.current,
+    required this.total,
+    required this.scope,
+    required this.progressShowcaseKey,
+    required this.onHelp,
+  });
 
   final int current;
   final int total;
+  final String scope;
+  final GlobalKey progressShowcaseKey;
+  final VoidCallback onHelp;
 
   @override
   Widget build(BuildContext context) {
@@ -244,19 +309,33 @@ class _Header extends StatelessWidget {
               ),
             ),
           ),
-          Text(
-            'Modo Guiado',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onSurface,
+          SeniorShowcase(
+            showcaseKey: progressShowcaseKey,
+            scope: scope,
+            title: 'Progresso do modo guiado',
+            description:
+                'Este número mostra em que passo está e quantos passos tem esta tarefa no total.',
+            child: Text(
+              'Modo Guiado',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+              ),
             ),
           ),
-          Text(
-            '$current/$total',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: AppColors.slate400,
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '$current/$total',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.slate400,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              TourHelpButton(onPressed: onHelp),
+            ],
           ),
         ],
       ),

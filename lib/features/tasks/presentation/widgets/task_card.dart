@@ -32,17 +32,20 @@ String _formatDueDate(DateTime dt) {
 }
 
 /// Card de tarefa na lista (node 15:7134).
+///
+/// [onToggleComplete] é opcional. Quando `null` o círculo fica apenas como
+/// indicador visual (sem InkWell), forçando o utilizador a abrir a tarefa.
 class TaskCard extends StatelessWidget {
   const TaskCard({
     required this.task,
     required this.onTap,
-    required this.onToggleComplete,
+    this.onToggleComplete,
     super.key,
   });
 
   final Task task;
   final VoidCallback onTap;
-  final VoidCallback onToggleComplete;
+  final VoidCallback? onToggleComplete;
 
   @override
   Widget build(BuildContext context) {
@@ -185,10 +188,37 @@ class _CompletionCircle extends StatelessWidget {
   const _CompletionCircle({required this.isDone, required this.onTap});
 
   final bool isDone;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final circle = Padding(
+      padding: const EdgeInsets.all(8),
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: isDone ? AppColors.success : Colors.transparent,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: isDone ? AppColors.success : AppColors.slate200,
+            width: 2,
+          ),
+        ),
+        child: isDone
+            ? const Icon(Icons.check, color: Colors.white, size: 16)
+            : null,
+      ),
+    );
+
+    if (onTap == null) {
+      return Semantics(
+        checked: isDone,
+        label: isDone ? 'Concluída' : 'Abra a tarefa para concluir',
+        child: circle,
+      );
+    }
+
     return Semantics(
       button: true,
       checked: isDone,
@@ -198,27 +228,10 @@ class _CompletionCircle extends StatelessWidget {
         child: InkWell(
           onTap: () {
             HapticFeedback.selectionClick();
-            onTap();
+            onTap!();
           },
           customBorder: const CircleBorder(),
-          child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: isDone ? AppColors.success : Colors.transparent,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isDone ? AppColors.success : AppColors.slate200,
-                  width: 2,
-                ),
-              ),
-              child: isDone
-                  ? const Icon(Icons.check, color: Colors.white, size: 16)
-                  : null,
-            ),
-          ),
+          child: circle,
         ),
       ),
     );
