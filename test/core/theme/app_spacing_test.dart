@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
-import 'package:mobile/features/accessibility/domain/entities/user_preferences.dart';
+import 'package:mobile/core/preferences/user_preferences.dart';
 
 void main() {
   group('AppSpacing.factor', () {

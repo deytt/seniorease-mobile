@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/senior_spacing_theme.dart';
-import 'package:mobile/features/accessibility/domain/entities/user_preferences.dart';
+import 'package:mobile/core/preferences/user_preferences.dart';
 
 /// Tema global do SeniorEase alinhado ao Design System (Figma).
 abstract final class AppTheme {

@@ -1,4 +1,4 @@
-import 'package:mobile/features/accessibility/domain/entities/user_preferences.dart';
+import 'package:mobile/core/preferences/user_preferences.dart';
 
 /// Tokens de espaçamento do Design System SeniorEase (techContext.md).
 abstract final class AppSpacing {
