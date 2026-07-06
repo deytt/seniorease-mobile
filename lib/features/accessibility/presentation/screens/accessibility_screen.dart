@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
+import 'package:mobile/core/theme/senior_spacing_theme.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
 import 'package:mobile/core/tour/tour_dialogs.dart';
 import 'package:mobile/core/tour/tour_gate.dart';
@@ -16,6 +17,7 @@ import 'package:mobile/features/accessibility/presentation/providers/preferences
 import 'package:mobile/features/accessibility/presentation/widgets/font_size_slider_card.dart';
 import 'package:mobile/features/accessibility/presentation/widgets/interface_mode_card.dart';
 import 'package:mobile/features/accessibility/presentation/widgets/preference_toggle_tile.dart';
+import 'package:mobile/features/accessibility/presentation/widgets/spacing_mode_card.dart';
 
 class AccessibilityScreen extends ConsumerStatefulWidget {
   const AccessibilityScreen({super.key});
@@ -34,6 +36,7 @@ class _AccessibilityScreenState extends ConsumerState<AccessibilityScreen>
   // Alvos do tutorial guiado (na ordem de exibição; o 1.º está no topo).
   final _fontShowcaseKey = GlobalKey();
   final _modeShowcaseKey = GlobalKey();
+  final _spacingShowcaseKey = GlobalKey();
   final _togglesShowcaseKey = GlobalKey();
   final _saveShowcaseKey = GlobalKey();
 
@@ -47,6 +50,7 @@ class _AccessibilityScreenState extends ConsumerState<AccessibilityScreen>
   List<GlobalKey> get tourKeys => [
         _fontShowcaseKey,
         _modeShowcaseKey,
+        _spacingShowcaseKey,
         _togglesShowcaseKey,
         _saveShowcaseKey,
       ];
@@ -162,6 +166,7 @@ class _AccessibilityScreenState extends ConsumerState<AccessibilityScreen>
           tourScope: _scope,
           fontShowcaseKey: _fontShowcaseKey,
           modeShowcaseKey: _modeShowcaseKey,
+          spacingShowcaseKey: _spacingShowcaseKey,
           togglesShowcaseKey: _togglesShowcaseKey,
           saveShowcaseKey: _saveShowcaseKey,
         ),
@@ -181,6 +186,7 @@ class _Body extends StatelessWidget {
     required this.tourScope,
     required this.fontShowcaseKey,
     required this.modeShowcaseKey,
+    required this.spacingShowcaseKey,
     required this.togglesShowcaseKey,
     required this.saveShowcaseKey,
   });
@@ -193,15 +199,17 @@ class _Body extends StatelessWidget {
   final String tourScope;
   final GlobalKey fontShowcaseKey;
   final GlobalKey modeShowcaseKey;
+  final GlobalKey spacingShowcaseKey;
   final GlobalKey togglesShowcaseKey;
   final GlobalKey saveShowcaseKey;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final spacing = theme.extension<SeniorSpacingTheme>();
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: EdgeInsets.all(spacing?.screenPadding ?? AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -218,7 +226,7 @@ class _Body extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 12),
+          SizedBox(height: spacing?.itemGap ?? 12),
 
           // Card 2 — Modo de Interface
           SeniorShowcase(
@@ -233,9 +241,24 @@ class _Body extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 12),
+          SizedBox(height: spacing?.itemGap ?? 12),
 
-          // Card 3 — Toggles
+          // Card 3 — Espaçamento
+          SeniorShowcase(
+            showcaseKey: spacingShowcaseKey,
+            scope: tourScope,
+            title: 'Espaçamento',
+            description:
+                'Escolha quanto espaço quer entre os elementos. "Espaçoso" dá mais respiro à tela.',
+            child: SpacingModeCard(
+              value: current.spacing,
+              onChanged: (v) => onUpdate(current.copyWith(spacing: v)),
+            ),
+          ),
+
+          SizedBox(height: spacing?.itemGap ?? 12),
+
+          // Card 4 — Toggles
           SeniorShowcase(
             showcaseKey: togglesShowcaseKey,
             scope: tourScope,
@@ -289,7 +312,7 @@ class _Body extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: AppSpacing.lg),
+          SizedBox(height: spacing?.sectionGap ?? AppSpacing.lg),
 
           SeniorShowcase(
             showcaseKey: saveShowcaseKey,
@@ -304,7 +327,7 @@ class _Body extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: AppSpacing.md),
+          SizedBox(height: spacing?.cardPadding ?? AppSpacing.md),
         ],
       ),
     );

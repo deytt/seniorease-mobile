@@ -6,6 +6,7 @@ import 'package:mobile/app/router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
+import 'package:mobile/core/theme/senior_spacing_theme.dart';
 import 'package:mobile/core/theme/senior_system_ui.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
 import 'package:mobile/core/tour/tour_host.dart';
@@ -482,12 +483,13 @@ class _TaskList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final spacing = Theme.of(context).extension<SeniorSpacingTheme>();
     return ListView(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: EdgeInsets.all(spacing?.screenPadding ?? AppSpacing.md),
       children: [
         for (var i = 0; i < tasks.length; i++) ...[
           _buildCard(context, ref, tasks[i], isFirst: i == 0),
-          const SizedBox(height: 12),
+          SizedBox(height: spacing?.itemGap ?? 12),
         ],
         const SizedBox(height: 4),
         _GuidedModePromo(tasks: tasks),

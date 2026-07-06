@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/core/theme/app_colors.dart';
+import 'package:mobile/core/theme/app_spacing.dart';
+import 'package:mobile/core/theme/senior_spacing_theme.dart';
 import 'package:mobile/features/accessibility/domain/entities/user_preferences.dart';
 
 /// Tema global do SeniorEase alinhado ao Design System (Figma).
@@ -127,6 +129,9 @@ abstract final class AppTheme {
       scaledText = _scale(_baseTextTheme, prefs.fontSize.scale);
     }
 
+    final spacingTheme =
+        SeniorSpacingTheme.fromFactor(AppSpacing.factor(prefs.spacing));
+
     return _buildBase(
       colorScheme: colorScheme,
       textTheme: scaledText,
@@ -136,6 +141,7 @@ abstract final class AppTheme {
       appBarFg: appBarFg,
       inputFill: inputFill,
       dividerColor: dividerColor,
+      spacingTheme: spacingTheme,
     );
   }
 
@@ -150,7 +156,9 @@ abstract final class AppTheme {
     Color appBarFg = AppColors.slate900,
     Color inputFill = Colors.white,
     Color dividerColor = AppColors.slate200,
+    SeniorSpacingTheme? spacingTheme,
   }) {
+    final spacing = spacingTheme ?? SeniorSpacingTheme.fromFactor(1.0);
     final inputRadius = BorderRadius.circular(inputBorderRadius);
 
     return ThemeData(
@@ -158,6 +166,7 @@ abstract final class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: scaffoldBg,
       textTheme: textTheme,
+      extensions: <ThemeExtension<dynamic>>[spacing],
       appBarTheme: AppBarTheme(
         backgroundColor: appBarBg,
         foregroundColor: appBarFg,
