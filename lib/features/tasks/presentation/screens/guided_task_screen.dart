@@ -168,8 +168,6 @@ class _GuidedBody extends StatelessWidget {
     return Column(
       children: [
         _Header(
-          current: currentIndex + 1,
-          total: total,
           scope: scope,
           progressShowcaseKey: progressShowcaseKey,
           onHelp: onHelp,
@@ -190,6 +188,17 @@ class _GuidedBody extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  Semantics(
+                    label: 'Passo ${currentIndex + 1} de $total',
+                    child: Text(
+                      'Passo ${currentIndex + 1} de $total',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.slate400,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
                   Container(
                     width: 80,
                     height: 80,
@@ -252,15 +261,11 @@ class _GuidedBody extends StatelessWidget {
 
 class _Header extends StatelessWidget {
   const _Header({
-    required this.current,
-    required this.total,
     required this.scope,
     required this.progressShowcaseKey,
     required this.onHelp,
   });
 
-  final int current;
-  final int total;
   final String scope;
   final GlobalKey progressShowcaseKey;
   final VoidCallback onHelp;
@@ -323,20 +328,7 @@ class _Header extends StatelessWidget {
               ),
             ),
           ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '$current/$total',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.slate400,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              TourHelpButton(onPressed: onHelp),
-            ],
-          ),
+          TourHelpButton(onPressed: onHelp),
         ],
       ),
     );
