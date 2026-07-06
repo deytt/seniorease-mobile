@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/app/router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
@@ -121,7 +122,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen>
   }
 
   void _openFilterSheet(BuildContext context, ReminderFilter current) {
-    HapticFeedback.lightImpact();
+    SeniorFeedback.light(ref);
     ref.read(openReminderSwipeProvider.notifier).close();
     ReminderFilterSheet.show(
       context,
@@ -137,7 +138,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen>
 // Header
 // ---------------------------------------------------------------------------
 
-class _Header extends StatelessWidget {
+class _Header extends ConsumerWidget {
   const _Header({
     required this.doneCount,
     required this.totalCount,
@@ -161,7 +162,7 @@ class _Header extends StatelessWidget {
   final VoidCallback onOpenFilter;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
     return ColoredBox(
@@ -238,7 +239,7 @@ class _Header extends StatelessWidget {
                           BorderRadius.circular(AppTheme.borderRadius),
                       child: InkWell(
                         onTap: () {
-                          HapticFeedback.lightImpact();
+                          SeniorFeedback.light(ref);
                           onCreate();
                         },
                         borderRadius:
@@ -394,20 +395,20 @@ class _ActiveFilterBar extends StatelessWidget {
   }
 }
 
-class _ActiveChip extends StatelessWidget {
+class _ActiveChip extends ConsumerWidget {
   const _ActiveChip({required this.label, required this.onRemove});
 
   final String label;
   final VoidCallback onRemove;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Semantics(
       label: 'Filtro ativo: $label. Toque para remover.',
       button: true,
       child: GestureDetector(
         onTap: () {
-          HapticFeedback.selectionClick();
+          SeniorFeedback.selection(ref);
           onRemove();
         },
         child: Container(

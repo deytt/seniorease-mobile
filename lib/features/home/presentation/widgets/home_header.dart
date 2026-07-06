@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/app/router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
@@ -117,19 +117,19 @@ class HomeHeader extends ConsumerWidget {
 }
 
 /// Botão de ajuda em versão clara, para o header gradiente da Tela Inicial.
-class _HeaderHelpButton extends StatelessWidget {
+class _HeaderHelpButton extends ConsumerWidget {
   const _HeaderHelpButton({required this.onTap});
 
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Semantics(
       button: true,
       label: 'Ver como funciona esta tela',
       child: GestureDetector(
         onTap: () {
-          HapticFeedback.lightImpact();
+          SeniorFeedback.light(ref);
           onTap();
         },
         child: Container(
@@ -191,7 +191,7 @@ class _SosButton extends StatelessWidget {
 
 // ------------------------------------------------------------------ Next Activity Card
 
-class _NextActivityCard extends StatelessWidget {
+class _NextActivityCard extends ConsumerWidget {
   const _NextActivityCard({required this.nextTask});
 
   final Task? nextTask;
@@ -217,7 +217,7 @@ class _NextActivityCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final hasTask = nextTask != null;
 
@@ -304,7 +304,7 @@ class _NextActivityCard extends StatelessWidget {
               excludeSemantics: true,
               child: GestureDetector(
                 onTap: () {
-                  HapticFeedback.lightImpact();
+                  SeniorFeedback.light(ref);
                   if (hasTask) {
                     context.push(AppRoutes.guidedTask(nextTask!.id));
                   } else {

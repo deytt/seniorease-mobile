@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
@@ -360,7 +360,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   // ------------------------------------------------------------------ Foto
 
   void _showPhotoSourceSheet() {
-    HapticFeedback.lightImpact();
+    SeniorFeedback.light(ref);
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -458,7 +458,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
   Future<void> _save(UserProfile base) async {
     FocusScope.of(context).unfocus();
-    HapticFeedback.mediumImpact();
 
     if (_nameController.text.trim().isEmpty) {
       showSeniorToast(
@@ -499,6 +498,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         variant: SeniorToastVariant.danger,
       );
     } else {
+      await SeniorFeedback.success(ref);
+      if (!mounted) return;
       showSeniorToast(
         context,
         title: 'Dados guardados',

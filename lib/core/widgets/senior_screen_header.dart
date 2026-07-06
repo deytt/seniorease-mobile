@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
@@ -104,21 +106,21 @@ class SeniorScreenHeader extends StatelessWidget {
   }
 }
 
-class _BackButton extends StatelessWidget {
+class _BackButton extends ConsumerWidget {
   const _BackButton({required this.onPressed, this.icon = Icons.arrow_back});
 
   final VoidCallback onPressed;
   final IconData icon;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     return Semantics(
       button: true,
       label: icon == Icons.close ? 'Fechar' : 'Voltar',
       child: GestureDetector(
         onTap: () {
-          HapticFeedback.lightImpact();
+          SeniorFeedback.light(ref);
           onPressed();
         },
         child: Container(

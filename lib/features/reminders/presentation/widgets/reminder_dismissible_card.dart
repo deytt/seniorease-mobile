@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/app/router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
@@ -186,7 +186,7 @@ class _ReminderDismissibleCardState
       _closeSwipe();
       return;
     }
-    HapticFeedback.selectionClick();
+    SeniorFeedback.selection(ref);
     ref.read(expandedReminderIdProvider.notifier).toggle(widget.reminder.id);
   }
 
@@ -194,7 +194,8 @@ class _ReminderDismissibleCardState
     final open = ref.read(openReminderSwipeProvider);
     if (open?.id != widget.reminder.id && !_isDragging) return;
 
-    HapticFeedback.mediumImpact();
+    await SeniorFeedback.medium(ref);
+    if (!mounted) return;
     final confirmed = await showSeniorConfirmDialog(
       context: context,
       title: 'Excluir lembrete?',
@@ -228,7 +229,7 @@ class _ReminderDismissibleCardState
     final open = ref.read(openReminderSwipeProvider);
     if (open?.id != widget.reminder.id && !_isDragging) return;
 
-    HapticFeedback.lightImpact();
+    SeniorFeedback.light(ref);
     _closeSwipe();
     context.push(
       AppRoutes.editReminder(widget.reminder.id),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
@@ -40,7 +40,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen>
   List<GlobalKey> get tourKeys => [_descShowcaseKey, _webShowcaseKey];
 
   Future<void> _openWeb() async {
-    HapticFeedback.lightImpact();
+    await SeniorFeedback.light(ref);
     final uri = Uri.parse(_webUrl);
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!ok && mounted) {

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
@@ -7,7 +9,7 @@ enum SeniorButtonVariant { primary, secondary, outline, ghost, destructive }
 
 enum SeniorButtonSize { medium, large }
 
-class SeniorButton extends StatelessWidget {
+class SeniorButton extends ConsumerWidget {
   const SeniorButton({
     required this.label,
     super.key,
@@ -43,7 +45,7 @@ class SeniorButton extends StatelessWidget {
   final Color? customForegroundColor;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final height = size == SeniorButtonSize.large
         ? AppTheme.buttonHeight
         : AppTheme.minTouchTarget;
@@ -56,7 +58,12 @@ class SeniorButton extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: isDisabled ? null : onPressed,
+          onTap: isDisabled
+              ? null
+              : () {
+                  SeniorFeedback.light(ref);
+                  onPressed!();
+                },
           borderRadius: BorderRadius.circular(AppTheme.buttonBorderRadius),
           child: Ink(
             height: height,

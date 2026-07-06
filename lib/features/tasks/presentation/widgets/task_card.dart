@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/features/tasks/domain/entities/task.dart';
@@ -35,7 +36,7 @@ String _formatDueDate(DateTime dt) {
 ///
 /// [onToggleComplete] é opcional. Quando `null` o círculo fica apenas como
 /// indicador visual (sem InkWell), forçando o utilizador a abrir a tarefa.
-class TaskCard extends StatelessWidget {
+class TaskCard extends ConsumerWidget {
   const TaskCard({
     required this.task,
     required this.onTap,
@@ -48,7 +49,7 @@ class TaskCard extends StatelessWidget {
   final VoidCallback? onToggleComplete;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final isDone = task.isCompleted;
     final pColor = priorityColor(task.priority);
@@ -61,7 +62,7 @@ class TaskCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            HapticFeedback.lightImpact();
+            SeniorFeedback.light(ref);
             onTap();
           },
           borderRadius: BorderRadius.circular(AppSpacing.md),
@@ -77,7 +78,7 @@ class TaskCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                _CompletionCircle(isDone: isDone, onTap: onToggleComplete),
+                _CompletionCircle(isDone: isDone, onTap: onToggleComplete, ref: ref),
                 const SizedBox(width: AppSpacing.sm + 4),
                 Expanded(
                   child: Column(
@@ -185,10 +186,15 @@ class _CardBadge extends StatelessWidget {
 }
 
 class _CompletionCircle extends StatelessWidget {
-  const _CompletionCircle({required this.isDone, required this.onTap});
+  const _CompletionCircle({
+    required this.isDone,
+    required this.onTap,
+    required this.ref,
+  });
 
   final bool isDone;
   final VoidCallback? onTap;
+  final WidgetRef ref;
 
   @override
   Widget build(BuildContext context) {
@@ -227,7 +233,7 @@ class _CompletionCircle extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            HapticFeedback.selectionClick();
+            SeniorFeedback.success(ref);
             onTap!();
           },
           customBorder: const CircleBorder(),

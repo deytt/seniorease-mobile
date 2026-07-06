@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 
 /// Tag de categoria selecionável — estilo pill horizontal.
 /// A área de toque respeita o mínimo de 44×44px (WCAG AA),
 /// mas o visual é compacto (pill) para listar várias categorias lado a lado.
-class CategoryChip extends StatelessWidget {
+class CategoryChip extends ConsumerWidget {
   const CategoryChip({
     required this.label,
     required this.selected,
@@ -18,7 +19,7 @@ class CategoryChip extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final textScale = MediaQuery.textScalerOf(context).scale(1);
 
@@ -32,7 +33,7 @@ class CategoryChip extends StatelessWidget {
       label: selected ? '$label, selecionado' : label,
       child: GestureDetector(
         onTap: () {
-          HapticFeedback.selectionClick();
+          SeniorFeedback.selection(ref);
           onTap();
         },
         // SizedBox garante área de toque mínima de 44px em altura
