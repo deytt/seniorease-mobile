@@ -1,7 +1,7 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mobile/features/accessibility/presentation/providers/preferences_provider.dart';
+import 'package:mobile/core/preferences/preferences_state.dart';
 
 /// Wrapper centralizado para todo o feedback tátil (haptic) e sonoro do app.
 ///
@@ -35,7 +35,7 @@ class SeniorFeedback {
   }
 
   static bool _isEnabled(WidgetRef ref) =>
-      ref.read(preferencesProvider).value?.audioFeedbackEnabled ?? false;
+      ref.read(audioFeedbackEnabledProvider);
 
   /// Feedback leve — navegação, abrir telas, botões gerais.
   static Future<void> light(WidgetRef ref) async {
