@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
@@ -163,8 +163,6 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen>
     final dateOk = _validateDateTime();
     if (!formOk || !dateOk) return;
 
-    HapticFeedback.lightImpact();
-
     final controller = ref.read(remindersControllerProvider.notifier);
 
     if (_isEditing) {
@@ -188,6 +186,8 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen>
         return;
       }
 
+      await SeniorFeedback.medium(ref);
+      if (!mounted) return;
       showSeniorToast(
         context,
         title: 'Lembrete atualizado',
@@ -226,6 +226,8 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen>
       return;
     }
 
+    await SeniorFeedback.medium(ref);
+    if (!mounted) return;
     showSeniorToast(
       context,
       title: 'Lembrete criado',

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
@@ -10,7 +11,7 @@ import 'package:mobile/features/tasks/domain/entities/task_filter.dart';
 ///
 /// Recebe o [initialFilter] activo e devolve o novo [TaskFilter] via [onApply].
 /// O estado local do sheet não afecta a lista até o utilizador tocar em "Aplicar".
-class TaskFilterSheet extends StatefulWidget {
+class TaskFilterSheet extends ConsumerStatefulWidget {
   const TaskFilterSheet({
     required this.initialFilter,
     required this.onApply,
@@ -39,10 +40,10 @@ class TaskFilterSheet extends StatefulWidget {
   }
 
   @override
-  State<TaskFilterSheet> createState() => _TaskFilterSheetState();
+  ConsumerState<TaskFilterSheet> createState() => _TaskFilterSheetState();
 }
 
-class _TaskFilterSheetState extends State<TaskFilterSheet> {
+class _TaskFilterSheetState extends ConsumerState<TaskFilterSheet> {
   late TaskFilter _filter;
 
   @override
@@ -52,12 +53,12 @@ class _TaskFilterSheetState extends State<TaskFilterSheet> {
   }
 
   void _toggleToday() {
-    HapticFeedback.selectionClick();
+    SeniorFeedback.selection(ref);
     setState(() => _filter = _filter.copyWith(isToday: !_filter.isToday));
   }
 
   void _toggleCategory(TaskCategory cat) {
-    HapticFeedback.selectionClick();
+    SeniorFeedback.selection(ref);
     setState(() {
       _filter = _filter.copyWith(
         category: _filter.category == cat ? null : cat,
@@ -66,7 +67,7 @@ class _TaskFilterSheetState extends State<TaskFilterSheet> {
   }
 
   void _togglePriority(TaskPriority prio) {
-    HapticFeedback.selectionClick();
+    SeniorFeedback.selection(ref);
     setState(() {
       _filter = _filter.copyWith(
         priority: _filter.priority == prio ? null : prio,
@@ -75,12 +76,12 @@ class _TaskFilterSheetState extends State<TaskFilterSheet> {
   }
 
   void _clear() {
-    HapticFeedback.lightImpact();
+    SeniorFeedback.light(ref);
     setState(() => _filter = TaskFilter.empty);
   }
 
   void _apply() {
-    HapticFeedback.lightImpact();
+    SeniorFeedback.light(ref);
     widget.onApply(_filter);
     Navigator.of(context).pop();
   }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
@@ -49,7 +49,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen>
   bool _verificationStarted = false;
 
   void _showComingSoon() {
-    HapticFeedback.lightImpact();
+    SeniorFeedback.light(ref);
     showSeniorToast(
       context,
       title: 'Em breve',
@@ -58,7 +58,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen>
   }
 
   Future<void> _startVerification() async {
-    HapticFeedback.lightImpact();
+    await SeniorFeedback.light(ref);
     setState(() {
       _sending = true;
       _verificationStarted = true;
@@ -86,7 +86,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen>
   }
 
   Future<void> _confirmVerification() async {
-    HapticFeedback.lightImpact();
+    await SeniorFeedback.light(ref);
     setState(() => _checking = true);
     try {
       final verified =

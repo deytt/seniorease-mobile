@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/app/router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
@@ -131,7 +132,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
   }
 
   Future<void> _confirmSignOut() async {
-    HapticFeedback.mediumImpact();
+    await SeniorFeedback.medium(ref);
+    if (!mounted) return;
     final confirmed = await showSeniorConfirmDialog(
       context: context,
       title: 'Sair da conta',
@@ -298,19 +300,19 @@ class _ProfileBanner extends StatelessWidget {
 }
 
 /// Botão de ajuda em versão clara, para o header gradiente das Definições.
-class _HeaderHelpButton extends StatelessWidget {
+class _HeaderHelpButton extends ConsumerWidget {
   const _HeaderHelpButton({required this.onTap});
 
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Semantics(
       button: true,
       label: 'Ver como funciona esta tela',
       child: GestureDetector(
         onTap: () {
-          HapticFeedback.lightImpact();
+          SeniorFeedback.light(ref);
           onTap();
         },
         child: Container(

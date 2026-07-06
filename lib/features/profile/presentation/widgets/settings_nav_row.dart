@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 
 /// Row de navegação reutilizável para o ecrã de Definições.
-class SettingsNavRow extends StatelessWidget {
+class SettingsNavRow extends ConsumerWidget {
   const SettingsNavRow({
     super.key,
     required this.icon,
@@ -23,14 +25,19 @@ class SettingsNavRow extends StatelessWidget {
   final bool showAlert;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         InkWell(
-          onTap: onTap,
+          onTap: onTap == null
+              ? null
+              : () {
+                  SeniorFeedback.light(ref);
+                  onTap!();
+                },
           child: Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.md,

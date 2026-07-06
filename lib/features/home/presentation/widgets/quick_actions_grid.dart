@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:mobile/app/router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
@@ -116,7 +117,7 @@ class QuickActionsGrid extends StatelessWidget {
 
 }
 
-class _ActionCard extends StatelessWidget {
+class _ActionCard extends ConsumerWidget {
   const _ActionCard({
     required this.icon,
     required this.label,
@@ -132,7 +133,7 @@ class _ActionCard extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
     return Semantics(
@@ -142,7 +143,7 @@ class _ActionCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            HapticFeedback.lightImpact();
+            SeniorFeedback.light(ref);
             onTap();
           },
           borderRadius: BorderRadius.circular(16),

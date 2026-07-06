@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 
 /// Linha de toggle reutilizável: emoji/ícone + label + Flutter Switch.
 /// Usada no card de toggles da tela de Acessibilidade.
-class PreferenceToggleTile extends StatelessWidget {
+class PreferenceToggleTile extends ConsumerWidget {
   const PreferenceToggleTile({
     super.key,
     required this.emoji,
@@ -20,7 +22,7 @@ class PreferenceToggleTile extends StatelessWidget {
   final bool showDivider;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
     return Column(
@@ -50,7 +52,10 @@ class PreferenceToggleTile extends StatelessWidget {
               ),
               Switch(
                 value: value,
-                onChanged: onChanged,
+                onChanged: (v) {
+                  SeniorFeedback.selection(ref);
+                  onChanged(v);
+                },
                 activeThumbColor: Colors.white,
                 activeTrackColor: AppColors.primary,
                 inactiveThumbColor: Colors.white,

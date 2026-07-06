@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
@@ -373,13 +373,13 @@ class _StepRow extends ConsumerWidget {
 
 // ------------------------------------------------------------------ Card Modo Guiado
 
-class _GuidedModeCard extends StatelessWidget {
+class _GuidedModeCard extends ConsumerWidget {
   const _GuidedModeCard({required this.task});
 
   final Task task;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
     return Container(
@@ -420,7 +420,7 @@ class _GuidedModeCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppTheme.borderRadius),
               child: InkWell(
                 onTap: () {
-                  HapticFeedback.lightImpact();
+                  SeniorFeedback.light(ref);
                   context.push('/tasks/${task.id}/guided');
                 },
                 borderRadius: BorderRadius.circular(AppTheme.borderRadius),
@@ -479,7 +479,7 @@ class _CompleteButton extends ConsumerWidget {
 
     if (confirmed != true || !context.mounted) return;
 
-    HapticFeedback.lightImpact();
+    await SeniorFeedback.success(ref);
     await ref.read(tasksControllerProvider.notifier).completeTask(task.id);
     if (!context.mounted) return;
     showSeniorToast(

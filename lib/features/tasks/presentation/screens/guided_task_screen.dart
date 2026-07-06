@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
@@ -61,8 +62,6 @@ class _GuidedTaskScreenState extends ConsumerState<GuidedTaskScreen>
     final step = task.steps[_currentIndex];
     final isLast = _currentIndex >= task.steps.length - 1;
 
-    HapticFeedback.lightImpact();
-
     // Avançar conclui o passo atual (idempotente).
     if (!step.isCompleted) {
       await controller.setStepCompleted(
@@ -74,6 +73,7 @@ class _GuidedTaskScreenState extends ConsumerState<GuidedTaskScreen>
     if (!mounted) return;
 
     if (isLast) {
+      await SeniorFeedback.success(ref);
       setState(() => _finishing = true);
       await controller.completeTask(task.id);
       if (!mounted) return;
@@ -84,13 +84,14 @@ class _GuidedTaskScreenState extends ConsumerState<GuidedTaskScreen>
       if (!mounted) return;
       context.pop();
     } else {
+      await SeniorFeedback.light(ref);
       setState(() => _currentIndex++);
     }
   }
 
   void _onBack() {
     if (_currentIndex == 0) return;
-    HapticFeedback.selectionClick();
+    SeniorFeedback.selection(ref);
     setState(() => _currentIndex--);
   }
 
@@ -259,7 +260,7 @@ class _GuidedBody extends StatelessWidget {
   }
 }
 
-class _Header extends StatelessWidget {
+class _Header extends ConsumerWidget {
   const _Header({
     required this.scope,
     required this.progressShowcaseKey,
@@ -271,7 +272,7 @@ class _Header extends StatelessWidget {
   final VoidCallback onHelp;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
     return Container(
@@ -291,7 +292,10 @@ class _Header extends StatelessWidget {
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () => Navigator.of(context).maybePop(),
+                onTap: () {
+                  SeniorFeedback.light(ref);
+                  Navigator.of(context).maybePop();
+                },
                 borderRadius: BorderRadius.circular(AppTheme.borderRadius),
                 child: SizedBox(
                   width: AppTheme.minTouchTarget,

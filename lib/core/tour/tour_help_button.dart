@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 
 /// Botão de ajuda (?) sempre acessível no header de cada tela.
 ///
 /// Toca para (re)ver o tutorial daquela tela. Touch target ≥44px e rótulo
 /// semântico, conforme as regras de acessibilidade do projeto.
-class TourHelpButton extends StatelessWidget {
+class TourHelpButton extends ConsumerWidget {
   const TourHelpButton({
     required this.onPressed,
     super.key,
@@ -17,7 +18,7 @@ class TourHelpButton extends StatelessWidget {
   final String tooltip;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
     return Semantics(
@@ -25,7 +26,7 @@ class TourHelpButton extends StatelessWidget {
       label: tooltip,
       child: GestureDetector(
         onTap: () {
-          HapticFeedback.lightImpact();
+          SeniorFeedback.light(ref);
           onPressed();
         },
         child: Container(

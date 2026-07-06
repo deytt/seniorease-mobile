@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
@@ -84,7 +84,7 @@ class _GuidesScreenState extends ConsumerState<GuidesScreen>
   }
 
   void _startTutorial(TutorialInfo info) {
-    HapticFeedback.lightImpact();
+    SeniorFeedback.light(ref);
     // Pede para iniciar o tutorial e navega para a tela alvo. O `TourHost` da
     // tela consome o sinal e inicia o showcase no próximo frame.
     ref.read(tourSignalProvider.notifier).request(info.id);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
@@ -11,7 +12,7 @@ import 'package:mobile/features/reminders/domain/entities/reminder_filter.dart';
 /// Recebe o [initialFilter] activo e devolve o novo [ReminderFilter] via
 /// [onApply]. O estado local do sheet não afecta a lista até o utilizador tocar
 /// em "Aplicar".
-class ReminderFilterSheet extends StatefulWidget {
+class ReminderFilterSheet extends ConsumerStatefulWidget {
   const ReminderFilterSheet({
     required this.initialFilter,
     required this.onApply,
@@ -38,10 +39,11 @@ class ReminderFilterSheet extends StatefulWidget {
   }
 
   @override
-  State<ReminderFilterSheet> createState() => _ReminderFilterSheetState();
+  ConsumerState<ReminderFilterSheet> createState() =>
+      _ReminderFilterSheetState();
 }
 
-class _ReminderFilterSheetState extends State<ReminderFilterSheet> {
+class _ReminderFilterSheetState extends ConsumerState<ReminderFilterSheet> {
   late ReminderFilter _filter;
 
   @override
@@ -51,12 +53,12 @@ class _ReminderFilterSheetState extends State<ReminderFilterSheet> {
   }
 
   void _toggleToday() {
-    HapticFeedback.selectionClick();
+    SeniorFeedback.selection(ref);
     setState(() => _filter = _filter.copyWith(isToday: !_filter.isToday));
   }
 
   void _toggleCategory(ReminderCategory cat) {
-    HapticFeedback.selectionClick();
+    SeniorFeedback.selection(ref);
     setState(() {
       _filter = _filter.copyWith(
         category: _filter.category == cat ? null : cat,
@@ -65,12 +67,12 @@ class _ReminderFilterSheetState extends State<ReminderFilterSheet> {
   }
 
   void _clear() {
-    HapticFeedback.lightImpact();
+    SeniorFeedback.light(ref);
     setState(() => _filter = ReminderFilter.empty);
   }
 
   void _apply() {
-    HapticFeedback.lightImpact();
+    SeniorFeedback.light(ref);
     widget.onApply(_filter);
     Navigator.of(context).pop();
   }

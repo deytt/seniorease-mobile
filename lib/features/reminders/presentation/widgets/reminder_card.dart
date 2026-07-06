@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/features/reminders/domain/entities/reminder.dart';
@@ -7,7 +8,7 @@ import 'package:mobile/features/reminders/presentation/widgets/reminder_complete
 import 'package:mobile/features/reminders/presentation/widgets/reminder_visuals.dart';
 
 /// Card de lembrete na lista (Figma `15:7912`).
-class ReminderCard extends StatelessWidget {
+class ReminderCard extends ConsumerWidget {
   const ReminderCard({
     required this.reminder,
     required this.onMarkDone,
@@ -37,12 +38,13 @@ class ReminderCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDone = reminder.isDone;
     final content = _ReminderCardContent(
       reminder: reminder,
       onMarkDone: onMarkDone,
       expanded: expanded,
+      ref: ref,
     );
 
     if (!showShell) return content;
@@ -64,11 +66,13 @@ class _ReminderCardContent extends StatelessWidget {
   const _ReminderCardContent({
     required this.reminder,
     required this.onMarkDone,
+    required this.ref,
     this.expanded = false,
   });
 
   final Reminder reminder;
   final VoidCallback onMarkDone;
+  final WidgetRef ref;
   final bool expanded;
 
   String get semanticsLabel {
@@ -180,7 +184,7 @@ class _ReminderCardContent extends StatelessWidget {
                       label: 'Concluído',
                       child: ReminderCompletedIcon(size: 20),
                     )
-                  : _DoneButton(onPressed: onMarkDone),
+                  : _DoneButton(onPressed: onMarkDone, ref: ref),
             ),
           ],
         ),
@@ -262,9 +266,10 @@ class _TimeBlock extends StatelessWidget {
 }
 
 class _DoneButton extends StatelessWidget {
-  const _DoneButton({required this.onPressed});
+  const _DoneButton({required this.onPressed, required this.ref});
 
   final VoidCallback onPressed;
+  final WidgetRef ref;
 
   @override
   Widget build(BuildContext context) {
@@ -282,7 +287,7 @@ class _DoneButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppTheme.borderRadius),
         child: InkWell(
           onTap: () {
-            HapticFeedback.lightImpact();
+            SeniorFeedback.success(ref);
             onPressed();
           },
           borderRadius: BorderRadius.circular(AppTheme.borderRadius),

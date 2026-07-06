@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
@@ -182,8 +182,6 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
     final extraOk = _validateExtra();
     if (!formOk || !extraOk) return;
 
-    HapticFeedback.lightImpact();
-
     final userId = ref.read(authStateProvider).asData?.value?.id;
     if (userId == null) return;
 
@@ -216,6 +214,8 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
     if (!mounted) return;
 
     if (id != null) {
+      await SeniorFeedback.medium(ref);
+      if (!mounted) return;
       showSeniorToast(
         context,
         title: 'Tarefa criada',
