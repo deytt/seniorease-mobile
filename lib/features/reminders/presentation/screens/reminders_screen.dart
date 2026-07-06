@@ -6,6 +6,7 @@ import 'package:mobile/app/router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
+import 'package:mobile/core/theme/senior_spacing_theme.dart';
 import 'package:mobile/core/theme/senior_system_ui.dart';
 import 'package:mobile/core/widgets/senior_toast.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
@@ -502,9 +503,15 @@ class _ReminderListState extends ConsumerState<_ReminderList> {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: EdgeInsets.all(
+        Theme.of(context).extension<SeniorSpacingTheme>()?.screenPadding ??
+            AppSpacing.md,
+      ),
       itemCount: reminders.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      separatorBuilder: (context, _) => SizedBox(
+        height: Theme.of(context).extension<SeniorSpacingTheme>()?.itemGap ??
+            12,
+      ),
       itemBuilder: (context, index) {
         final reminder = reminders[index];
         final isHighlighted = reminder.id == highlightId;

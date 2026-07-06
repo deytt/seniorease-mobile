@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
+import 'package:mobile/core/theme/senior_spacing_theme.dart';
 import 'package:mobile/core/theme/senior_system_ui.dart';
 import 'package:mobile/core/tour/tour_dialogs.dart';
 import 'package:mobile/core/tour/tour_gate.dart';
@@ -92,24 +93,38 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
             // Corpo com scroll
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: AppSpacing.sm),
-                    QuickActionsGrid(
-                      tourScope: _scope,
-                      newTaskShowcaseKey: _newTaskShowcaseKey,
-                      accessibilityShowcaseKey: _accessibilityShowcaseKey,
+              child: Builder(
+                builder: (context) {
+                  final spacing =
+                      Theme.of(context).extension<SeniorSpacingTheme>();
+                  return SingleChildScrollView(
+                    padding: EdgeInsets.all(
+                      spacing?.screenPadding ?? AppSpacing.md,
                     ),
-                    const SizedBox(height: AppSpacing.lg),
-                    const RemindersSection(),
-                    const SizedBox(height: AppSpacing.md),
-                    _SuccessBanner(),
-                    const SizedBox(height: AppSpacing.md),
-                  ],
-                ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SizedBox(height: spacing?.itemGap ?? AppSpacing.sm),
+                        QuickActionsGrid(
+                          tourScope: _scope,
+                          newTaskShowcaseKey: _newTaskShowcaseKey,
+                          accessibilityShowcaseKey: _accessibilityShowcaseKey,
+                        ),
+                        SizedBox(
+                          height: spacing?.sectionGap ?? AppSpacing.lg,
+                        ),
+                        const RemindersSection(),
+                        SizedBox(
+                          height: spacing?.cardPadding ?? AppSpacing.md,
+                        ),
+                        _SuccessBanner(),
+                        SizedBox(
+                          height: spacing?.cardPadding ?? AppSpacing.md,
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
           ],

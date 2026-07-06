@@ -42,6 +42,20 @@ void main() {
       expect(p.remindersEnabled, isTrue);
     });
 
+    test('spacing default é comfortable', () {
+      expect(
+        UserPreferences.defaults(userId: 'u1').spacing,
+        SpacingMode.comfortable,
+      );
+    });
+
+    test('copyWith preserva spacing', () {
+      final p = UserPreferences.defaults(userId: 'u1');
+      final updated = p.copyWith(spacing: SpacingMode.spacious);
+      expect(updated.spacing, SpacingMode.spacious);
+      expect(updated.fontSize, p.fontSize);
+    });
+
     test('copyWith', () {
       final p = UserPreferences.defaults(userId: 'u1');
       final updated = p.copyWith(
@@ -66,6 +80,18 @@ void main() {
       expect(map['updatedAt'], isA<FieldValue>());
     });
 
+    test('toMap/fromMap roundtrip spacing', () {
+      final prefs = UserPreferences.defaults(userId: 'u1')
+          .copyWith(spacing: SpacingMode.compact);
+      final map = Map<String, dynamic>.from(prefs.toMap())
+        // FieldValue.serverTimestamp() não pode ser relido como Timestamp
+        // em testes unitários — removemos e deixamos o fromMap usar DateTime.now()
+        ..remove('updatedAt');
+      expect(map['spacing'], 'compact');
+      final restored = UserPreferences.fromMap(prefs.userId, map);
+      expect(restored.spacing, SpacingMode.compact);
+    });
+
     test('fromMap reconstrói com defaults para campos ausentes', () {
       final p = UserPreferences.fromMap('u2', {
         'fontSize': 'large',
@@ -80,6 +106,7 @@ void main() {
       expect(p.contrast, ContrastMode.maximum);
       expect(p.interfaceMode, InterfaceMode.basic);
       expect(p.remindersEnabled, isTrue); // ausente → default true
+      expect(p.spacing, SpacingMode.comfortable); // ausente → default comfortable
       expect(p.updatedAt, DateTime(2026, 3, 3));
     });
   });

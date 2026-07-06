@@ -6,6 +6,7 @@ import 'package:mobile/app/router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
+import 'package:mobile/core/theme/senior_spacing_theme.dart';
 import 'package:mobile/core/theme/senior_system_ui.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
 import 'package:mobile/core/tour/tour_host.dart';
@@ -482,15 +483,15 @@ class _TaskList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final spacing = Theme.of(context).extension<SeniorSpacingTheme>();
     return ListView(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: EdgeInsets.all(spacing?.screenPadding ?? AppSpacing.md),
       children: [
         for (var i = 0; i < tasks.length; i++) ...[
           _buildCard(context, ref, tasks[i], isFirst: i == 0),
-          const SizedBox(height: 12),
+          SizedBox(height: spacing?.itemGap ?? 12),
         ],
         const SizedBox(height: 4),
-        _GuidedModePromo(tasks: tasks),
       ],
     );
   }
@@ -504,11 +505,6 @@ class _TaskList extends ConsumerWidget {
     final card = TaskCard(
       task: task,
       onTap: () => context.push('/tasks/${task.id}'),
-      onToggleComplete: () {
-        if (!task.isCompleted) {
-          ref.read(tasksControllerProvider.notifier).completeTask(task.id);
-        }
-      },
     );
 
     if (!isFirst) return card;
@@ -518,98 +514,9 @@ class _TaskList extends ConsumerWidget {
       scope: scope,
       title: 'As suas tarefas',
       description:
-          'Cada cartão é uma tarefa. Toque para ver os detalhes, ou no círculo para marcar como concluída.',
+          'Cada cartão é uma tarefa. Toque para ver os detalhes e concluí-la por lá.',
       child: card,
     );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Promo modo guiado
-// ---------------------------------------------------------------------------
-
-class _GuidedModePromo extends StatelessWidget {
-  const _GuidedModePromo({required this.tasks});
-
-  final List<Task> tasks;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      padding: const EdgeInsets.all(17),
-      decoration: BoxDecoration(
-        color: AppColors.secondaryLight,
-        border: Border.all(color: const Color(0xFF99F6E4)),
-        borderRadius: BorderRadius.circular(AppSpacing.md),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.bolt, color: Color(0xFF0F766E), size: 16),
-              const SizedBox(width: AppSpacing.sm),
-              Text(
-                'Modo Guiado',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF0F766E),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            'Ajuda passo a passo para concluir qualquer tarefa com facilidade.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF0F766E),
-            ),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: Material(
-              color: AppColors.secondary,
-              borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-              child: InkWell(
-                onTap: () => _startGuided(context),
-                borderRadius: BorderRadius.circular(AppTheme.borderRadius),
-                child: const SizedBox(
-                  height: 44,
-                  child: Center(
-                    child: Text(
-                      'Iniciar Modo Guiado →',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _startGuided(BuildContext context) {
-    HapticFeedback.lightImpact();
-    final pending = tasks.where((t) => !t.isCompleted).toList();
-    if (pending.isEmpty) {
-      showSeniorToast(
-        context,
-        title: 'Tudo concluído!',
-        message: 'Não há tarefas pendentes para o modo guiado.',
-        variant: SeniorToastVariant.info,
-      );
-      return;
-    }
-    context.push('/tasks/${pending.first.id}/guided');
   }
 }
 

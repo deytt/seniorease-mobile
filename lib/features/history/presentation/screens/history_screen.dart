@@ -6,6 +6,7 @@ import 'package:mobile/app/router.dart';
 import 'package:mobile/core/history/history_recorder.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
+import 'package:mobile/core/theme/senior_spacing_theme.dart';
 import 'package:mobile/core/theme/senior_system_ui.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
 import 'package:mobile/core/tour/tour_host.dart';
@@ -203,11 +204,12 @@ class _Content extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final spacing = theme.extension<SeniorSpacingTheme>();
     final showStreak = stats.currentStreak >= StreakBanner.minStreakToShow;
 
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: EdgeInsets.all(spacing?.screenPadding ?? AppSpacing.md),
       children: [
         SeniorShowcase(
           showcaseKey: statsShowcaseKey,
@@ -227,7 +229,7 @@ class _Content extends StatelessWidget {
                       '${stats.weeklyCount} atividades concluídas esta semana.',
                 ),
               ),
-              const SizedBox(width: AppSpacing.md),
+              SizedBox(width: spacing?.cardPadding ?? AppSpacing.md),
               Expanded(
                 child: HistoryStatCard(
                   icon: Icons.local_fire_department_outlined,
@@ -242,7 +244,7 @@ class _Content extends StatelessWidget {
           ),
         ),
         if (showStreak) ...[
-          const SizedBox(height: AppSpacing.md),
+          SizedBox(height: spacing?.cardPadding ?? AppSpacing.md),
           SeniorShowcase(
             showcaseKey: streakShowcaseKey,
             scope: scope,
@@ -252,7 +254,7 @@ class _Content extends StatelessWidget {
             child: StreakBanner(streak: stats.currentStreak),
           ),
         ],
-        const SizedBox(height: AppSpacing.md),
+        SizedBox(height: spacing?.cardPadding ?? AppSpacing.md),
         SeniorShowcase(
           showcaseKey: activityShowcaseKey,
           scope: scope,
@@ -268,7 +270,7 @@ class _Content extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: AppSpacing.sm),
+        SizedBox(height: spacing?.itemGap ?? AppSpacing.sm),
         if (events.isEmpty)
           _BasicEmptyNote()
         else

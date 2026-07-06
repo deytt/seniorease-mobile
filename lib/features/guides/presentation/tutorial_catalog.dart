@@ -106,6 +106,24 @@ const List<TutorialInfo> kTutorials = [
     route: AppRoutes.profile,
   ),
   TutorialInfo(
+    id: TourId.taskDetails,
+    title: 'Ver os detalhes de uma tarefa',
+    description:
+        'Saiba como ler os passos e iniciar o Modo Guiado. Abra qualquer tarefa depois de tocar aqui.',
+    icon: Icons.task_alt_outlined,
+    route: AppRoutes.tasks,
+    isShellTab: true,
+  ),
+  TutorialInfo(
+    id: TourId.guidedTask,
+    title: 'Usar o Modo Guiado',
+    description:
+        'Veja como funciona o guia passo a passo. Abra uma tarefa e toque em "Iniciar Modo Guiado".',
+    icon: Icons.bolt,
+    route: AppRoutes.tasks,
+    isShellTab: true,
+  ),
+  TutorialInfo(
     id: TourId.security,
     title: 'Proteger a sua conta',
     description: 'Veja as opções de biometria, verificação e palavra-passe.',

@@ -5,6 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
+import 'package:mobile/core/tour/senior_showcase.dart';
+import 'package:mobile/core/tour/tour_help_button.dart';
+import 'package:mobile/core/tour/tour_host.dart';
+import 'package:mobile/core/tour/tour_id.dart';
 import 'package:mobile/core/widgets/senior_button.dart';
 import 'package:mobile/core/widgets/senior_modal.dart';
 import 'package:mobile/core/widgets/senior_screen_scaffold.dart';
@@ -14,26 +18,65 @@ import 'package:mobile/features/tasks/domain/entities/task_step.dart';
 import 'package:mobile/features/tasks/presentation/providers/tasks_provider.dart';
 import 'package:mobile/features/tasks/presentation/widgets/task_card.dart';
 
-class TaskDetailsScreen extends ConsumerWidget {
+class TaskDetailsScreen extends ConsumerStatefulWidget {
   const TaskDetailsScreen({required this.taskId, super.key});
 
   final String taskId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final taskAsync = ref.watch(taskStreamProvider(taskId));
+  ConsumerState<TaskDetailsScreen> createState() => _TaskDetailsScreenState();
+}
+
+class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
+    with TourHost<TaskDetailsScreen> {
+  static const String _scope = 'taskDetails';
+
+  final _deleteShowcaseKey = GlobalKey();
+  final _descriptionShowcaseKey = GlobalKey();
+  final _stepsShowcaseKey = GlobalKey();
+  final _actionsShowcaseKey = GlobalKey();
+
+  @override
+  String get tourScope => _scope;
+
+  @override
+  TourId get tourId => TourId.taskDetails;
+
+  @override
+  List<GlobalKey> get tourKeys => [
+        _deleteShowcaseKey,
+        _descriptionShowcaseKey,
+        _stepsShowcaseKey,
+        _actionsShowcaseKey,
+      ];
+
+  @override
+  Widget build(BuildContext context) {
+    final taskAsync = ref.watch(taskStreamProvider(widget.taskId));
     final task = taskAsync.asData?.value;
 
     return SeniorScreenScaffold(
       title: task?.title ?? 'Detalhes da Tarefa',
       subtitleWidget: task != null ? _HeaderBadges(task: task) : null,
-      trailing: task != null
-          ? IconButton(
-              icon: const Icon(Icons.delete_outline, color: AppColors.danger),
-              tooltip: 'Excluir tarefa',
-              onPressed: () => _confirmDelete(context, ref),
-            )
-          : null,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          TourHelpButton(onPressed: startTour),
+          if (task != null)
+            SeniorShowcase(
+              showcaseKey: _deleteShowcaseKey,
+              scope: _scope,
+              title: 'Excluir tarefa',
+              description:
+                  'Toque aqui para excluir esta tarefa permanentemente. Será pedida confirmação antes.',
+              child: IconButton(
+                icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+                tooltip: 'Excluir tarefa',
+                onPressed: () => _confirmDelete(context, ref),
+              ),
+            ),
+        ],
+      ),
       body: taskAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, _) => const Center(
@@ -42,7 +85,13 @@ class TaskDetailsScreen extends ConsumerWidget {
             child: Text('Não foi possível carregar a tarefa.'),
           ),
         ),
-        data: (task) => _Content(task: task),
+        data: (task) => _Content(
+          task: task,
+          descriptionShowcaseKey: _descriptionShowcaseKey,
+          stepsShowcaseKey: _stepsShowcaseKey,
+          actionsShowcaseKey: _actionsShowcaseKey,
+          scope: _scope,
+        ),
       ),
     );
   }
@@ -60,7 +109,7 @@ class TaskDetailsScreen extends ConsumerWidget {
 
     if (confirmed != true || !context.mounted) return;
 
-    await ref.read(tasksControllerProvider.notifier).delete(taskId);
+    await ref.read(tasksControllerProvider.notifier).delete(widget.taskId);
     if (!context.mounted) return;
     showSeniorToast(
       context,
@@ -102,23 +151,47 @@ class _HeaderBadges extends StatelessWidget {
 
 // ------------------------------------------------------------------ Conteúdo
 
-class _Content extends ConsumerWidget {
-  const _Content({required this.task});
+class _Content extends StatelessWidget {
+  const _Content({
+    required this.task,
+    required this.descriptionShowcaseKey,
+    required this.stepsShowcaseKey,
+    required this.actionsShowcaseKey,
+    required this.scope,
+  });
 
   final Task task;
+  final GlobalKey descriptionShowcaseKey;
+  final GlobalKey stepsShowcaseKey;
+  final GlobalKey actionsShowcaseKey;
+  final String scope;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
         if (task.description.isNotEmpty || task.dueDate != null) ...[
-          _DescriptionCard(task: task),
+          SeniorShowcase(
+            showcaseKey: descriptionShowcaseKey,
+            scope: scope,
+            title: 'Detalhes da tarefa',
+            description:
+                'Aqui estão a descrição e a data de entrega desta tarefa.',
+            child: _DescriptionCard(task: task),
+          ),
           const SizedBox(height: AppSpacing.md),
         ],
-        Text('Passos a Concluir', style: theme.textTheme.headlineMedium),
+        SeniorShowcase(
+          showcaseKey: stepsShowcaseKey,
+          scope: scope,
+          title: 'Passos a concluir',
+          description:
+              'Cada passo mostra o que precisa de fazer. Use o Modo Guiado para os concluir um a um.',
+          child: Text('Passos a Concluir', style: theme.textTheme.headlineMedium),
+        ),
         const SizedBox(height: 12),
         if (task.steps.isEmpty)
           Text(
@@ -131,19 +204,26 @@ class _Content extends ConsumerWidget {
             const SizedBox(height: AppSpacing.sm),
           ],
         const SizedBox(height: AppSpacing.md),
-        if (task.steps.isNotEmpty)
-          SeniorButton(
-            label: 'Iniciar Modo Guiado',
-            icon: Icons.bolt,
-            customBackgroundColor: AppColors.secondary,
-            customForegroundColor: Colors.white,
-            onPressed: () => context.push('/tasks/${task.id}/guided'),
+        SeniorShowcase(
+          showcaseKey: actionsShowcaseKey,
+          scope: scope,
+          title: 'Como concluir a tarefa',
+          description:
+              'Use o Modo Guiado para ir passo a passo, ou toque em "Marcar como Concluída" para concluir tudo de uma vez.',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (task.steps.isNotEmpty) ...[
+                _GuidedModeCard(task: task),
+                const SizedBox(height: 12),
+              ],
+              if (!task.isCompleted)
+                _CompleteButton(task: task)
+              else
+                _CompletedBanner(),
+            ],
           ),
-        const SizedBox(height: 12),
-        if (!task.isCompleted)
-          _CompleteButton(task: task)
-        else
-          _CompletedBanner(),
+        ),
         const SizedBox(height: AppSpacing.md),
       ],
     );
@@ -282,6 +362,81 @@ class _StepRow extends ConsumerWidget {
                 color: done ? AppColors.slate400 : AppColors.slate900,
                 decoration: done ? TextDecoration.lineThrough : null,
                 height: 1.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ------------------------------------------------------------------ Card Modo Guiado
+
+class _GuidedModeCard extends StatelessWidget {
+  const _GuidedModeCard({required this.task});
+
+  final Task task;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(17),
+      decoration: BoxDecoration(
+        color: AppColors.secondaryLight,
+        border: Border.all(color: const Color(0xFF99F6E4)),
+        borderRadius: BorderRadius.circular(AppSpacing.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.bolt, color: Color(0xFF0F766E), size: 16),
+              const SizedBox(width: AppSpacing.sm),
+              Text(
+                'Modo Guiado',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF0F766E),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            'Ajuda passo a passo para concluir esta tarefa com facilidade.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: const Color(0xFF0F766E),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: Material(
+              color: AppColors.secondary,
+              borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+              child: InkWell(
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  context.push('/tasks/${task.id}/guided');
+                },
+                borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+                child: const SizedBox(
+                  height: 44,
+                  child: Center(
+                    child: Text(
+                      'Iniciar Modo Guiado →',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
