@@ -13,6 +13,7 @@ import 'package:mobile/core/tour/tour_id.dart';
 import 'package:mobile/core/widgets/senior_button.dart';
 import 'package:mobile/core/widgets/senior_modal.dart';
 import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:mobile/features/notifications/presentation/providers/notifications_provider.dart';
 import 'package:mobile/features/profile/presentation/providers/profile_provider.dart';
 import 'package:mobile/features/profile/presentation/widgets/settings_nav_row.dart';
 
@@ -143,6 +144,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
       isDestructive: true,
     );
     if (confirmed == true && mounted) {
+      // Remover token FCM antes de fazer sign-out para não receber pushes após sair
+      await removeFcmTokenOnSignOut(ref);
       await ref.read(authControllerProvider.notifier).signOut();
       if (mounted) {
         context.go(AppRoutes.login);
@@ -205,7 +208,7 @@ class _ProfileBanner extends StatelessWidget {
                   const SizedBox(width: 44),
                   Expanded(
                     child: Text(
-                      'Configurações',
+                      'Ajustes',
                       textAlign: TextAlign.center,
                       style: theme.textTheme.titleLarge?.copyWith(
                         color: Colors.white,
@@ -360,7 +363,7 @@ class _NavCard extends StatelessWidget {
           SettingsNavRow(
             icon: Icons.notifications_outlined,
             label: 'Preferências de Notificação',
-            onTap: () {},
+            onTap: () => context.push(AppRoutes.notificationPreferences),
           ),
           SettingsNavRow(
             icon: Icons.accessibility_new_outlined,

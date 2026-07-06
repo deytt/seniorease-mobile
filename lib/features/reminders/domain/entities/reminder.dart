@@ -12,6 +12,7 @@ class Reminder {
     required this.isRead,
     required this.createdAt,
     this.taskId,
+    this.notified = false,
   });
 
   final String id;
@@ -23,6 +24,10 @@ class Reminder {
   final DateTime scheduledAt;
   final bool isRead;
   final DateTime createdAt;
+
+  /// true após a Cloud Function ter enviado o push de aviso deste lembrete.
+  /// Reposto a false se scheduledAt for alterado.
+  final bool notified;
 
   bool get isDone => isRead;
 
@@ -36,6 +41,7 @@ class Reminder {
     DateTime? scheduledAt,
     bool? isRead,
     DateTime? createdAt,
+    bool? notified,
   }) =>
       Reminder(
         id: id ?? this.id,
@@ -47,6 +53,7 @@ class Reminder {
         scheduledAt: scheduledAt ?? this.scheduledAt,
         isRead: isRead ?? this.isRead,
         createdAt: createdAt ?? this.createdAt,
+        notified: notified ?? this.notified,
       );
 
   Map<String, dynamic> toMap() => {
@@ -57,6 +64,7 @@ class Reminder {
         'category': category.toFirestore(),
         'scheduledAt': Timestamp.fromDate(scheduledAt),
         'isRead': isRead,
+        'notified': notified,
         'createdAt': Timestamp.fromDate(createdAt),
       };
 
@@ -71,6 +79,7 @@ class Reminder {
         scheduledAt:
             (map['scheduledAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
         isRead: map['isRead'] as bool? ?? false,
+        notified: map['notified'] as bool? ?? false,
         createdAt:
             (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       );

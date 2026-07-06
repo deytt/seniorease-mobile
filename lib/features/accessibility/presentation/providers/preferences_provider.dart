@@ -70,3 +70,31 @@ class AccessibilityController extends Notifier<AsyncValue<void>> {
     }
   }
 }
+
+// --- Controller de Preferências de Notificação ---
+
+final notificationPreferencesControllerProvider =
+    NotifierProvider<NotificationPreferencesController, AsyncValue<void>>(
+  NotificationPreferencesController.new,
+);
+
+class NotificationPreferencesController extends Notifier<AsyncValue<void>> {
+  bool _notifLogged = false;
+
+  @override
+  AsyncValue<void> build() => const AsyncData(null);
+
+  Future<void> save(UserPreferences preferences) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => ref.read(savePreferencesUseCaseProvider).call(preferences),
+    );
+    if (!state.hasError && !_notifLogged) {
+      _notifLogged = true;
+      await ref.read(historyRecorderProvider).record(
+            type: HistoryActionType.accessibilityChanged,
+            title: 'Ajustou as preferências de notificação',
+          );
+    }
+  }
+}

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:mobile/app/notifications/app_notifications_gate.dart';
 import 'package:mobile/app/router.dart';
 import 'package:mobile/core/preferences/preferences_state.dart';
 import 'package:mobile/core/theme/app_theme.dart';
@@ -23,13 +24,15 @@ class SeniorEaseApp extends ConsumerWidget {
         audioFeedbackEnabledProvider
             .overrideWithValue(prefs.audioFeedbackEnabled),
       ],
-      child: MaterialApp.router(
-        title: 'SeniorEase',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.buildDynamic(prefs),
-        darkTheme: AppTheme.buildDynamic(prefs.copyWith(darkMode: true)),
-        themeMode: prefs.darkMode ? ThemeMode.dark : ThemeMode.light,
-        routerConfig: router,
+      child: AppNotificationsGate(
+        child: MaterialApp.router(
+          title: 'SeniorEase',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.buildDynamic(prefs),
+          darkTheme: AppTheme.buildDynamic(prefs.copyWith(darkMode: true)),
+          themeMode: prefs.darkMode ? ThemeMode.dark : ThemeMode.light,
+          routerConfig: router,
+        ),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/app/shell_scaffold.dart';
 import 'package:mobile/features/accessibility/presentation/screens/accessibility_screen.dart';
+import 'package:mobile/features/accessibility/presentation/screens/notification_preferences_screen.dart';
 import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:mobile/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:mobile/features/auth/presentation/screens/login_screen.dart';
@@ -38,6 +39,7 @@ abstract final class AppRoutes {
   static const createReminder = '/reminders/create';
   static const history = '/history';
   static const settings = '/settings';
+  static const notificationPreferences = '/settings/notifications';
 
   static String taskDetails(String id) => '/tasks/$id';
   static String guidedTask(String id) => '/tasks/$id/guided';
@@ -91,6 +93,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.accessibility,
         builder: (context, state) => const AccessibilityScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.notificationPreferences,
+        builder: (context, state) => const NotificationPreferencesScreen(),
       ),
       GoRoute(
         path: AppRoutes.guides,

@@ -32,6 +32,32 @@ void main() {
     });
   });
 
+  group('NotificationOffset', () {
+    test('minutes retorna valores corretos', () {
+      expect(NotificationOffset.min15.minutes, 15);
+      expect(NotificationOffset.min30.minutes, 30);
+      expect(NotificationOffset.hour1.minutes, 60);
+      expect(NotificationOffset.hour6.minutes, 360);
+      expect(NotificationOffset.day1.minutes, 1440);
+    });
+
+    test('label em português', () {
+      expect(NotificationOffset.min30.label, '30 minutos antes');
+      expect(NotificationOffset.hour1.label, '1 hora antes');
+      expect(NotificationOffset.day1.label, '1 dia antes');
+    });
+
+    test('fromString/toFirestore roundtrip', () {
+      for (final v in NotificationOffset.values) {
+        expect(NotificationOffset.fromString(v.toFirestore()), v);
+      }
+    });
+
+    test('fromString com valor desconhecido retorna min30', () {
+      expect(NotificationOffset.fromString('?'), NotificationOffset.min30);
+    });
+  });
+
   group('UserPreferences', () {
     test('defaults', () {
       final p = UserPreferences.defaults(userId: 'u1');
@@ -39,7 +65,10 @@ void main() {
       expect(p.fontSize, FontSizeScale.medium);
       expect(p.darkMode, isFalse);
       expect(p.interfaceMode, InterfaceMode.advanced);
-      expect(p.remindersEnabled, isTrue);
+      expect(p.tasksNotificationsEnabled, isTrue);
+      expect(p.remindersNotificationsEnabled, isTrue);
+      expect(p.taskNotificationOffset, NotificationOffset.min30);
+      expect(p.reminderNotificationOffset, NotificationOffset.min30);
     });
 
     test('spacing default é comfortable', () {
@@ -69,14 +98,33 @@ void main() {
       expect(updated.fontSize, p.fontSize);
     });
 
+    test('copyWith altera offsets de notificação', () {
+      final p = UserPreferences.defaults(userId: 'u1');
+      final updated = p.copyWith(
+        tasksNotificationsEnabled: false,
+        taskNotificationOffset: NotificationOffset.hour6,
+        remindersNotificationsEnabled: false,
+        reminderNotificationOffset: NotificationOffset.day1,
+      );
+      expect(updated.tasksNotificationsEnabled, isFalse);
+      expect(updated.taskNotificationOffset, NotificationOffset.hour6);
+      expect(updated.remindersNotificationsEnabled, isFalse);
+      expect(updated.reminderNotificationOffset, NotificationOffset.day1);
+      // outros campos inalterados
+      expect(updated.fontSize, p.fontSize);
+    });
+
     test('toMap serializa enums e usa serverTimestamp em updatedAt', () {
       final map = UserPreferences.defaults(userId: 'u1').copyWith(
         fontSize: FontSizeScale.large,
         contrast: ContrastMode.high,
+        taskNotificationOffset: NotificationOffset.hour1,
       ).toMap();
       expect(map['fontSize'], 'large');
       expect(map['contrast'], 'high');
       expect(map['interfaceMode'], 'advanced');
+      expect(map['taskNotificationOffset'], '1h');
+      expect(map['reminderNotificationOffset'], '30m');
       expect(map['updatedAt'], isA<FieldValue>());
     });
 
@@ -92,6 +140,21 @@ void main() {
       expect(restored.spacing, SpacingMode.compact);
     });
 
+    test('toMap/fromMap roundtrip notificationOffset', () {
+      final prefs = UserPreferences.defaults(userId: 'u1').copyWith(
+        tasksNotificationsEnabled: false,
+        taskNotificationOffset: NotificationOffset.hour6,
+        remindersNotificationsEnabled: true,
+        reminderNotificationOffset: NotificationOffset.day1,
+      );
+      final map = Map<String, dynamic>.from(prefs.toMap())..remove('updatedAt');
+      final restored = UserPreferences.fromMap(prefs.userId, map);
+      expect(restored.tasksNotificationsEnabled, isFalse);
+      expect(restored.taskNotificationOffset, NotificationOffset.hour6);
+      expect(restored.remindersNotificationsEnabled, isTrue);
+      expect(restored.reminderNotificationOffset, NotificationOffset.day1);
+    });
+
     test('fromMap reconstrói com defaults para campos ausentes', () {
       final p = UserPreferences.fromMap('u2', {
         'fontSize': 'large',
@@ -105,8 +168,12 @@ void main() {
       expect(p.darkMode, isTrue);
       expect(p.contrast, ContrastMode.maximum);
       expect(p.interfaceMode, InterfaceMode.basic);
-      expect(p.remindersEnabled, isTrue); // ausente → default true
-      expect(p.spacing, SpacingMode.comfortable); // ausente → default comfortable
+      // campos de notificação ausentes → defaults
+      expect(p.tasksNotificationsEnabled, isTrue);
+      expect(p.taskNotificationOffset, NotificationOffset.min30);
+      expect(p.remindersNotificationsEnabled, isTrue);
+      expect(p.reminderNotificationOffset, NotificationOffset.min30);
+      expect(p.spacing, SpacingMode.comfortable);
       expect(p.updatedAt, DateTime(2026, 3, 3));
     });
   });
