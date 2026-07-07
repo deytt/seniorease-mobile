@@ -5,9 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile/app/router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
+import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
-import 'package:mobile/core/widgets/senior_modal.dart';
 import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:mobile/features/notifications/presentation/providers/notification_history_provider.dart';
 import 'package:mobile/features/tasks/domain/entities/task.dart';
 import 'package:mobile/features/tasks/presentation/providers/tasks_provider.dart';
 
@@ -48,9 +49,9 @@ class HomeHeader extends ConsumerWidget {
           colors: [AppColors.primary, AppColors.primaryDark],
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         AppSpacing.md,
-        AppSpacing.md,
+        MediaQuery.paddingOf(context).top + AppSpacing.md,
         AppSpacing.md,
         AppSpacing.lg,
       ),
@@ -92,7 +93,7 @@ class HomeHeader extends ConsumerWidget {
                 _HeaderHelpButton(onTap: onHelp!),
                 const SizedBox(width: AppSpacing.sm),
               ],
-              _SosButton(),
+              _NotificationBell(),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
@@ -146,43 +147,76 @@ class _HeaderHelpButton extends ConsumerWidget {
   }
 }
 
-// ------------------------------------------------------------------ SOS Button
+// ------------------------------------------------------------------ Notification Bell
 
-class _SosButton extends StatelessWidget {
+/// Botão sininho que navega para o histórico de notificações push.
+/// Exibe um badge vermelho com a contagem de notificações recebidas hoje.
+class _NotificationBell extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final todayCount = ref.watch(todayNotificationCountProvider);
+    final hasBadge = todayCount > 0;
+
     return Semantics(
       button: true,
-      label: 'Botão de emergência SOS',
+      label: hasBadge
+          ? 'Notificações — $todayCount nova${todayCount > 1 ? 's' : ''} hoje'
+          : 'Ver notificações',
       child: GestureDetector(
-        onTap: () => showSeniorConfirmDialog(
-          context: context,
-          title: 'Emergência',
-          message:
-              'Ligue para o nosso suporte de emergência:\n\n📞 1-800-SENIOR\n\nEstamos disponíveis 24 horas.',
-          confirmLabel: 'Entendido',
-          cancelLabel: 'Fechar',
-          isDestructive: false,
-        ),
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: AppColors.danger,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: const Center(
-            // "SOS" é sempre 3 chars — não precisa de escalar com o tema
-            child: Text(
-              'SOS',
-              style: TextStyle(
+        onTap: () {
+          SeniorFeedback.light(ref);
+          context.push(AppRoutes.notifications);
+        },
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(AppTheme.borderRadius),
+              ),
+              child: const Icon(
+                Icons.notifications_outlined,
                 color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
+                size: 22,
               ),
             ),
-          ),
+            if (hasBadge)
+              Positioned(
+                top: -2,
+                right: -2,
+                child: Container(
+                  constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.danger,
+                    shape: todayCount < 10
+                        ? BoxShape.circle
+                        : BoxShape.rectangle,
+                    borderRadius: todayCount >= 10
+                        ? BorderRadius.circular(9)
+                        : null,
+                    border: Border.all(
+                      color: AppColors.primaryDark,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      todayCount > 99 ? '99+' : '$todayCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        height: 1.1,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

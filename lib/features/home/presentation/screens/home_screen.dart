@@ -77,19 +77,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SeniorSystemUi.headerOverlay,
+      value: SeniorSystemUi.blueHeaderOverlay,
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Column(
           children: [
-            // Header gradiente (inclui StatusBar + saudação + next activity)
-            SafeArea(
-              bottom: false,
-              child: HomeHeader(
-                tourScope: _scope,
-                nextActivityShowcaseKey: _nextActivityShowcaseKey,
-                onHelp: startTour,
-              ),
+            // Header gradiente — estende-se para trás do status bar (edge-to-edge)
+            HomeHeader(
+              tourScope: _scope,
+              nextActivityShowcaseKey: _nextActivityShowcaseKey,
+              onHelp: startTour,
             ),
             // Corpo com scroll
             Expanded(
