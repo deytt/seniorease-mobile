@@ -4,7 +4,7 @@ import 'package:mobile/features/notifications/domain/entities/notification_item.
 void main() {
   final sentAt = DateTime(2026, 7, 6, 14, 30);
 
-  NotificationItem _item({
+  NotificationItem makeItem({
     String id = 'n1',
     NotificationEntityType type = NotificationEntityType.task,
   }) =>
@@ -48,7 +48,7 @@ void main() {
 
   group('NotificationItem', () {
     test('igualdade baseia-se apenas no id', () {
-      final a = _item(id: 'n1');
+      final a = makeItem(id: 'n1');
       final b = NotificationItem(
         id: 'n1',
         userId: 'outro',
@@ -63,11 +63,11 @@ void main() {
     });
 
     test('itens com ids diferentes não são iguais', () {
-      expect(_item(id: 'n1'), isNot(equals(_item(id: 'n2'))));
+      expect(makeItem(id: 'n1'), isNot(equals(makeItem(id: 'n2'))));
     });
 
     test('campos são preservados correctamente', () {
-      final item = _item();
+      final item = makeItem();
       expect(item.id, 'n1');
       expect(item.userId, 'u1');
       expect(item.entityId, 'e1');

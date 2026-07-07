@@ -89,7 +89,7 @@ void main() {
       ]);
       addTearDown(container.dispose);
 
-      container.listen(authStateProvider, (_, __) {}, fireImmediately: true);
+      container.listen(authStateProvider, (prev, next) {}, fireImmediately: true);
       await container.read(authStateProvider.future);
 
       final result = await _firstEmission(container);
@@ -106,7 +106,7 @@ void main() {
       ]);
       addTearDown(container.dispose);
 
-      container.listen(authStateProvider, (_, __) {}, fireImmediately: true);
+      container.listen(authStateProvider, (prev, next) {}, fireImmediately: true);
       await container.read(authStateProvider.future);
 
       final result = await _firstEmission(container);
@@ -124,7 +124,7 @@ void main() {
       ]);
       addTearDown(container.dispose);
 
-      container.listen(authStateProvider, (_, __) {}, fireImmediately: true);
+      container.listen(authStateProvider, (prev, next) {}, fireImmediately: true);
       await container.read(authStateProvider.future);
 
       final state = container.read(notificationHistoryProvider);
@@ -140,7 +140,7 @@ void main() {
   // -------------------------------------------------------------------------
 
   group('todayNotificationCountProvider', () {
-    ProviderContainer _makeContainer(List<NotificationItem> items) {
+    ProviderContainer makeContainer(List<NotificationItem> items) {
       final container = ProviderContainer(overrides: [
         notificationHistoryProvider.overrideWith(
           (ref) => Stream.fromFuture(Future.value(items)),
@@ -150,8 +150,8 @@ void main() {
       return container;
     }
 
-    Future<int> _readCount(List<NotificationItem> items) async {
-      final c = _makeContainer(items);
+    Future<int> readCount(List<NotificationItem> items) async {
+      final c = makeContainer(items);
       // Usa _firstEmission para aguardar a emissão via Completer (mais robusto
       // que .future quando o stream usa Future.value internamente).
       await _firstEmission(c);
@@ -167,17 +167,17 @@ void main() {
       final yesterday =
           _item('n3', sentAt: DateTime(now.year, now.month, now.day - 1, 10));
 
-      expect(await _readCount([today1, today2, yesterday]), 2);
+      expect(await readCount([today1, today2, yesterday]), 2);
     });
 
     test('devolve 0 quando não há notificações', () async {
-      expect(await _readCount([]), 0);
+      expect(await readCount([]), 0);
     });
 
     test('devolve 0 quando todas as notificações são de dias anteriores',
         () async {
       final past = _item('n1', sentAt: DateTime(2024, 1, 1, 10));
-      expect(await _readCount([past]), 0);
+      expect(await readCount([past]), 0);
     });
 
     test('conta todas as notificações de hoje se não houver anteriores',
@@ -188,7 +188,7 @@ void main() {
         (i) => _item('n$i',
             sentAt: DateTime(now.year, now.month, now.day, i + 8)),
       );
-      expect(await _readCount(items), 5);
+      expect(await readCount(items), 5);
     });
   });
 }

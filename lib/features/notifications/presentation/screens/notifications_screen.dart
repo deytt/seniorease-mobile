@@ -220,7 +220,7 @@ class _NotificationList extends StatelessWidget {
       child: ListView.separated(
         padding: const EdgeInsets.all(AppSpacing.md),
         itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.sm),
         itemBuilder: (context, index) {
           final item = items[index];
           final card = NotificationItemCard(
