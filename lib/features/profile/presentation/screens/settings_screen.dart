@@ -49,7 +49,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
     final profile = ref.watch(profileProvider).asData?.value;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SeniorSystemUi.headerOverlay,
+      value: SeniorSystemUi.blueHeaderOverlay,
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Column(

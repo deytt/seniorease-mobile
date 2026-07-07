@@ -17,6 +17,17 @@ abstract final class SeniorSystemUi {
     systemNavigationBarIconBrightness: Brightness.dark,
   );
 
+  /// Status bar transparente com ícones brancos — usada nas telas com header
+  /// gradiente (Home e Ajustes) para que o gradiente apareça diretamente
+  /// atrás do status bar, dando a sensação de ser um único componente.
+  static const SystemUiOverlayStyle blueHeaderOverlay = SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+    statusBarBrightness: Brightness.dark,
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarIconBrightness: Brightness.dark,
+  );
+
   static const SystemUiOverlayStyle loginOverlay = SystemUiOverlayStyle(
     statusBarColor: AppColors.slate50,
     statusBarIconBrightness: Brightness.dark,

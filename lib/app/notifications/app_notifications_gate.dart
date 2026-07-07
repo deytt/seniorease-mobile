@@ -34,11 +34,6 @@ class _AppNotificationsGateState
   void initState() {
     super.initState();
 
-    // Inicialização FCM: pedir permissão e registar token (side-effect)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(fcmInitProvider);
-    });
-
     final service = ref.read(pushNotificationServiceProvider);
 
     // Foreground: exibir toast informativo
@@ -89,5 +84,11 @@ class _AppNotificationsGateState
   }
 
   @override
-  Widget build(BuildContext context) => widget.child;
+  Widget build(BuildContext context) {
+    // Observa o fcmInitProvider para que seja reactivo ao estado de auth:
+    // quando o utilizador faz login, authStateProvider emite o user e este
+    // provider re-executa automaticamente, pedindo permissão e registando o token.
+    ref.watch(fcmInitProvider);
+    return widget.child;
+  }
 }

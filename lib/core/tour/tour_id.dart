@@ -22,7 +22,8 @@ enum TourId {
   about,
   profile,
   security,
-  notificationPreferences;
+  notificationPreferences,
+  notifications;
 
   /// Chave estável usada na persistência local (shared_preferences).
   String get storageKey => name;

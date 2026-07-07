@@ -26,7 +26,7 @@ class SeniorEaseApp extends ConsumerWidget {
       ],
       child: AppNotificationsGate(
         child: MaterialApp.router(
-          title: 'SeniorEase',
+          title: 'Senior Ease',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.buildDynamic(prefs),
           darkTheme: AppTheme.buildDynamic(prefs.copyWith(darkMode: true)),
