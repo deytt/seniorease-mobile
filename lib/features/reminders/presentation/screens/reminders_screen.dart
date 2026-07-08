@@ -11,6 +11,8 @@ import 'package:mobile/core/theme/senior_spacing_theme.dart';
 import 'package:mobile/core/theme/senior_system_ui.dart';
 import 'package:mobile/core/widgets/senior_toast.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
+import 'package:mobile/core/tour/tour_dialogs.dart';
+import 'package:mobile/core/tour/tour_gate.dart';
 import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_help_button.dart';
 import 'package:mobile/core/tour/tour_id.dart';
@@ -45,6 +47,32 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen>
   @override
   List<GlobalKey> get tourKeys =>
       [_createShowcaseKey, _filterShowcaseKey, _firstCardShowcaseKey];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _maybeOfferFirstUse());
+  }
+
+  /// Na primeira visita (apenas em Modo Básico), pergunta se pode mostrar
+  /// como funciona esta tela. A decisão de "quando" é toda do [TourGate].
+  Future<void> _maybeOfferFirstUse() async {
+    if (!mounted) return;
+    final gate = ref.read(tourGateProvider);
+    if (!await gate.shouldOfferFirstUse(tourId)) return;
+    if (!mounted) return;
+
+    await gate.markOffered(tourId);
+    if (!mounted) return;
+
+    final accepted = await showTourInviteDialog(
+      context,
+      title: 'Quer conhecer esta tela?',
+      message: 'Posso mostrar como tudo funciona aqui em poucos passos.',
+    );
+    if (accepted && mounted) startTour();
+  }
 
   @override
   Widget build(BuildContext context) {

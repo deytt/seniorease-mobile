@@ -10,7 +10,6 @@ import 'package:mobile/core/tour/tour_gate.dart';
 import 'package:mobile/core/tour/tour_help_button.dart';
 import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_id.dart';
-import 'package:mobile/core/tour/tour_signal_provider.dart';
 import 'package:mobile/core/widgets/senior_button.dart';
 import 'package:mobile/core/widgets/senior_input.dart';
 import 'package:mobile/core/widgets/senior_screen_scaffold.dart';
@@ -87,13 +86,10 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen>
   /// como criar um lembrete. A decisão de "quando" é toda do [TourGate].
   Future<void> _maybeOfferFirstUse() async {
     if (!mounted) return;
-    if (ref.read(tourSessionProvider)) return;
-
     final gate = ref.read(tourGateProvider);
     if (!await gate.shouldOfferFirstUse(TourId.createReminder)) return;
     if (!mounted) return;
 
-    ref.read(tourSessionProvider.notifier).markAutoOffered();
     await gate.markOffered(TourId.createReminder);
     if (!mounted) return;
 
