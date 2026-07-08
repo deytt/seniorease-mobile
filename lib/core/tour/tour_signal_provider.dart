@@ -23,20 +23,3 @@ class TourSignal extends Notifier<TourId?> {
   void clear() => state = null;
 }
 
-/// Guard de sessão: garante que **não iniciamos mais de um tutorial automático
-/// na mesma sessão de uso** (boas prática do briefing). É reposto a cada novo
-/// arranque da app (estado em memória).
-final tourSessionProvider =
-    NotifierProvider<TourSession, bool>(TourSession.new);
-
-class TourSession extends Notifier<bool> {
-  @override
-  bool build() => false;
-
-  /// `true` se algum tutorial já foi oferecido/iniciado automaticamente nesta
-  /// sessão.
-  bool get hasAutoOffered => state;
-
-  /// Marca que um tutorial automático já foi oferecido nesta sessão.
-  void markAutoOffered() => state = true;
-}
