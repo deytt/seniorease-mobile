@@ -16,13 +16,17 @@ class QuickActionsGrid extends StatelessWidget {
     this.tourScope,
     this.newTaskShowcaseKey,
     this.accessibilityShowcaseKey,
+    this.remindersShowcaseKey,
+    this.quickHelpShowcaseKey,
   });
 
-  /// Quando fornecidos, os cards "Nova Tarefa" e "Acessibilidade" são alvos do
-  /// tutorial guiado da Tela Inicial.
+  /// Quando fornecidos, os cards correspondentes tornam-se alvos do tutorial
+  /// guiado da Tela Inicial.
   final String? tourScope;
   final GlobalKey? newTaskShowcaseKey;
   final GlobalKey? accessibilityShowcaseKey;
+  final GlobalKey? remindersShowcaseKey;
+  final GlobalKey? quickHelpShowcaseKey;
 
   static const double _gap = AppSpacing.sm + 4; // 12 px
 
@@ -98,12 +102,18 @@ class QuickActionsGrid extends StatelessWidget {
               Expanded(
                 child: _ShakeCard(
                   delay: const Duration(milliseconds: 160),
-                  child: _ActionCard(
-                    icon: Icons.notifications_outlined,
-                    label: 'Lembretes',
-                    iconBg: AppColors.warning.withValues(alpha: 0.13),
-                    iconColor: AppColors.warning,
-                    onTap: () => context.go(AppRoutes.reminders),
+                  child: _maybeShowcase(
+                    key: remindersShowcaseKey,
+                    title: 'Os seus lembretes',
+                    description:
+                        'Aceda aqui aos seus lembretes de medicação, consultas e outras atividades.',
+                    child: _ActionCard(
+                      icon: Icons.notifications_outlined,
+                      label: 'Lembretes',
+                      iconBg: AppColors.warning.withValues(alpha: 0.13),
+                      iconColor: AppColors.warning,
+                      onTap: () => context.go(AppRoutes.reminders),
+                    ),
                   ),
                 ),
               ),
@@ -111,12 +121,18 @@ class QuickActionsGrid extends StatelessWidget {
               Expanded(
                 child: _ShakeCard(
                   delay: const Duration(milliseconds: 240),
-                  child: _ActionCard(
-                    icon: Icons.help_outline,
-                    label: 'Ajuda Rápida',
-                    iconBg: AppColors.danger.withValues(alpha: 0.13),
-                    iconColor: AppColors.danger,
-                    onTap: () => context.push(AppRoutes.guides),
+                  child: _maybeShowcase(
+                    key: quickHelpShowcaseKey,
+                    title: 'Ajuda Rápida',
+                    description:
+                        'Encontre aqui os guias e tutoriais para aprender a usar o SeniorEase.',
+                    child: _ActionCard(
+                      icon: Icons.help_outline,
+                      label: 'Ajuda Rápida',
+                      iconBg: AppColors.danger.withValues(alpha: 0.13),
+                      iconColor: AppColors.danger,
+                      onTap: () => context.push(AppRoutes.guides),
+                    ),
                   ),
                 ),
               ),

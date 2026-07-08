@@ -22,14 +22,16 @@ class HomeHeader extends ConsumerWidget {
     super.key,
     this.tourScope,
     this.nextActivityShowcaseKey,
+    this.notificationBellShowcaseKey,
     this.onHelp,
     this.tourId,
   });
 
-  /// Quando fornecidos, o cartão "Próxima atividade" torna-se alvo do tutorial
-  /// guiado e é mostrado um botão de ajuda no header.
+  /// Quando fornecidos, o cartão "Próxima atividade" e o sininho de notificações
+  /// tornam-se alvos do tutorial guiado e é mostrado um botão de ajuda no header.
   final String? tourScope;
   final GlobalKey? nextActivityShowcaseKey;
+  final GlobalKey? notificationBellShowcaseKey;
   final VoidCallback? onHelp;
 
   /// Identificador do tour da tela inicial — controla se o tooltip é exibido.
@@ -101,13 +103,28 @@ class HomeHeader extends ConsumerWidget {
                 _HeaderHelpButton(onTap: onHelp!, tourId: tourId),
                 const SizedBox(width: AppSpacing.sm),
               ],
-              _NotificationBell(),
+              _maybeShowcaseBell(context),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
           _buildNextActivity(ref),
         ],
       ),
+    );
+  }
+
+  Widget _maybeShowcaseBell(BuildContext context) {
+    final bell = _NotificationBell();
+    if (tourScope == null || notificationBellShowcaseKey == null) return bell;
+    return SeniorShowcase(
+      showcaseKey: notificationBellShowcaseKey!,
+      scope: tourScope!,
+      title: 'As suas notificações',
+      description:
+          'Aqui vê as notificações recebidas. O número a vermelho indica quantas chegaram hoje.',
+      targetPadding: const EdgeInsets.all(4),
+      targetBorderRadius: BorderRadius.circular(14),
+      child: bell,
     );
   }
 

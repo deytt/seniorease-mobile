@@ -95,33 +95,38 @@ mixin TourHost<T extends ConsumerStatefulWidget> on ConsumerState<T> {
 
     // Tela já viva (ex.: aba do IndexedStack): reage a pedidos futuros. O
     // callback corre fora da fase de build, logo é seguro limpar o sinal aqui.
+    // O addPostFrameCallback garante que a navegação da Central de Guias
+    // termina de animar antes de iniciarmos o showcase.
     ref.listenManual<TourId?>(tourSignalProvider, (previous, next) {
       if (next == tourId) {
         ref.read(tourSignalProvider.notifier).clear();
-        startTour();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          startTour();
+        });
       }
     });
   }
 
-  /// Inicia o tutorial desta tela. Adiado para o próximo frame para garantir que
-  /// os alvos já estão renderizados (boa prática do briefing).
+  /// Inicia o tutorial desta tela de forma imediata (sem delay de frame).
   ///
-  /// Auto-scroll condicional: o 1.º passo é sempre um elemento do topo da tela
-  /// (o botão de ajuda só é alcançável com o topo à vista), por isso saltamos o
-  /// scroll de re-centragem que atrasava o arranque do tour. Para os passos
-  /// seguintes mantemos o auto-scroll, pois o alvo pode estar fora do ecrã.
+  /// Deve ser chamado sempre de contextos pós-build: callbacks de gestos,
+  /// callbacks async após await, ou dentro de addPostFrameCallback existente.
+  /// Nestas situações a árvore já está totalmente renderizada e os GlobalKeys
+  /// dos alvos estão montados — não é necessário adiar mais um frame.
+  ///
+  /// Auto-scroll condicional: o 1.º passo é sempre um elemento do topo da tela,
+  /// por isso saltamos o scroll de re-centragem que atrasaria o arranque.
+  /// Para os passos seguintes mantemos o auto-scroll (alvo pode estar fora do ecrã).
   ///
   /// O `enableAutoScroll` é lido de forma síncrona dentro de `startShowCase` (no
   /// arranque do passo 0), logo desligá-lo antes e voltar a ligá-lo a seguir
-  /// afeta apenas o 1.º passo. Degradação segura: se a leitura ocorresse mais
-  /// tarde, mantinha-se o comportamento atual (scroll também no passo 0).
+  /// afeta apenas o 1.º passo.
   void startTour() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final view = ShowcaseView.getNamed(tourScope)..enableAutoScroll = false;
-      view.startShowCase(tourKeys);
-      view.enableAutoScroll = true;
-    });
+    if (!mounted) return;
+    final view = ShowcaseView.getNamed(tourScope)..enableAutoScroll = false;
+    view.startShowCase(tourKeys);
+    view.enableAutoScroll = true;
   }
 
   void _markSeen() {
