@@ -106,7 +106,7 @@ class _IntroCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.primaryLight,
+        color: theme.colorScheme.primary.withValues(alpha: 0.10),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
         borderRadius: BorderRadius.circular(16),
       ),
@@ -119,7 +119,7 @@ class _IntroCard extends StatelessWidget {
             child: Text(
               'Escolha um guia e eu mostro-lhe como funciona, passo a passo.',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: AppColors.primaryDark,
+                color: theme.colorScheme.primary,
               ),
             ),
           ),
@@ -160,7 +160,7 @@ class _TutorialCard extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Icon(info.icon, color: AppColors.primary, size: 24),
