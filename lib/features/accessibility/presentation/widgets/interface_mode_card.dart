@@ -52,9 +52,9 @@ class InterfaceModeCard extends StatelessWidget {
                     label: 'Básico',
                     sublabel: 'Elementos maiores e simplificados',
                     selected: value == InterfaceMode.basic,
-                    selectedBg: AppColors.secondaryLight,
                     selectedBorder: AppColors.secondary,
                     selectedTextColor: AppColors.secondary,
+                    selectedBgAlpha: 0.15,
                     onTap: () => onChanged(InterfaceMode.basic),
                   ),
                 ),
@@ -64,9 +64,9 @@ class InterfaceModeCard extends StatelessWidget {
                     label: 'Avançado',
                     sublabel: 'Todas as funcionalidades',
                     selected: value == InterfaceMode.advanced,
-                    selectedBg: AppColors.primaryLight,
                     selectedBorder: AppColors.primary,
                     selectedTextColor: AppColors.primary,
+                    selectedBgAlpha: 0.15,
                     onTap: () => onChanged(InterfaceMode.advanced),
                   ),
                 ),
@@ -84,24 +84,26 @@ class _ModeButton extends StatelessWidget {
     required this.label,
     required this.sublabel,
     required this.selected,
-    required this.selectedBg,
     required this.selectedBorder,
     required this.selectedTextColor,
     required this.onTap,
+    this.selectedBgAlpha = 0.15,
   });
 
   final String label;
   final String sublabel;
   final bool selected;
-  final Color selectedBg;
   final Color selectedBorder;
   final Color selectedTextColor;
+  final double selectedBgAlpha;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bg = selected ? selectedBg : theme.colorScheme.surface;
+    final bg = selected
+        ? selectedBorder.withValues(alpha: selectedBgAlpha)
+        : theme.colorScheme.surface;
     final border = selected ? selectedBorder : theme.colorScheme.outline;
     final labelColor =
         selected ? selectedTextColor : theme.colorScheme.onSurface;

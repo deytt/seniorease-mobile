@@ -49,7 +49,7 @@ class SettingsNavRow extends ConsumerWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Icon(icon, color: AppColors.primary, size: 20),

@@ -81,11 +81,11 @@ class _SeniorInputState extends State<SeniorInput> {
               style: widget.compactLabel
                   ? Theme.of(context).textTheme.labelSmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: AppColors.slate900,
+                        color: Theme.of(context).colorScheme.onSurface,
                       )
                   : Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: AppColors.slate900,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
             ),
             const SizedBox(height: 6),
@@ -108,7 +108,7 @@ class _SeniorInputState extends State<SeniorInput> {
               onFieldSubmitted: widget.onSubmitted,
               validator: widget.validator,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.slate900,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
               decoration: InputDecoration(
                 hintText: widget.hint,

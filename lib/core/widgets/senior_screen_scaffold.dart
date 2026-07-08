@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/widgets/senior_screen_header.dart';
 
 class SeniorScreenScaffold extends StatelessWidget {
@@ -13,7 +12,7 @@ class SeniorScreenScaffold extends StatelessWidget {
     this.backIcon = Icons.arrow_back,
     this.onBack,
     this.trailing,
-    this.backgroundColor = AppColors.slate50,
+    this.backgroundColor,
   });
 
   final String title;
@@ -24,12 +23,17 @@ class SeniorScreenScaffold extends StatelessWidget {
   final VoidCallback? onBack;
   final Widget? trailing;
   final Widget body;
-  final Color backgroundColor;
+
+  /// Cor de fundo do scaffold. Quando nulo, usa
+  /// [ThemeData.scaffoldBackgroundColor] (correto em dark/light mode).
+  final Color? backgroundColor;
 
   @override
   Widget build(BuildContext context) {
+    final bg = backgroundColor ?? Theme.of(context).scaffoldBackgroundColor;
+
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: bg,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -44,7 +48,7 @@ class SeniorScreenScaffold extends StatelessWidget {
           ),
           Expanded(
             child: ColoredBox(
-              color: backgroundColor,
+              color: bg,
               child: SafeArea(
                 top: false,
                 child: body,

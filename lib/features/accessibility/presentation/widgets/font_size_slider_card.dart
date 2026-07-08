@@ -56,7 +56,10 @@ class FontSizeSliderCard extends StatelessWidget {
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
               overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
               activeTrackColor: AppColors.primary,
-              inactiveTrackColor: AppColors.slate200,
+              inactiveTrackColor: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.2),
               thumbColor: AppColors.primary,
               overlayColor: AppColors.primary.withValues(alpha: 0.12),
             ),

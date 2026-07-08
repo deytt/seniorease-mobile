@@ -180,7 +180,7 @@ class _WebAppCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           child: Ink(
             decoration: BoxDecoration(
-              color: AppColors.primaryLight,
+              color: theme.colorScheme.primary.withValues(alpha: 0.10),
               border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
               borderRadius: BorderRadius.circular(16),
             ),
@@ -191,7 +191,7 @@ class _WebAppCard extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: const Icon(Icons.public,
@@ -206,14 +206,14 @@ class _WebAppCard extends StatelessWidget {
                         'Aplicação web',
                         style: theme.textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: AppColors.primaryDark,
+                          color: theme.colorScheme.primary,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         'Use também no computador',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: AppColors.primaryDark.withValues(alpha: 0.8),
+                          color: theme.colorScheme.primary.withValues(alpha: 0.8),
                         ),
                       ),
                     ],

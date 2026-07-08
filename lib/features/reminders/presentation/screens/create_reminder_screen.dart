@@ -323,7 +323,7 @@ class _LabeledField extends StatelessWidget {
           label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: AppColors.slate900,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
         ),
         const SizedBox(height: 6),

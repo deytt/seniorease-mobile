@@ -322,7 +322,7 @@ class _LabeledField extends StatelessWidget {
           label,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: AppColors.slate900,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
         ),
         const SizedBox(height: 6),
@@ -458,7 +458,7 @@ class _StepsSection extends StatelessWidget {
           'Passos da Tarefa *',
           style: theme.textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.bold,
-            color: AppColors.slate900,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 4),
