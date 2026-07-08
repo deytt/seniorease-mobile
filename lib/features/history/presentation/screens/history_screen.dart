@@ -9,8 +9,6 @@ import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/senior_spacing_theme.dart';
 import 'package:mobile/core/theme/senior_system_ui.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
-import 'package:mobile/core/tour/tour_dialogs.dart';
-import 'package:mobile/core/tour/tour_gate.dart';
 import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_help_button.dart';
 import 'package:mobile/core/tour/tour_id.dart';
@@ -62,31 +60,6 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
       [_statsShowcaseKey, _streakShowcaseKey, _activityShowcaseKey];
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _maybeOfferFirstUse());
-  }
-
-  /// Na primeira visita (apenas em Modo Básico), pergunta se pode mostrar
-  /// como funciona esta tela. A decisão de "quando" é toda do [TourGate].
-  Future<void> _maybeOfferFirstUse() async {
-    if (!mounted) return;
-    final gate = ref.read(tourGateProvider);
-    if (!await gate.shouldOfferFirstUse(tourId)) return;
-    if (!mounted) return;
-
-    await gate.markOffered(tourId);
-    if (!mounted) return;
-
-    final accepted = await showTourInviteDialog(
-      context,
-      title: 'Quer conhecer esta tela?',
-      message: 'Posso mostrar como tudo funciona aqui em poucos passos.',
-    );
-    if (accepted && mounted) startTour();
-  }
-
   @override
   Widget build(BuildContext context) {
     final eventsAsync = ref.watch(historyStreamProvider);
@@ -101,7 +74,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Column(
           children: [
-            _Header(onHelp: startTour),
+            _Header(onHelp: startTour, tourId: tourId),
             Expanded(
               child: RefreshIndicator(
                 color: AppColors.primary,
@@ -153,9 +126,10 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen>
 // ---------------------------------------------------------------------------
 
 class _Header extends StatelessWidget {
-  const _Header({required this.onHelp});
+  const _Header({required this.onHelp, this.tourId});
 
   final VoidCallback onHelp;
+  final TourId? tourId;
 
   @override
   Widget build(BuildContext context) {
@@ -197,7 +171,7 @@ class _Header extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                TourHelpButton(onPressed: onHelp),
+                TourHelpButton(onPressed: onHelp, tourId: tourId),
               ],
             ),
           ),

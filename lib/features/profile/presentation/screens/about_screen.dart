@@ -4,8 +4,6 @@ import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
-import 'package:mobile/core/tour/tour_dialogs.dart';
-import 'package:mobile/core/tour/tour_gate.dart';
 import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_help_button.dart';
 import 'package:mobile/core/tour/tour_id.dart';
@@ -41,32 +39,6 @@ class _AboutScreenState extends ConsumerState<AboutScreen>
   @override
   List<GlobalKey> get tourKeys => [_descShowcaseKey, _webShowcaseKey];
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _maybeOfferFirstUse());
-  }
-
-  /// Na primeira visita (apenas em Modo Básico), pergunta se pode mostrar
-  /// como funciona esta tela. A decisão de "quando" é toda do [TourGate].
-  Future<void> _maybeOfferFirstUse() async {
-    if (!mounted) return;
-    final gate = ref.read(tourGateProvider);
-    if (!await gate.shouldOfferFirstUse(tourId)) return;
-    if (!mounted) return;
-
-    await gate.markOffered(tourId);
-    if (!mounted) return;
-
-    final accepted = await showTourInviteDialog(
-      context,
-      title: 'Quer conhecer esta tela?',
-      message: 'Posso mostrar como tudo funciona aqui em poucos passos.',
-    );
-    if (accepted && mounted) startTour();
-  }
-
   Future<void> _openWeb() async {
     await SeniorFeedback.light(ref);
     final uri = Uri.parse(_webUrl);
@@ -89,7 +61,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen>
       title: 'Sobre',
       backIcon: Icons.chevron_left,
       onBack: () => Navigator.of(context).pop(),
-      trailing: TourHelpButton(onPressed: startTour),
+      trailing: TourHelpButton(onPressed: startTour, tourId: tourId),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(

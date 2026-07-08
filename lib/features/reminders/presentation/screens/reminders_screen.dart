@@ -9,10 +9,9 @@ import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/theme/senior_spacing_theme.dart';
 import 'package:mobile/core/theme/senior_system_ui.dart';
+import 'package:mobile/core/widgets/senior_feedback_overlay.dart';
 import 'package:mobile/core/widgets/senior_toast.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
-import 'package:mobile/core/tour/tour_dialogs.dart';
-import 'package:mobile/core/tour/tour_gate.dart';
 import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_help_button.dart';
 import 'package:mobile/core/tour/tour_id.dart';
@@ -49,32 +48,6 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen>
       [_createShowcaseKey, _filterShowcaseKey, _firstCardShowcaseKey];
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _maybeOfferFirstUse());
-  }
-
-  /// Na primeira visita (apenas em Modo Básico), pergunta se pode mostrar
-  /// como funciona esta tela. A decisão de "quando" é toda do [TourGate].
-  Future<void> _maybeOfferFirstUse() async {
-    if (!mounted) return;
-    final gate = ref.read(tourGateProvider);
-    if (!await gate.shouldOfferFirstUse(tourId)) return;
-    if (!mounted) return;
-
-    await gate.markOffered(tourId);
-    if (!mounted) return;
-
-    final accepted = await showTourInviteDialog(
-      context,
-      title: 'Quer conhecer esta tela?',
-      message: 'Posso mostrar como tudo funciona aqui em poucos passos.',
-    );
-    if (accepted && mounted) startTour();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final remindersAsync = ref.watch(filteredRemindersStreamProvider);
     final filter = ref.watch(reminderFilterProvider);
@@ -97,6 +70,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen>
               createShowcaseKey: _createShowcaseKey,
               filterShowcaseKey: _filterShowcaseKey,
               onHelp: startTour,
+              tourId: tourId,
               onCreate: () => context.push(AppRoutes.createReminder),
               onOpenFilter: () => _openFilterSheet(context, filter),
             ),
@@ -177,6 +151,7 @@ class _Header extends ConsumerWidget {
     required this.onHelp,
     required this.onCreate,
     required this.onOpenFilter,
+    this.tourId,
   });
 
   final int doneCount;
@@ -188,6 +163,7 @@ class _Header extends ConsumerWidget {
   final VoidCallback onHelp;
   final VoidCallback onCreate;
   final VoidCallback onOpenFilter;
+  final TourId? tourId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -232,7 +208,7 @@ class _Header extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                TourHelpButton(onPressed: onHelp),
+                TourHelpButton(onPressed: onHelp, tourId: tourId),
                 const SizedBox(width: AppSpacing.sm),
                 SeniorShowcase(
                   showcaseKey: filterShowcaseKey,
@@ -496,6 +472,18 @@ class _ReminderListState extends ConsumerState<_ReminderList> {
   final GlobalKey _highlightKey = GlobalKey();
   String? _handledHighlightId;
 
+  Future<void> _onMarkDone(String reminderId, String reminderTitle) async {
+    await ref
+        .read(remindersControllerProvider.notifier)
+        .markRead(reminderId, isRead: true);
+    if (!mounted) return;
+    await SeniorFeedbackOverlay.show(
+      context,
+      title: 'Lembrete concluído! 🎉',
+      message: 'Muito bem! Concluiu "$reminderTitle".',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen(filteredRemindersStreamProvider, (previous, next) {
@@ -550,9 +538,7 @@ class _ReminderListState extends ConsumerState<_ReminderList> {
           playHint: reminder.id == firstActionableId,
           highlighted: isHighlighted,
           highlightKey: isHighlighted ? _highlightKey : null,
-          onMarkDone: () => ref
-              .read(remindersControllerProvider.notifier)
-              .markRead(reminder.id, isRead: true),
+          onMarkDone: () => _onMarkDone(reminder.id, reminder.title),
           onDelete: () async {
             ref.read(openReminderSwipeProvider.notifier).close();
             await ref

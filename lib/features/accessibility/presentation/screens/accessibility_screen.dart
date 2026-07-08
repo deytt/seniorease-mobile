@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/senior_spacing_theme.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
-import 'package:mobile/core/tour/tour_dialogs.dart';
-import 'package:mobile/core/tour/tour_gate.dart';
 import 'package:mobile/core/tour/tour_help_button.dart';
 import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_id.dart';
@@ -66,29 +64,7 @@ class _AccessibilityScreenState extends ConsumerState<AccessibilityScreen>
       if (prefs != null && _draft == null) {
         setState(() => _draft = prefs);
       }
-      _maybeOfferFirstUse();
     });
-  }
-
-  /// Na primeira utilização (apenas em Modo Básico), pergunta se pode mostrar
-  /// como ajustar a acessibilidade. A decisão de "quando" é toda do [TourGate].
-  Future<void> _maybeOfferFirstUse() async {
-    if (!mounted) return;
-    final gate = ref.read(tourGateProvider);
-    if (!await gate.shouldOfferFirstUse(TourId.accessibility)) return;
-    if (!mounted) return;
-
-    await gate.markOffered(TourId.accessibility);
-    if (!mounted) return;
-
-    final accepted = await showTourInviteDialog(
-      context,
-      title: 'Vamos fazer juntos?',
-      message: 'Posso mostrar rapidamente como ajustar a acessibilidade?',
-      acceptLabel: 'Sim',
-      declineLabel: 'Agora não',
-    );
-    if (accepted && mounted) startTour();
   }
 
   void _update(UserPreferences updated) => setState(() => _draft = updated);
@@ -142,7 +118,7 @@ class _AccessibilityScreenState extends ConsumerState<AccessibilityScreen>
       title: 'Configurações de Acessibilidade',
       backIcon: Icons.chevron_left,
       onBack: () => Navigator.of(context).pop(),
-      trailing: TourHelpButton(onPressed: startTour),
+      trailing: TourHelpButton(onPressed: startTour, tourId: tourId),
       body: prefsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(

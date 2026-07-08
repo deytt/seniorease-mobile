@@ -5,12 +5,11 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
-import 'package:mobile/core/tour/tour_dialogs.dart';
-import 'package:mobile/core/tour/tour_gate.dart';
 import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_id.dart';
 import 'package:mobile/core/widgets/senior_button.dart';
 import 'package:mobile/core/widgets/senior_input.dart';
+import 'package:mobile/core/widgets/senior_feedback_overlay.dart';
 import 'package:mobile/core/widgets/senior_screen_scaffold.dart';
 import 'package:mobile/core/widgets/senior_toast.dart';
 import 'package:mobile/core/tour/tour_help_button.dart';
@@ -51,33 +50,6 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
   @override
   List<GlobalKey> get tourKeys =>
       [_titleShowcaseKey, _stepsShowcaseKey, _createShowcaseKey];
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeOfferFirstUse());
-  }
-
-  /// Na primeira utilização (apenas em Modo Básico), pergunta se pode mostrar
-  /// como criar uma tarefa. A decisão de "quando" é toda do [TourGate].
-  Future<void> _maybeOfferFirstUse() async {
-    if (!mounted) return;
-    final gate = ref.read(tourGateProvider);
-    if (!await gate.shouldOfferFirstUse(TourId.createTask)) return;
-    if (!mounted) return;
-
-    await gate.markOffered(TourId.createTask);
-    if (!mounted) return;
-
-    final accepted = await showTourInviteDialog(
-      context,
-      title: 'Vamos fazer juntos?',
-      message: 'Posso mostrar rapidamente como criar uma tarefa?',
-      acceptLabel: 'Sim',
-      declineLabel: 'Agora não',
-    );
-    if (accepted && mounted) startTour();
-  }
 
   // 1 passo pré-aberto por defeito
   final List<TextEditingController> _stepControllers = [
@@ -210,14 +182,14 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
     if (!mounted) return;
 
     if (id != null) {
-      await SeniorFeedback.medium(ref);
+      await SeniorFeedback.success(ref);
       if (!mounted) return;
-      showSeniorToast(
+      await SeniorFeedbackOverlay.show(
         context,
-        title: 'Tarefa criada',
-        message: 'A sua tarefa foi guardada com sucesso!',
-        variant: SeniorToastVariant.success,
+        title: 'Tarefa criada!',
+        message: 'A sua tarefa foi guardada com sucesso.',
       );
+      if (!mounted) return;
       context.pop();
     } else {
       showSeniorToast(
@@ -236,7 +208,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
     return SeniorScreenScaffold(
       title: 'Nova Tarefa',
       backIcon: Icons.close,
-      trailing: TourHelpButton(onPressed: startTour),
+      trailing: TourHelpButton(onPressed: startTour, tourId: tourId),
       body: Form(
         key: _formKey,
         child: ListView(

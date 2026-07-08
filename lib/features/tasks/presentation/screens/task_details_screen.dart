@@ -6,12 +6,11 @@ import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
-import 'package:mobile/core/tour/tour_dialogs.dart';
-import 'package:mobile/core/tour/tour_gate.dart';
 import 'package:mobile/core/tour/tour_help_button.dart';
 import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_id.dart';
 import 'package:mobile/core/widgets/senior_button.dart';
+import 'package:mobile/core/widgets/senior_feedback_overlay.dart';
 import 'package:mobile/core/widgets/senior_modal.dart';
 import 'package:mobile/core/widgets/senior_screen_scaffold.dart';
 import 'package:mobile/core/widgets/senior_toast.dart';
@@ -53,32 +52,6 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
       ];
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _maybeOfferFirstUse());
-  }
-
-  /// Na primeira visita (apenas em Modo Básico), pergunta se pode mostrar
-  /// como funciona esta tela. A decisão de "quando" é toda do [TourGate].
-  Future<void> _maybeOfferFirstUse() async {
-    if (!mounted) return;
-    final gate = ref.read(tourGateProvider);
-    if (!await gate.shouldOfferFirstUse(tourId)) return;
-    if (!mounted) return;
-
-    await gate.markOffered(tourId);
-    if (!mounted) return;
-
-    final accepted = await showTourInviteDialog(
-      context,
-      title: 'Quer conhecer esta tela?',
-      message: 'Posso mostrar como tudo funciona aqui em poucos passos.',
-    );
-    if (accepted && mounted) startTour();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final taskAsync = ref.watch(taskStreamProvider(widget.taskId));
     final task = taskAsync.asData?.value;
@@ -89,7 +62,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          TourHelpButton(onPressed: startTour),
+          TourHelpButton(onPressed: startTour, tourId: tourId),
           if (task != null)
             SeniorShowcase(
               showcaseKey: _deleteShowcaseKey,
@@ -119,9 +92,31 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
           stepsShowcaseKey: _stepsShowcaseKey,
           actionsShowcaseKey: _actionsShowcaseKey,
           scope: _scope,
+          onComplete: () => _handleCompleteTask(task),
         ),
       ),
     );
+  }
+
+  Future<void> _handleCompleteTask(Task task) async {
+    final confirmed = await showSeniorConfirmDialog(
+      context: context,
+      title: 'Concluir tarefa?',
+      message: 'Isto vai marcar a tarefa e todos os seus passos como concluídos.',
+      confirmLabel: 'Concluir',
+      cancelLabel: 'Cancelar',
+    );
+    if (confirmed != true || !mounted) return;
+
+    await SeniorFeedback.success(ref);
+    await ref.read(tasksControllerProvider.notifier).completeTask(task.id);
+    if (!mounted) return;
+    await SeniorFeedbackOverlay.show(
+      context,
+      message: 'Concluiu "${task.title}". Muito bem!',
+    );
+    if (!mounted) return;
+    context.pop();
   }
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
@@ -186,6 +181,7 @@ class _Content extends StatelessWidget {
     required this.stepsShowcaseKey,
     required this.actionsShowcaseKey,
     required this.scope,
+    required this.onComplete,
   });
 
   final Task task;
@@ -193,6 +189,7 @@ class _Content extends StatelessWidget {
   final GlobalKey stepsShowcaseKey;
   final GlobalKey actionsShowcaseKey;
   final String scope;
+  final VoidCallback onComplete;
 
   @override
   Widget build(BuildContext context) {
@@ -246,7 +243,7 @@ class _Content extends StatelessWidget {
                 const SizedBox(height: 12),
               ],
               if (!task.isCompleted)
-                _CompleteButton(task: task)
+                _CompleteButton(task: task, onComplete: onComplete)
               else
                 _CompletedBanner(),
             ],
@@ -477,9 +474,10 @@ class _GuidedModeCard extends ConsumerWidget {
 // ------------------------------------------------------------------ Botões
 
 class _CompleteButton extends ConsumerWidget {
-  const _CompleteButton({required this.task});
+  const _CompleteButton({required this.task, required this.onComplete});
 
   final Task task;
+  final VoidCallback onComplete;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -491,30 +489,7 @@ class _CompleteButton extends ConsumerWidget {
       isLoading: isLoading,
       customBackgroundColor: AppColors.success,
       customForegroundColor: Colors.white,
-      onPressed: () => _confirmComplete(context, ref),
-    );
-  }
-
-  Future<void> _confirmComplete(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showSeniorConfirmDialog(
-      context: context,
-      title: 'Concluir tarefa?',
-      message:
-          'Isto vai marcar a tarefa e todos os seus passos como concluídos.',
-      confirmLabel: 'Concluir',
-      cancelLabel: 'Cancelar',
-    );
-
-    if (confirmed != true || !context.mounted) return;
-
-    await SeniorFeedback.success(ref);
-    await ref.read(tasksControllerProvider.notifier).completeTask(task.id);
-    if (!context.mounted) return;
-    showSeniorToast(
-      context,
-      title: 'Parabéns!',
-      message: 'Concluiu esta tarefa. Muito bem!',
-      variant: SeniorToastVariant.success,
+      onPressed: onComplete,
     );
   }
 }

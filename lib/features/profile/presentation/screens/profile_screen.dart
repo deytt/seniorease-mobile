@@ -5,8 +5,6 @@ import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
-import 'package:mobile/core/tour/tour_dialogs.dart';
-import 'package:mobile/core/tour/tour_gate.dart';
 import 'package:mobile/core/tour/tour_help_button.dart';
 import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_id.dart';
@@ -78,7 +76,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
       if (profile != null) _populate(profile);
     }, fireImmediately: true);
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeOfferFirstUse());
   }
 
   @override
@@ -116,25 +113,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
   /// Na primeira utilização (apenas em Modo Básico), pergunta se pode mostrar
   /// como funciona o perfil. A decisão de "quando" é toda do [TourGate].
-  Future<void> _maybeOfferFirstUse() async {
-    if (!mounted) return;
-    final gate = ref.read(tourGateProvider);
-    if (!await gate.shouldOfferFirstUse(TourId.profile)) return;
-    if (!mounted) return;
-
-    await gate.markOffered(TourId.profile);
-    if (!mounted) return;
-
-    final accepted = await showTourInviteDialog(
-      context,
-      title: 'Vamos fazer juntos?',
-      message: 'Posso mostrar rapidamente como ver e mudar seus dados?',
-      acceptLabel: 'Sim',
-      declineLabel: 'Agora não',
-    );
-    if (accepted && mounted) startTour();
-  }
-
   bool get _isBasicMode =>
       ref.watch(preferencesProvider).asData?.value.interfaceMode ==
       InterfaceMode.basic;
@@ -148,7 +126,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     return SeniorScreenScaffold(
       title: 'Perfil',
       subtitle: 'Veja e atualize seus dados',
-      trailing: TourHelpButton(onPressed: startTour),
+      trailing: TourHelpButton(onPressed: startTour, tourId: tourId),
       body: profile == null
           ? const Center(child: CircularProgressIndicator())
           : Form(

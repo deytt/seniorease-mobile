@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/feedback/senior_feedback.dart';
@@ -7,6 +9,8 @@ import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
+import 'package:mobile/core/tour/tour_attention_wrapper.dart';
+import 'package:mobile/core/tour/tour_id.dart';
 import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:mobile/features/notifications/presentation/providers/notification_history_provider.dart';
 import 'package:mobile/features/tasks/domain/entities/task.dart';
@@ -19,6 +23,7 @@ class HomeHeader extends ConsumerWidget {
     this.tourScope,
     this.nextActivityShowcaseKey,
     this.onHelp,
+    this.tourId,
   });
 
   /// Quando fornecidos, o cartão "Próxima atividade" torna-se alvo do tutorial
@@ -26,6 +31,9 @@ class HomeHeader extends ConsumerWidget {
   final String? tourScope;
   final GlobalKey? nextActivityShowcaseKey;
   final VoidCallback? onHelp;
+
+  /// Identificador do tour da tela inicial — controla se o tooltip é exibido.
+  final TourId? tourId;
 
   static String _greeting() {
     final hour = DateTime.now().hour;
@@ -90,7 +98,7 @@ class HomeHeader extends ConsumerWidget {
               ),
               const SizedBox(width: AppSpacing.sm),
               if (onHelp != null) ...[
-                _HeaderHelpButton(onTap: onHelp!),
+                _HeaderHelpButton(onTap: onHelp!, tourId: tourId),
                 const SizedBox(width: AppSpacing.sm),
               ],
               _NotificationBell(),
@@ -119,9 +127,10 @@ class HomeHeader extends ConsumerWidget {
 
 /// Botão de ajuda em versão clara, para o header gradiente da Tela Inicial.
 class _HeaderHelpButton extends ConsumerWidget {
-  const _HeaderHelpButton({required this.onTap});
+  const _HeaderHelpButton({required this.onTap, this.tourId});
 
   final VoidCallback onTap;
+  final TourId? tourId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -133,14 +142,18 @@ class _HeaderHelpButton extends ConsumerWidget {
           SeniorFeedback.light(ref);
           onTap();
         },
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(14),
+        child: TourAttentionWrapper(
+          tourId: tourId,
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child:
+                const Icon(Icons.help_outline, color: Colors.white, size: 22),
           ),
-          child: const Icon(Icons.help_outline, color: Colors.white, size: 22),
         ),
       ),
     );
@@ -151,9 +164,67 @@ class _HeaderHelpButton extends ConsumerWidget {
 
 /// Botão sininho que navega para o histórico de notificações push.
 /// Exibe um badge vermelho com a contagem de notificações recebidas hoje.
-class _NotificationBell extends ConsumerWidget {
+/// Ao abrir a Home, balança por 5 segundos para chamar a atenção do usuário.
+class _NotificationBell extends ConsumerStatefulWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_NotificationBell> createState() => _NotificationBellState();
+}
+
+class _NotificationBellState extends ConsumerState<_NotificationBell>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _bellCtrl;
+  late final Animation<double> _shakeAnim;
+  Timer? _stopTimer;
+
+  static const _kBellDuration = Duration(seconds: 5);
+  static const _kBellCycle = Duration(milliseconds: 450);
+
+  @override
+  void initState() {
+    super.initState();
+    _bellCtrl = AnimationController(vsync: this, duration: _kBellCycle);
+
+    // Swing: centre → left → right → centre, giving a ringing bell feel.
+    _shakeAnim = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(begin: 0.0, end: -0.1)
+            .chain(CurveTween(curve: Curves.easeOut)),
+        weight: 1,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: -0.1, end: 0.1)
+            .chain(CurveTween(curve: Curves.easeInOut)),
+        weight: 2,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 0.1, end: 0.0)
+            .chain(CurveTween(curve: Curves.easeIn)),
+        weight: 1,
+      ),
+    ]).animate(_bellCtrl);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _bellCtrl.repeat();
+      _stopTimer = Timer(_kBellDuration, _stop);
+    });
+  }
+
+  void _stop() {
+    if (!mounted) return;
+    _bellCtrl.stop();
+    _bellCtrl.animateTo(0, duration: const Duration(milliseconds: 200));
+  }
+
+  @override
+  void dispose() {
+    _stopTimer?.cancel();
+    _bellCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final todayCount = ref.watch(todayNotificationCountProvider);
     final hasBadge = todayCount > 0;
 
@@ -177,10 +248,17 @@ class _NotificationBell extends ConsumerWidget {
                 color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(AppTheme.borderRadius),
               ),
-              child: const Icon(
-                Icons.notifications_outlined,
-                color: Colors.white,
-                size: 22,
+              child: AnimatedBuilder(
+                animation: _shakeAnim,
+                builder: (context, child) => Transform.rotate(
+                  angle: _shakeAnim.value,
+                  child: child,
+                ),
+                child: const Icon(
+                  Icons.notifications_outlined,
+                  color: Colors.white,
+                  size: 22,
+                ),
               ),
             ),
             if (hasBadge)
@@ -188,16 +266,16 @@ class _NotificationBell extends ConsumerWidget {
                 top: -2,
                 right: -2,
                 child: Container(
-                  constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                  constraints:
+                      const BoxConstraints(minWidth: 18, minHeight: 18),
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
                     color: AppColors.danger,
                     shape: todayCount < 10
                         ? BoxShape.circle
                         : BoxShape.rectangle,
-                    borderRadius: todayCount >= 10
-                        ? BorderRadius.circular(9)
-                        : null,
+                    borderRadius:
+                        todayCount >= 10 ? BorderRadius.circular(9) : null,
                     border: Border.all(
                       color: AppColors.primaryDark,
                       width: 1.5,

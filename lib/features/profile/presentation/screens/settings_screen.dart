@@ -8,8 +8,7 @@ import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/senior_system_ui.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
-import 'package:mobile/core/tour/tour_dialogs.dart';
-import 'package:mobile/core/tour/tour_gate.dart';
+import 'package:mobile/core/tour/tour_attention_wrapper.dart';
 import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_id.dart';
 import 'package:mobile/core/widgets/senior_button.dart';
@@ -45,31 +44,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
   List<GlobalKey> get tourKeys =>
       [_navShowcaseKey, _helpShowcaseKey, _signOutShowcaseKey];
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _maybeOfferFirstUse());
-  }
-
-  /// Na primeira visita (apenas em Modo Básico), pergunta se pode mostrar
-  /// como funciona esta tela. A decisão de "quando" é toda do [TourGate].
-  Future<void> _maybeOfferFirstUse() async {
-    if (!mounted) return;
-    final gate = ref.read(tourGateProvider);
-    if (!await gate.shouldOfferFirstUse(tourId)) return;
-    if (!mounted) return;
-
-    await gate.markOffered(tourId);
-    if (!mounted) return;
-
-    final accepted = await showTourInviteDialog(
-      context,
-      title: 'Quer conhecer esta tela?',
-      message: 'Posso mostrar como tudo funciona aqui em poucos passos.',
-    );
-    if (accepted && mounted) startTour();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -92,6 +66,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               phone: profile?.hasPhone == true ? profile!.phone : null,
               photoUrl: profile?.hasPhoto == true ? profile!.photoUrl : null,
               onHelp: startTour,
+              tourId: tourId,
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -191,6 +166,7 @@ class _ProfileBanner extends StatelessWidget {
     this.phone,
     this.photoUrl,
     this.onHelp,
+    this.tourId,
   });
 
   final String name;
@@ -198,6 +174,7 @@ class _ProfileBanner extends StatelessWidget {
   final String? phone;
   final String? photoUrl;
   final VoidCallback? onHelp;
+  final TourId? tourId;
 
   String get _initials {
     final parts = name.trim().split(' ').where((w) => w.isNotEmpty).toList();
@@ -247,7 +224,7 @@ class _ProfileBanner extends StatelessWidget {
                   SizedBox(
                     width: 44,
                     child: onHelp != null
-                        ? _HeaderHelpButton(onTap: onHelp!)
+                        ? _HeaderHelpButton(onTap: onHelp!, tourId: tourId)
                         : null,
                   ),
                 ],
@@ -332,9 +309,10 @@ class _ProfileBanner extends StatelessWidget {
 
 /// Botão de ajuda em versão clara, para o header gradiente das Definições.
 class _HeaderHelpButton extends ConsumerWidget {
-  const _HeaderHelpButton({required this.onTap});
+  const _HeaderHelpButton({required this.onTap, this.tourId});
 
   final VoidCallback onTap;
+  final TourId? tourId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -346,14 +324,18 @@ class _HeaderHelpButton extends ConsumerWidget {
           SeniorFeedback.light(ref);
           onTap();
         },
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(14),
+        child: TourAttentionWrapper(
+          tourId: tourId,
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child:
+                const Icon(Icons.help_outline, color: Colors.white, size: 22),
           ),
-          child: const Icon(Icons.help_outline, color: Colors.white, size: 22),
         ),
       ),
     );
