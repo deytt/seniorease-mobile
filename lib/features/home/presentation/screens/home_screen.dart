@@ -9,7 +9,6 @@ import 'package:mobile/core/tour/tour_dialogs.dart';
 import 'package:mobile/core/tour/tour_gate.dart';
 import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_id.dart';
-import 'package:mobile/core/tour/tour_signal_provider.dart';
 import 'package:mobile/features/home/presentation/widgets/home_header.dart';
 import 'package:mobile/features/home/presentation/widgets/quick_actions_grid.dart';
 import 'package:mobile/features/home/presentation/widgets/reminders_section.dart';
@@ -45,20 +44,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeOfferWelcome());
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _maybeOfferWelcome();
+      if (mounted) await _maybeOfferFirstUse();
+    });
   }
 
-  /// Boas-vindas no primeiro arranque: pergunta se pode mostrar o essencial.
-  /// A decisão (e a persistência cross-device) é toda do [TourGate].
+  /// Boas-vindas no primeiro arranque (cross-device, Firestore): pergunta se
+  /// pode mostrar o essencial. Marca também [TourId.home] como oferecido para
+  /// evitar um segundo modal de primeira utilização nesta mesma tela.
   Future<void> _maybeOfferWelcome() async {
     if (!mounted) return;
-    if (ref.read(tourSessionProvider)) return;
-
     final gate = ref.read(tourGateProvider);
     if (!await gate.isInitialOnboardingPending()) return;
     if (!mounted) return;
-
-    ref.read(tourSessionProvider.notifier).markAutoOffered();
 
     final accepted = await showTourInviteDialog(
       context,
@@ -71,6 +70,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     // Concluído quer aceite ou recuse — não volta a aparecer automaticamente.
     await gate.completeInitialOnboarding();
+    // Evita que _maybeOfferFirstUse mostre outro modal para esta mesma tela.
+    await gate.markOffered(TourId.home);
+    if (accepted && mounted) startTour();
+  }
+
+  /// Na primeira visita (apenas em Modo Básico), pergunta se pode mostrar
+  /// como funciona a tela inicial. Só dispara se o onboarding já foi concluído
+  /// noutro dispositivo mas o tour da Home ainda não foi oferecido neste.
+  Future<void> _maybeOfferFirstUse() async {
+    if (!mounted) return;
+    final gate = ref.read(tourGateProvider);
+    if (!await gate.shouldOfferFirstUse(TourId.home)) return;
+    if (!mounted) return;
+
+    await gate.markOffered(TourId.home);
+    if (!mounted) return;
+
+    final accepted = await showTourInviteDialog(
+      context,
+      title: 'Quer conhecer esta tela?',
+      message: 'Posso mostrar como tudo funciona aqui em poucos passos.',
+    );
     if (accepted && mounted) startTour();
   }
 
