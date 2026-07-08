@@ -7,10 +7,11 @@ import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
 
-/// Grid 2×2 de ações rápidas.
-/// Usa IntrinsicHeight + Row em vez de GridView para que os cards
-/// cresçam com o tamanho da fonte sem overflow.
-class QuickActionsGrid extends StatelessWidget {
+/// Grid 2×2 de ações rápidas com animação de entrada escalonada.
+///
+/// Cada card surge com fade-in + slide sutil para cima, com 105 ms de
+/// desfasagem entre eles (leitura natural: linha-a-linha, esquerda→direita).
+class QuickActionsGrid extends StatefulWidget {
   const QuickActionsGrid({
     super.key,
     this.tourScope,
@@ -24,7 +25,71 @@ class QuickActionsGrid extends StatelessWidget {
   final GlobalKey? newTaskShowcaseKey;
   final GlobalKey? accessibilityShowcaseKey;
 
-  static const double _gap = AppSpacing.sm + 4; // 12px
+  @override
+  State<QuickActionsGrid> createState() => _QuickActionsGridState();
+}
+
+class _QuickActionsGridState extends State<QuickActionsGrid>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  // Total da animação: 700 ms. Cada card dura 50 % desse tempo (~350 ms),
+  // com 15 % de desfasagem (~105 ms) entre inícios consecutivos.
+  static const _kTotal = Duration(milliseconds: 700);
+  static const _kCardFraction = 0.50;
+  static const _kStagger = 0.15;
+
+  late final List<Animation<double>> _fadeAnims;
+  late final List<Animation<Offset>> _slideAnims;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: _kTotal);
+
+    _fadeAnims = List.generate(4, (i) {
+      final begin = i * _kStagger;
+      final end = (begin + _kCardFraction).clamp(0.0, 1.0);
+      return Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(
+          parent: _ctrl,
+          curve: Interval(begin, end, curve: Curves.easeOut),
+        ),
+      );
+    });
+
+    _slideAnims = List.generate(4, (i) {
+      final begin = i * _kStagger;
+      final end = (begin + _kCardFraction).clamp(0.0, 1.0);
+      return Tween<Offset>(
+        begin: const Offset(0, 0.10),
+        end: Offset.zero,
+      ).animate(
+        CurvedAnimation(
+          parent: _ctrl,
+          curve: Interval(begin, end, curve: Curves.easeOut),
+        ),
+      );
+    });
+
+    // Arranca após o primeiro frame para não atrasar o render inicial.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _ctrl.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  static const double _gap = AppSpacing.sm + 4; // 12 px
+
+  Widget _animated(int index, Widget child) => FadeTransition(
+        opacity: _fadeAnims[index],
+        child: SlideTransition(position: _slideAnims[index], child: child),
+      );
 
   Widget _maybeShowcase({
     required GlobalKey? key,
@@ -32,10 +97,10 @@ class QuickActionsGrid extends StatelessWidget {
     required String description,
     required Widget child,
   }) {
-    if (tourScope == null || key == null) return child;
+    if (widget.tourScope == null || key == null) return child;
     return SeniorShowcase(
       showcaseKey: key,
-      scope: tourScope!,
+      scope: widget.tourScope!,
       title: title,
       description: description,
       child: child,
@@ -51,33 +116,39 @@ class QuickActionsGrid extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
-                child: _maybeShowcase(
-                  key: newTaskShowcaseKey,
-                  title: 'Criar uma nova tarefa',
-                  description:
-                      'Toque aqui para criar uma tarefa, como tomar um remédio ou ir ao médico.',
-                  child: _ActionCard(
-                    icon: Icons.add_task,
-                    label: 'Nova Tarefa',
-                    iconBg: AppColors.primary.withValues(alpha: 0.13),
-                    iconColor: AppColors.primary,
-                    onTap: () => context.push(AppRoutes.createTask),
+                child: _animated(
+                  0,
+                  _maybeShowcase(
+                    key: widget.newTaskShowcaseKey,
+                    title: 'Criar uma nova tarefa',
+                    description:
+                        'Toque aqui para criar uma tarefa, como tomar um remédio ou ir ao médico.',
+                    child: _ActionCard(
+                      icon: Icons.add_task,
+                      label: 'Nova Tarefa',
+                      iconBg: AppColors.primary.withValues(alpha: 0.13),
+                      iconColor: AppColors.primary,
+                      onTap: () => context.push(AppRoutes.createTask),
+                    ),
                   ),
                 ),
               ),
               const SizedBox(width: _gap),
               Expanded(
-                child: _maybeShowcase(
-                  key: accessibilityShowcaseKey,
-                  title: 'Ajustar para si',
-                  description:
-                      'Aqui você pode aumentar as letras e melhorar as cores para ver melhor.',
-                  child: _ActionCard(
-                    icon: Icons.accessibility_new,
-                    label: 'Acessibilidade',
-                    iconBg: AppColors.secondary.withValues(alpha: 0.13),
-                    iconColor: AppColors.secondary,
-                    onTap: () => context.push(AppRoutes.accessibility),
+                child: _animated(
+                  1,
+                  _maybeShowcase(
+                    key: widget.accessibilityShowcaseKey,
+                    title: 'Ajustar para si',
+                    description:
+                        'Aqui você pode aumentar as letras e melhorar as cores para ver melhor.',
+                    child: _ActionCard(
+                      icon: Icons.accessibility_new,
+                      label: 'Acessibilidade',
+                      iconBg: AppColors.secondary.withValues(alpha: 0.13),
+                      iconColor: AppColors.secondary,
+                      onTap: () => context.push(AppRoutes.accessibility),
+                    ),
                   ),
                 ),
               ),
@@ -90,22 +161,28 @@ class QuickActionsGrid extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
-                child: _ActionCard(
-                  icon: Icons.notifications_outlined,
-                  label: 'Lembretes',
-                  iconBg: AppColors.warning.withValues(alpha: 0.13),
-                  iconColor: AppColors.warning,
-                  onTap: () => context.go(AppRoutes.reminders),
+                child: _animated(
+                  2,
+                  _ActionCard(
+                    icon: Icons.notifications_outlined,
+                    label: 'Lembretes',
+                    iconBg: AppColors.warning.withValues(alpha: 0.13),
+                    iconColor: AppColors.warning,
+                    onTap: () => context.go(AppRoutes.reminders),
+                  ),
                 ),
               ),
               const SizedBox(width: _gap),
               Expanded(
-                child: _ActionCard(
-                  icon: Icons.help_outline,
-                  label: 'Ajuda Rápida',
-                  iconBg: AppColors.danger.withValues(alpha: 0.13),
-                  iconColor: AppColors.danger,
-                  onTap: () => context.push(AppRoutes.guides),
+                child: _animated(
+                  3,
+                  _ActionCard(
+                    icon: Icons.help_outline,
+                    label: 'Ajuda Rápida',
+                    iconBg: AppColors.danger.withValues(alpha: 0.13),
+                    iconColor: AppColors.danger,
+                    onTap: () => context.push(AppRoutes.guides),
+                  ),
                 ),
               ),
             ],
@@ -114,7 +191,6 @@ class QuickActionsGrid extends StatelessWidget {
       ],
     );
   }
-
 }
 
 class _ActionCard extends ConsumerWidget {
