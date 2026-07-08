@@ -98,10 +98,12 @@ class _SpacingButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bg = selected ? AppColors.primaryLight : theme.colorScheme.surface;
+    final bg = selected
+        ? theme.colorScheme.primary.withValues(alpha: 0.15)
+        : theme.colorScheme.surface;
     final border = selected ? AppColors.primary : theme.colorScheme.outline;
     final labelColor =
-        selected ? AppColors.primary : theme.colorScheme.onSurface;
+        selected ? theme.colorScheme.primary : theme.colorScheme.onSurface;
 
     return Semantics(
       button: true,
