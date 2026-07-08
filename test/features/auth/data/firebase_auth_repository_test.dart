@@ -3,9 +3,13 @@ import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:mobile/features/auth/data/firebase_auth_repository.dart';
+import 'package:mocktail/mocktail.dart';
+
+class _MockGoogleSignIn extends Mock implements GoogleSignIn {}
 
 void main() {
   late FakeFirebaseFirestore db;
+  late _MockGoogleSignIn mockGoogleSignIn;
 
   MockUser user({bool isEmailVerified = true}) => MockUser(
         uid: 'u1',
@@ -18,10 +22,16 @@ void main() {
       FirebaseAuthRepository(
         firebaseAuth: auth,
         firestore: db,
-        googleSignIn: GoogleSignIn(),
+        googleSignIn: mockGoogleSignIn,
       );
 
-  setUp(() => db = FakeFirebaseFirestore());
+  setUp(() {
+    db = FakeFirebaseFirestore();
+    mockGoogleSignIn = _MockGoogleSignIn();
+    // signOut() devolve Future<GoogleSignInAccount?> — o mock retorna null
+    // (sessão Google já não existe ou não estava ativa).
+    when(() => mockGoogleSignIn.signOut()).thenAnswer((_) async => null);
+  });
 
   group('signUp', () {
     test('cria o utilizador, grava o perfil no Firestore e devolve o AppUser',
