@@ -9,6 +9,7 @@ import 'package:mobile/core/tour/tour_help_button.dart';
 import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_id.dart';
 import 'package:mobile/core/widgets/senior_button.dart';
+import 'package:mobile/core/widgets/senior_feedback_overlay.dart';
 import 'package:mobile/core/widgets/senior_input.dart';
 import 'package:mobile/core/widgets/senior_screen_scaffold.dart';
 import 'package:mobile/core/widgets/senior_toast.dart';
@@ -154,14 +155,14 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen>
         return;
       }
 
-      await SeniorFeedback.medium(ref);
+      await SeniorFeedback.success(ref);
       if (!mounted) return;
-      showSeniorToast(
+      await SeniorFeedbackOverlay.show(
         context,
-        title: 'Lembrete atualizado',
+        title: 'Lembrete atualizado!',
         message: 'As alterações foram salvas com sucesso.',
-        variant: SeniorToastVariant.success,
       );
+      if (!mounted) return;
       context.pop();
       return;
     }
@@ -194,14 +195,14 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen>
       return;
     }
 
-    await SeniorFeedback.medium(ref);
+    await SeniorFeedback.success(ref);
     if (!mounted) return;
-    showSeniorToast(
+    await SeniorFeedbackOverlay.show(
       context,
-      title: 'Lembrete criado',
+      title: 'Lembrete criado!',
       message: 'Seu lembrete foi salvo com sucesso.',
-      variant: SeniorToastVariant.success,
     );
+    if (!mounted) return;
     context.pop();
   }
 

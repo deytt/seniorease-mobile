@@ -9,6 +9,7 @@ import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/theme/senior_spacing_theme.dart';
 import 'package:mobile/core/theme/senior_system_ui.dart';
+import 'package:mobile/core/widgets/senior_feedback_overlay.dart';
 import 'package:mobile/core/widgets/senior_toast.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
 import 'package:mobile/core/tour/tour_host.dart';
@@ -471,6 +472,18 @@ class _ReminderListState extends ConsumerState<_ReminderList> {
   final GlobalKey _highlightKey = GlobalKey();
   String? _handledHighlightId;
 
+  Future<void> _onMarkDone(String reminderId, String reminderTitle) async {
+    await ref
+        .read(remindersControllerProvider.notifier)
+        .markRead(reminderId, isRead: true);
+    if (!mounted) return;
+    await SeniorFeedbackOverlay.show(
+      context,
+      title: 'Lembrete concluído! 🎉',
+      message: 'Muito bem! Concluiu "$reminderTitle".',
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen(filteredRemindersStreamProvider, (previous, next) {
@@ -525,9 +538,7 @@ class _ReminderListState extends ConsumerState<_ReminderList> {
           playHint: reminder.id == firstActionableId,
           highlighted: isHighlighted,
           highlightKey: isHighlighted ? _highlightKey : null,
-          onMarkDone: () => ref
-              .read(remindersControllerProvider.notifier)
-              .markRead(reminder.id, isRead: true),
+          onMarkDone: () => _onMarkDone(reminder.id, reminder.title),
           onDelete: () async {
             ref.read(openReminderSwipeProvider.notifier).close();
             await ref
