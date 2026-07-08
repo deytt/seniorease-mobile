@@ -9,7 +9,6 @@ import 'package:mobile/core/tour/tour_dialogs.dart';
 import 'package:mobile/core/tour/tour_gate.dart';
 import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_id.dart';
-import 'package:mobile/core/tour/tour_signal_provider.dart';
 import 'package:mobile/core/widgets/senior_button.dart';
 import 'package:mobile/core/widgets/senior_input.dart';
 import 'package:mobile/core/widgets/senior_screen_scaffold.dart';
@@ -63,13 +62,10 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
   /// como criar uma tarefa. A decisão de "quando" é toda do [TourGate].
   Future<void> _maybeOfferFirstUse() async {
     if (!mounted) return;
-    if (ref.read(tourSessionProvider)) return;
-
     final gate = ref.read(tourGateProvider);
     if (!await gate.shouldOfferFirstUse(TourId.createTask)) return;
     if (!mounted) return;
 
-    ref.read(tourSessionProvider.notifier).markAutoOffered();
     await gate.markOffered(TourId.createTask);
     if (!mounted) return;
 

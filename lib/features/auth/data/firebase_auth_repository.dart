@@ -18,6 +18,11 @@ class FirebaseAuthRepository implements AuthRepository {
   final FirebaseFirestore _firestore;
   final GoogleSignIn _googleSignIn;
 
+  /// Nome completo capturado durante o `signUp()`. Serve de fallback imediato
+  /// para o `authStateChanges()`, que pode emitir antes de o Firestore e o
+  /// `updateDisplayName` terminarem, evitando o "Usuário" transitório na Home.
+  String? _pendingSignUpName;
+
   @override
   Stream<AppUser?> authStateChanges() {
     return _auth.authStateChanges().asyncMap((user) async {
@@ -53,6 +58,12 @@ class FirebaseAuthRepository implements AuthRepository {
     required String email,
     required String password,
   }) async {
+    final fullName = '${firstName.trim()} ${lastName.trim()}'.trim();
+    // Guarda o nome antes de criar a conta: o `authStateChanges()` pode emitir
+    // imediatamente após `createUserWithEmailAndPassword`, antes de o Firestore
+    // e o `updateDisplayName` terminarem. O `_pendingSignUpName` garante que
+    // `_mapFirebaseUser` devolva o nome correto nessa janela de race condition.
+    _pendingSignUpName = fullName;
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email.trim(),
@@ -63,7 +74,6 @@ class FirebaseAuthRepository implements AuthRepository {
         throw FirebaseAuthException(code: 'user-not-found');
       }
 
-      final fullName = '${firstName.trim()} ${lastName.trim()}'.trim();
       await user.updateDisplayName(fullName);
 
       final appUser = AppUser(
@@ -80,8 +90,10 @@ class FirebaseAuthRepository implements AuthRepository {
         'createdAt': FieldValue.serverTimestamp(),
       });
 
+      _pendingSignUpName = null;
       return appUser;
     } on FirebaseAuthException catch (error) {
+      _pendingSignUpName = null;
       throw _mapAuthException(error);
     }
   }
@@ -177,7 +189,10 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> signOut() => _auth.signOut();
+  Future<void> signOut() async {
+    await _googleSignIn.signOut();
+    await _auth.signOut();
+  }
 
   Future<AppUser> _mapFirebaseUser(User user) async {
     final doc = await _firestore.collection('users').doc(user.uid).get();
@@ -186,7 +201,7 @@ class FirebaseAuthRepository implements AuthRepository {
     return AppUser(
       id: user.uid,
       email: user.email ?? data?['email'] as String? ?? '',
-      name: data?['name'] as String? ?? user.displayName ?? 'Usuário',
+      name: data?['name'] as String? ?? user.displayName ?? _pendingSignUpName ?? 'Usuário',
       createdAt: (data?['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       emailVerified: user.emailVerified,
     );

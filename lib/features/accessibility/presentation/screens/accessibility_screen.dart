@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/senior_spacing_theme.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
@@ -9,9 +8,9 @@ import 'package:mobile/core/tour/tour_gate.dart';
 import 'package:mobile/core/tour/tour_help_button.dart';
 import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_id.dart';
-import 'package:mobile/core/tour/tour_signal_provider.dart';
 import 'package:mobile/core/widgets/senior_button.dart';
 import 'package:mobile/core/widgets/senior_screen_scaffold.dart';
+import 'package:mobile/core/widgets/senior_toast.dart';
 import 'package:mobile/features/accessibility/domain/entities/user_preferences.dart';
 import 'package:mobile/features/accessibility/presentation/providers/preferences_provider.dart';
 import 'package:mobile/features/accessibility/presentation/widgets/font_size_slider_card.dart';
@@ -75,13 +74,10 @@ class _AccessibilityScreenState extends ConsumerState<AccessibilityScreen>
   /// como ajustar a acessibilidade. A decisão de "quando" é toda do [TourGate].
   Future<void> _maybeOfferFirstUse() async {
     if (!mounted) return;
-    if (ref.read(tourSessionProvider)) return;
-
     final gate = ref.read(tourGateProvider);
     if (!await gate.shouldOfferFirstUse(TourId.accessibility)) return;
     if (!mounted) return;
 
-    ref.read(tourSessionProvider.notifier).markAutoOffered();
     await gate.markOffered(TourId.accessibility);
     if (!mounted) return;
 
@@ -109,21 +105,18 @@ class _AccessibilityScreenState extends ConsumerState<AccessibilityScreen>
     if (!mounted) return;
     final saveState = ref.read(accessibilityControllerProvider);
     if (saveState is AsyncError) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Erro ao salvar as configurações. Tente novamente.',
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-          ),
-          backgroundColor: Theme.of(context).colorScheme.surface,
-        ),
+      showSeniorToast(
+        context,
+        title: 'Erro ao salvar',
+        message: 'Não foi possível salvar as configurações. Tente novamente.',
+        variant: SeniorToastVariant.danger,
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Configurações salvas com sucesso.'),
-          backgroundColor: AppColors.successDark,
-        ),
+      showSeniorToast(
+        context,
+        title: 'Configurações salvas',
+        message: 'As suas preferências foram aplicadas com sucesso.',
+        variant: SeniorToastVariant.success,
       );
     }
   }

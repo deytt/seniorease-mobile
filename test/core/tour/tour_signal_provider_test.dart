@@ -27,18 +27,6 @@ void main() {
     });
   });
 
-  group('TourSession', () {
-    test('começa sem oferta automática', () {
-      expect(container.read(tourSessionProvider), isFalse);
-      expect(container.read(tourSessionProvider.notifier).hasAutoOffered,
-          isFalse);
-    });
-
-    test('markAutoOffered marca a sessão', () {
-      container.read(tourSessionProvider.notifier).markAutoOffered();
-      expect(container.read(tourSessionProvider), isTrue);
-      expect(
-          container.read(tourSessionProvider.notifier).hasAutoOffered, isTrue);
-    });
-  });
+  // TourSession foi removido no ADR-021: o guard de sessão era redundante face
+  // ao mecanismo de persistência por TourId (SharedPreferences 'offered').
 }
