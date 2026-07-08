@@ -5,6 +5,7 @@ import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/senior_spacing_theme.dart';
 import 'package:mobile/core/theme/senior_system_ui.dart';
+import 'package:mobile/core/tour/senior_showcase.dart';
 import 'package:mobile/core/tour/tour_dialogs.dart';
 import 'package:mobile/core/tour/tour_gate.dart';
 import 'package:mobile/core/tour/tour_host.dart';
@@ -24,9 +25,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     with TourHost<HomeScreen> {
   static const String _scope = 'home';
 
+  // Passo 1: sininho de notificações (header — topo, passo 0 sem auto-scroll)
+  final _notificationBellShowcaseKey = GlobalKey();
+  // Passo 2: próxima atividade (header)
   final _nextActivityShowcaseKey = GlobalKey();
+  // Passo 3: ação rápida Nova Tarefa
   final _newTaskShowcaseKey = GlobalKey();
+  // Passo 4: ação rápida Acessibilidade
   final _accessibilityShowcaseKey = GlobalKey();
+  // Passo 5: ação rápida Lembretes
+  final _remindersActionShowcaseKey = GlobalKey();
+  // Passo 6: ação rápida Ajuda Rápida
+  final _quickHelpShowcaseKey = GlobalKey();
+  // Passo 7: seção "Lembretes de Hoje"
+  final _remindersSectionShowcaseKey = GlobalKey();
 
   @override
   String get tourScope => _scope;
@@ -36,9 +48,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   List<GlobalKey> get tourKeys => [
+        _notificationBellShowcaseKey,
         _nextActivityShowcaseKey,
         _newTaskShowcaseKey,
         _accessibilityShowcaseKey,
+        _remindersActionShowcaseKey,
+        _quickHelpShowcaseKey,
+        _remindersSectionShowcaseKey,
       ];
 
   @override
@@ -84,6 +100,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             HomeHeader(
               tourScope: _scope,
               nextActivityShowcaseKey: _nextActivityShowcaseKey,
+              notificationBellShowcaseKey: _notificationBellShowcaseKey,
               onHelp: startTour,
               tourId: tourId,
             ),
@@ -105,11 +122,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           tourScope: _scope,
                           newTaskShowcaseKey: _newTaskShowcaseKey,
                           accessibilityShowcaseKey: _accessibilityShowcaseKey,
+                          remindersShowcaseKey: _remindersActionShowcaseKey,
+                          quickHelpShowcaseKey: _quickHelpShowcaseKey,
                         ),
                         SizedBox(
                           height: spacing?.sectionGap ?? AppSpacing.lg,
                         ),
-                        const RemindersSection(),
+                        SeniorShowcase(
+                          showcaseKey: _remindersSectionShowcaseKey,
+                          scope: _scope,
+                          title: 'Lembretes de Hoje',
+                          description:
+                              'Aqui aparecem os seus lembretes para o dia de hoje. Toque num para ver os detalhes.',
+                          targetBorderRadius: BorderRadius.circular(16),
+                          child: const RemindersSection(),
+                        ),
                         SizedBox(
                           height: spacing?.cardPadding ?? AppSpacing.md,
                         ),
