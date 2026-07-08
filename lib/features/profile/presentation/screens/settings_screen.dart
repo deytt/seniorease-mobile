@@ -407,7 +407,7 @@ class _HelpCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.primaryLight,
+        color: theme.colorScheme.primary.withValues(alpha: 0.10),
         border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
         borderRadius: BorderRadius.circular(16),
       ),
@@ -426,7 +426,7 @@ class _HelpCard extends StatelessWidget {
                 'Precisa de Ajuda?',
                 style: theme.textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: AppColors.primaryDark,
+                  color: theme.colorScheme.primary,
                 ),
               ),
             ],
@@ -435,7 +435,7 @@ class _HelpCard extends StatelessWidget {
           Text(
             'Ligue para a nossa equipa de suporte a qualquer hora — estamos aqui para si.',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: AppColors.primaryDark.withValues(alpha: 0.8),
+              color: theme.colorScheme.primary.withValues(alpha: 0.85),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),

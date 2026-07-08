@@ -520,7 +520,7 @@ class _ProfileHeaderCard extends StatelessWidget {
                 width: 96,
                 height: 96,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
+                  color: theme.colorScheme.primary.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.primary, width: 2),
                   image: hasPhoto
@@ -670,7 +670,7 @@ class _PhotoSourceTile extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
+                  color: theme.colorScheme.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(icon, color: AppColors.primary, size: 22),

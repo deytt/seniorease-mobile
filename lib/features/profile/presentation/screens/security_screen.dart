@@ -245,7 +245,7 @@ class _VerificationPanel extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: AppColors.warningLight,
+        color: AppColors.warning.withValues(alpha: 0.15),
         border: Border.all(color: AppColors.warning.withValues(alpha: 0.4)),
         borderRadius: BorderRadius.circular(16),
       ),
@@ -256,7 +256,7 @@ class _VerificationPanel extends StatelessWidget {
             children: [
               const Icon(
                 Icons.mark_email_unread_outlined,
-                color: Color(0xFF92400E),
+                color: AppColors.warning,
                 size: 22,
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -265,7 +265,7 @@ class _VerificationPanel extends StatelessWidget {
                   'A sua conta ainda não foi verificada',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF92400E),
+                    color: AppColors.warning,
                   ),
                 ),
               ),
@@ -279,7 +279,10 @@ class _VerificationPanel extends StatelessWidget {
                     '"Já confirmei o meu e-mail".'
                 : 'Vamos enviar um link para o seu e-mail. Basta abrir a mensagem '
                     'e tocar no link para confirmar a sua conta.',
-            style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              height: 1.5,
+              color: theme.colorScheme.onSurface,
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
           if (!started)
@@ -320,19 +323,19 @@ class _VerifiedBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: AppColors.successLight,
-        border: Border.all(color: AppColors.success),
+        color: AppColors.success.withValues(alpha: 0.15),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.5)),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.check, size: 14, color: AppColors.successDark),
+          const Icon(Icons.check, size: 14, color: AppColors.success),
           const SizedBox(width: 4),
           Text(
             'Verificada',
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: AppColors.successDark,
+                  color: AppColors.success,
                   fontWeight: FontWeight.w600,
                 ),
           ),
@@ -351,14 +354,14 @@ class _NotVerifiedBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: AppColors.warningLight,
-        border: Border.all(color: AppColors.warning),
+        color: AppColors.warning.withValues(alpha: 0.15),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.5)),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         'Não verificado',
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: const Color(0xFF92400E),
+              color: AppColors.warning,
               fontWeight: FontWeight.w600,
             ),
       ),
@@ -403,7 +406,7 @@ class _SecurityRow extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: Icon(icon, color: AppColors.primary, size: 20),
@@ -444,15 +447,14 @@ class _ComingSoonBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: AppColors.warningLight,
-        border: Border.all(color: AppColors.warning),
+        color: AppColors.warning.withValues(alpha: 0.15),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.5)),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         'Em breve',
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              // Âmbar escuro para garantir contraste AA sobre o fundo claro.
-              color: const Color(0xFF92400E),
+              color: AppColors.warning,
               fontWeight: FontWeight.w600,
             ),
       ),
