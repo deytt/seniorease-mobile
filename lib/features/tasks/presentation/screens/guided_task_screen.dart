@@ -13,7 +13,7 @@ import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_id.dart';
 import 'package:mobile/features/tasks/domain/entities/task.dart';
 import 'package:mobile/features/tasks/presentation/providers/tasks_provider.dart';
-import 'package:mobile/features/tasks/presentation/widgets/celebration_overlay.dart';
+import 'package:mobile/core/widgets/senior_feedback_overlay.dart';
 import 'package:mobile/features/tasks/presentation/widgets/guided_progress_header.dart';
 
 class GuidedTaskScreen extends ConsumerStatefulWidget {
@@ -77,7 +77,7 @@ class _GuidedTaskScreenState extends ConsumerState<GuidedTaskScreen>
       setState(() => _finishing = true);
       await controller.completeTask(task.id);
       if (!mounted) return;
-      await CelebrationOverlay.show(
+      await SeniorFeedbackOverlay.show(
         context,
         message: 'Concluiu "${task.title}"!',
       );

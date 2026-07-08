@@ -9,6 +9,7 @@ import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_id.dart';
 import 'package:mobile/core/widgets/senior_button.dart';
 import 'package:mobile/core/widgets/senior_input.dart';
+import 'package:mobile/core/widgets/senior_feedback_overlay.dart';
 import 'package:mobile/core/widgets/senior_screen_scaffold.dart';
 import 'package:mobile/core/widgets/senior_toast.dart';
 import 'package:mobile/core/tour/tour_help_button.dart';
@@ -181,14 +182,14 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
     if (!mounted) return;
 
     if (id != null) {
-      await SeniorFeedback.medium(ref);
+      await SeniorFeedback.success(ref);
       if (!mounted) return;
-      showSeniorToast(
+      await SeniorFeedbackOverlay.show(
         context,
-        title: 'Tarefa criada',
-        message: 'A sua tarefa foi guardada com sucesso!',
-        variant: SeniorToastVariant.success,
+        title: 'Tarefa criada!',
+        message: 'A sua tarefa foi guardada com sucesso.',
       );
+      if (!mounted) return;
       context.pop();
     } else {
       showSeniorToast(
