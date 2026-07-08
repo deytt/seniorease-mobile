@@ -6,8 +6,6 @@ import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
-import 'package:mobile/core/tour/tour_dialogs.dart';
-import 'package:mobile/core/tour/tour_gate.dart';
 import 'package:mobile/core/tour/tour_help_button.dart';
 import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_id.dart';
@@ -53,32 +51,6 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
       ];
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _maybeOfferFirstUse());
-  }
-
-  /// Na primeira visita (apenas em Modo Básico), pergunta se pode mostrar
-  /// como funciona esta tela. A decisão de "quando" é toda do [TourGate].
-  Future<void> _maybeOfferFirstUse() async {
-    if (!mounted) return;
-    final gate = ref.read(tourGateProvider);
-    if (!await gate.shouldOfferFirstUse(tourId)) return;
-    if (!mounted) return;
-
-    await gate.markOffered(tourId);
-    if (!mounted) return;
-
-    final accepted = await showTourInviteDialog(
-      context,
-      title: 'Quer conhecer esta tela?',
-      message: 'Posso mostrar como tudo funciona aqui em poucos passos.',
-    );
-    if (accepted && mounted) startTour();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final taskAsync = ref.watch(taskStreamProvider(widget.taskId));
     final task = taskAsync.asData?.value;
@@ -89,7 +61,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          TourHelpButton(onPressed: startTour),
+          TourHelpButton(onPressed: startTour, tourId: tourId),
           if (task != null)
             SeniorShowcase(
               showcaseKey: _deleteShowcaseKey,

@@ -5,8 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
-import 'package:mobile/core/tour/tour_dialogs.dart';
-import 'package:mobile/core/tour/tour_gate.dart';
 import 'package:mobile/core/tour/tour_help_button.dart';
 import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_id.dart';
@@ -75,32 +73,6 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen>
       _category = initial.category;
       _scheduledAt = initial.scheduledAt;
     }
-    // A oferta de tour na 1ª utilização só faz sentido na criação.
-    if (!_isEditing) {
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _maybeOfferFirstUse());
-    }
-  }
-
-  /// Na primeira utilização (apenas em Modo Básico), pergunta se pode mostrar
-  /// como criar um lembrete. A decisão de "quando" é toda do [TourGate].
-  Future<void> _maybeOfferFirstUse() async {
-    if (!mounted) return;
-    final gate = ref.read(tourGateProvider);
-    if (!await gate.shouldOfferFirstUse(TourId.createReminder)) return;
-    if (!mounted) return;
-
-    await gate.markOffered(TourId.createReminder);
-    if (!mounted) return;
-
-    final accepted = await showTourInviteDialog(
-      context,
-      title: 'Vamos fazer juntos?',
-      message: 'Posso mostrar rapidamente como criar um lembrete?',
-      acceptLabel: 'Sim',
-      declineLabel: 'Agora não',
-    );
-    if (accepted && mounted) startTour();
   }
 
   @override
@@ -248,7 +220,7 @@ class _CreateReminderScreenState extends ConsumerState<CreateReminderScreen>
     return SeniorScreenScaffold(
       title: _isEditing ? 'Editar Lembrete' : 'Novo Lembrete',
       backIcon: Icons.close,
-      trailing: TourHelpButton(onPressed: startTour),
+      trailing: TourHelpButton(onPressed: startTour, tourId: tourId),
       body: Form(
         key: _formKey,
         child: ListView(
