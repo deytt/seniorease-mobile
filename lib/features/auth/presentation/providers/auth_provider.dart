@@ -4,6 +4,7 @@ import 'package:mobile/core/history/history_recorder.dart';
 import 'package:mobile/features/auth/data/firebase_auth_repository.dart';
 import 'package:mobile/features/auth/domain/entities/user.dart';
 import 'package:mobile/features/auth/domain/repositories/auth_repository.dart';
+import 'package:mobile/features/auth/domain/usecases/change_password_use_case.dart';
 import 'package:mobile/features/auth/domain/usecases/refresh_email_verification_use_case.dart';
 import 'package:mobile/features/auth/domain/usecases/send_email_verification_use_case.dart';
 import 'package:mobile/features/auth/domain/usecases/send_password_reset_use_case.dart';
@@ -52,6 +53,10 @@ final sendEmailVerificationUseCaseProvider =
 final refreshEmailVerificationUseCaseProvider =
     Provider<RefreshEmailVerificationUseCase>((ref) {
   return RefreshEmailVerificationUseCase(ref.watch(authRepositoryProvider));
+});
+
+final changePasswordUseCaseProvider = Provider<ChangePasswordUseCase>((ref) {
+  return ChangePasswordUseCase(ref.watch(authRepositoryProvider));
 });
 
 // --- Estado de autenticação ---
@@ -144,6 +149,27 @@ class AuthController extends Notifier<AsyncValue<void>> {
     state = await AsyncValue.guard(
       () => ref.read(signInWithGoogleUseCaseProvider).call().then((_) {}),
     );
+  }
+
+  /// Reautentica com [currentPassword] e define [newPassword]. Regista a ação
+  /// no Histórico em caso de sucesso (best-effort, não propaga falhas de log).
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => ref.read(changePasswordUseCaseProvider).call(
+            currentPassword: currentPassword,
+            newPassword: newPassword,
+          ),
+    );
+    if (state is AsyncData) {
+      await ref.read(historyRecorderProvider).record(
+            type: HistoryActionType.passwordChanged,
+            title: 'Alterou a senha',
+          );
+    }
   }
 
   Future<void> signOut() async {
