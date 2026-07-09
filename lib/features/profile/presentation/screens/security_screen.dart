@@ -83,18 +83,6 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen>
     }
   }
 
-  void _showBiometricUnavailable() {
-    SeniorFeedback.light(ref);
-    showSeniorToast(
-      context,
-      title: 'Biometria não disponível',
-      message:
-          'O seu dispositivo não tem sensor biométrico configurado. '
-          'Active nas definições do sistema.',
-      variant: SeniorToastVariant.warning,
-    );
-  }
-
   Future<void> _startVerification() async {
     await SeniorFeedback.light(ref);
     setState(() {
@@ -215,21 +203,28 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen>
                             'Disponível em dispositivos com sensor biométrico.',
                     child: _SecurityRow(
                       icon: Icons.fingerprint,
-                      label: biometricState?.isEnabled == true
-                          ? 'Desativar biometria'
-                          : 'Habilitar biometria',
-                      onTap: isBiometricLoading || biometricState?.isAvailable != true
-                          ? (biometricState?.isAvailable != true
-                              ? _showBiometricUnavailable
-                              : null)
-                          : () => _toggleBiometric(
-                                currentlyEnabled: biometricState!.isEnabled,
-                              ),
-                      trailing: _BiometricTrailing(
-                        isLoading: isBiometricLoading,
-                        isAvailable: biometricState?.isAvailable ?? false,
-                        isEnabled: biometricState?.isEnabled ?? false,
-                      ),
+                      label: 'Desbloqueio biométrico',
+                      subtitle: biometricState?.isAvailable == true
+                          ? null
+                          : 'Sensor biométrico não disponível neste dispositivo',
+                      onTap: null,
+                      trailing: isBiometricLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Switch(
+                              value: biometricState?.isEnabled ?? false,
+                              onChanged:
+                                  biometricState?.isAvailable == true &&
+                                          !isBiometricLoading
+                                      ? (_) => _toggleBiometric(
+                                            currentlyEnabled:
+                                                biometricState!.isEnabled,
+                                          )
+                                      : null,
+                            ),
                     ),
                   ),
                   SeniorShowcase(
@@ -616,89 +611,6 @@ class _VerificationPanel extends StatelessWidget {
   }
 }
 
-/// Trailing da linha de biometria: mostra loading, ou um dos três selos
-/// (indisponível / ativo / inativo).
-class _BiometricTrailing extends StatelessWidget {
-  const _BiometricTrailing({
-    required this.isLoading,
-    required this.isAvailable,
-    required this.isEnabled,
-  });
-
-  final bool isLoading;
-  final bool isAvailable;
-  final bool isEnabled;
-
-  @override
-  Widget build(BuildContext context) {
-    if (isLoading) {
-      return const SizedBox(
-        width: 20,
-        height: 20,
-        child: CircularProgressIndicator(strokeWidth: 2),
-      );
-    }
-    if (!isAvailable) return const _ComingSoonBadge();
-    if (isEnabled) return const _BiometricActiveBadge();
-    return const _BiometricInactiveBadge();
-  }
-}
-
-/// Selo verde "Ativo".
-class _BiometricActiveBadge extends StatelessWidget {
-  const _BiometricActiveBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: AppColors.success.withValues(alpha: 0.15),
-        border: Border.all(color: AppColors.success.withValues(alpha: 0.5)),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.check, size: 14, color: AppColors.success),
-          const SizedBox(width: 4),
-          Text(
-            'Ativo',
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: AppColors.success,
-                  fontWeight: FontWeight.w600,
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Selo cinzento "Inativo".
-class _BiometricInactiveBadge extends StatelessWidget {
-  const _BiometricInactiveBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: AppColors.slate200.withValues(alpha: 0.6),
-        border: Border.all(color: AppColors.slate300),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        'Inativo',
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: AppColors.slate500,
-              fontWeight: FontWeight.w600,
-            ),
-      ),
-    );
-  }
-}
-
 /// Selo verde "Conta verificada".
 class _VerifiedBadge extends StatelessWidget {
   const _VerifiedBadge();
@@ -761,11 +673,13 @@ class _SecurityRow extends StatelessWidget {
     required this.label,
     required this.onTap,
     required this.trailing,
+    this.subtitle,
     this.showDivider = true,
   });
 
   final IconData icon;
   final String label;
+  final String? subtitle;
   final VoidCallback? onTap;
   final Widget trailing;
   final bool showDivider;
@@ -797,12 +711,27 @@ class _SecurityRow extends StatelessWidget {
                 ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
-                  child: Text(
-                    label,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      color: theme.colorScheme.onSurface,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        label,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w500,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppColors.slate500,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
@@ -819,29 +748,6 @@ class _SecurityRow extends StatelessWidget {
             color: theme.colorScheme.outline,
           ),
       ],
-    );
-  }
-}
-
-class _ComingSoonBadge extends StatelessWidget {
-  const _ComingSoonBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: AppColors.warning.withValues(alpha: 0.15),
-        border: Border.all(color: AppColors.warning.withValues(alpha: 0.5)),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        'Em breve',
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: AppColors.warning,
-              fontWeight: FontWeight.w600,
-            ),
-      ),
     );
   }
 }
