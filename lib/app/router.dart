@@ -6,6 +6,8 @@ import 'package:mobile/features/accessibility/presentation/screens/accessibility
 import 'package:mobile/features/accessibility/presentation/screens/notification_preferences_screen.dart';
 import 'package:mobile/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:mobile/features/auth/presentation/providers/biometric_provider.dart';
+import 'package:mobile/features/auth/presentation/screens/biometric_lock_screen.dart';
 import 'package:mobile/features/auth/presentation/screens/forgot_password_screen.dart';
 import 'package:mobile/features/auth/presentation/screens/login_screen.dart';
 import 'package:mobile/features/auth/presentation/screens/register_screen.dart';
@@ -29,6 +31,7 @@ abstract final class AppRoutes {
   static const login = '/login';
   static const register = '/register';
   static const forgotPassword = '/forgot-password';
+  static const biometricLock = '/biometric-lock';
   static const accessibility = '/accessibility';
   static const guides = '/guides';
   static const about = '/about';
@@ -73,9 +76,31 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isLoggedIn = authState.asData?.value != null;
       final location = state.matchedLocation;
       final isAuthRoute = _authRoutes.contains(location);
+      final isBiometricLockRoute = location == AppRoutes.biometricLock;
 
-      if (!isLoggedIn && !isAuthRoute) return AppRoutes.login;
-      if (isLoggedIn && isAuthRoute) return AppRoutes.home;
+      if (!isLoggedIn && !isAuthRoute && !isBiometricLockRoute) {
+        return AppRoutes.login;
+      }
+
+      if (!isLoggedIn && isBiometricLockRoute) return AppRoutes.login;
+
+      if (isLoggedIn && isAuthRoute) {
+        final biometricEnabled = ref.read(biometricEnabledProvider);
+        if (biometricEnabled) {
+          final locked = ref.read(biometricLockedProvider);
+          return locked ? AppRoutes.biometricLock : AppRoutes.home;
+        }
+        return AppRoutes.home;
+      }
+
+      if (isLoggedIn && !isBiometricLockRoute) {
+        final biometricEnabled = ref.read(biometricEnabledProvider);
+        if (biometricEnabled) {
+          final locked = ref.read(biometricLockedProvider);
+          if (locked) return AppRoutes.biometricLock;
+        }
+      }
+
       return null;
     },
     routes: [
@@ -91,6 +116,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.forgotPassword,
         builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.biometricLock,
+        builder: (context, state) => const BiometricLockScreen(),
       ),
       GoRoute(
         path: AppRoutes.accessibility,
@@ -199,6 +228,8 @@ final routerProvider = Provider<GoRouter>((ref) {
 
 class GoRouterRefreshNotifier extends ChangeNotifier {
   GoRouterRefreshNotifier(Ref ref) {
-    ref.listen(authStateProvider, (_, next) => notifyListeners());
+    ref.listen(authStateProvider, (_, __) => notifyListeners());
+    ref.listen(biometricLockedProvider, (_, __) => notifyListeners());
+    ref.listen(biometricControllerProvider, (_, __) => notifyListeners());
   }
 }
