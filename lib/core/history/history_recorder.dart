@@ -17,7 +17,8 @@ enum HistoryActionType {
   reminderDeleted,
   accessibilityChanged,
   profileUpdated,
-  accountVerified;
+  accountVerified,
+  passwordChanged;
 
   /// Chave estável persistida no Firestore (`history.type`).
   String get storageKey => name;
