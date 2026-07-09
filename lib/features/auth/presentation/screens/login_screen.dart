@@ -23,10 +23,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  // TODO(dev): remover credenciais de teste antes de publicar; ao remover, re-ativar o
-  // teste 'redireciona para home quando autenticado' em test/widget_test.dart
-  final _emailController = TextEditingController(text: 'senior@teste.com');
-  final _passwordController = TextEditingController(text: '123456');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   var _rememberMe = true;
 
   static const _formHorizontalPadding = 20.0;

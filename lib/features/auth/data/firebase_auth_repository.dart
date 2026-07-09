@@ -179,6 +179,27 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<void> reauthenticateAndChangePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null || user.email == null) {
+        throw Exception('Não está autenticado.');
+      }
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+      await user.reauthenticateWithCredential(credential);
+      await user.updatePassword(newPassword);
+    } on FirebaseAuthException catch (error) {
+      throw _mapAuthException(error);
+    }
+  }
+
+  @override
   Future<bool> reloadAndCheckEmailVerified() async {
     try {
       await _auth.currentUser?.reload();
@@ -217,6 +238,8 @@ class FirebaseAuthRepository implements AuthRepository {
       'weak-password' => 'A senha é muito fraca. Use pelo menos 6 caracteres.',
       'invalid-credential' => 'E-mail ou senha incorretos.',
       'too-many-requests' => 'Muitas tentativas. Tente novamente mais tarde.',
+      'requires-recent-login' =>
+        'Por segurança, faça login novamente antes de alterar a senha.',
       _ => 'Não foi possível concluir a operação. Tente novamente.',
     };
     return Exception(message);

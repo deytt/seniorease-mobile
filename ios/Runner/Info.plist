@@ -26,6 +26,8 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSFaceIDUsageDescription</key>
+	<string>O SeniorEase usa o Face ID para entrar na sua conta de forma mais fácil e segura.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Precisamos de aceder à câmara para tirar a sua foto de perfil.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

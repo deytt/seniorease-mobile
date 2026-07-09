@@ -4,6 +4,7 @@ import 'package:mobile/core/history/history_recorder.dart';
 import 'package:mobile/features/auth/data/firebase_auth_repository.dart';
 import 'package:mobile/features/auth/domain/entities/user.dart';
 import 'package:mobile/features/auth/domain/repositories/auth_repository.dart';
+import 'package:mobile/features/auth/domain/usecases/change_password_use_case.dart';
 import 'package:mobile/features/auth/domain/usecases/refresh_email_verification_use_case.dart';
 import 'package:mobile/features/auth/domain/usecases/send_email_verification_use_case.dart';
 import 'package:mobile/features/auth/domain/usecases/send_password_reset_use_case.dart';
@@ -11,6 +12,7 @@ import 'package:mobile/features/auth/domain/usecases/sign_in_use_case.dart';
 import 'package:mobile/features/auth/domain/usecases/sign_in_with_google_use_case.dart';
 import 'package:mobile/features/auth/domain/usecases/sign_out_use_case.dart';
 import 'package:mobile/features/auth/domain/usecases/sign_up_use_case.dart';
+import 'package:mobile/features/auth/presentation/providers/biometric_provider.dart';
 
 // --- Repositório ---
 
@@ -54,6 +56,10 @@ final refreshEmailVerificationUseCaseProvider =
   return RefreshEmailVerificationUseCase(ref.watch(authRepositoryProvider));
 });
 
+final changePasswordUseCaseProvider = Provider<ChangePasswordUseCase>((ref) {
+  return ChangePasswordUseCase(ref.watch(authRepositoryProvider));
+});
+
 // --- Estado de autenticação ---
 
 final authStateProvider = StreamProvider<AppUser?>((ref) {
@@ -83,6 +89,12 @@ class AuthController extends Notifier<AsyncValue<void>> {
           .call(email: email, password: password)
           .then((_) {}),
     );
+    // Login explícito com senha → desbloqueia o app lock biométrico para esta
+    // sessão. O lock screen só deve aparecer em arranque frio com sessão já
+    // persistida, não imediatamente a seguir a um login manual.
+    if (state is AsyncData) {
+      ref.read(biometricLockedProvider.notifier).unlock();
+    }
   }
 
   Future<void> signUp({
@@ -103,6 +115,9 @@ class AuthController extends Notifier<AsyncValue<void>> {
           )
           .then((_) {}),
     );
+    if (state is AsyncData) {
+      ref.read(biometricLockedProvider.notifier).unlock();
+    }
   }
 
   Future<void> sendPasswordReset({required String email}) async {
@@ -144,6 +159,30 @@ class AuthController extends Notifier<AsyncValue<void>> {
     state = await AsyncValue.guard(
       () => ref.read(signInWithGoogleUseCaseProvider).call().then((_) {}),
     );
+    if (state is AsyncData) {
+      ref.read(biometricLockedProvider.notifier).unlock();
+    }
+  }
+
+  /// Reautentica com [currentPassword] e define [newPassword]. Regista a ação
+  /// no Histórico em caso de sucesso (best-effort, não propaga falhas de log).
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => ref.read(changePasswordUseCaseProvider).call(
+            currentPassword: currentPassword,
+            newPassword: newPassword,
+          ),
+    );
+    if (state is AsyncData) {
+      await ref.read(historyRecorderProvider).record(
+            type: HistoryActionType.passwordChanged,
+            title: 'Alterou a senha',
+          );
+    }
   }
 
   Future<void> signOut() async {
