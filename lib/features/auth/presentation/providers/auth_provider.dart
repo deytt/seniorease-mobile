@@ -12,6 +12,7 @@ import 'package:mobile/features/auth/domain/usecases/sign_in_use_case.dart';
 import 'package:mobile/features/auth/domain/usecases/sign_in_with_google_use_case.dart';
 import 'package:mobile/features/auth/domain/usecases/sign_out_use_case.dart';
 import 'package:mobile/features/auth/domain/usecases/sign_up_use_case.dart';
+import 'package:mobile/features/auth/presentation/providers/biometric_provider.dart';
 
 // --- Repositório ---
 
@@ -88,6 +89,12 @@ class AuthController extends Notifier<AsyncValue<void>> {
           .call(email: email, password: password)
           .then((_) {}),
     );
+    // Login explícito com senha → desbloqueia o app lock biométrico para esta
+    // sessão. O lock screen só deve aparecer em arranque frio com sessão já
+    // persistida, não imediatamente a seguir a um login manual.
+    if (state is AsyncData) {
+      ref.read(biometricLockedProvider.notifier).unlock();
+    }
   }
 
   Future<void> signUp({
@@ -108,6 +115,9 @@ class AuthController extends Notifier<AsyncValue<void>> {
           )
           .then((_) {}),
     );
+    if (state is AsyncData) {
+      ref.read(biometricLockedProvider.notifier).unlock();
+    }
   }
 
   Future<void> sendPasswordReset({required String email}) async {
@@ -149,6 +159,9 @@ class AuthController extends Notifier<AsyncValue<void>> {
     state = await AsyncValue.guard(
       () => ref.read(signInWithGoogleUseCaseProvider).call().then((_) {}),
     );
+    if (state is AsyncData) {
+      ref.read(biometricLockedProvider.notifier).unlock();
+    }
   }
 
   /// Reautentica com [currentPassword] e define [newPassword]. Regista a ação
