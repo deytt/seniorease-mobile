@@ -49,6 +49,26 @@ final disableBiometricUseCaseProvider =
 
 // --- Estado ---
 
+/// `true` enquanto a sessão ainda não foi desbloqueada por biometria neste
+/// arranque da app. O [BiometricLockScreen] define `false` após auth com sucesso.
+/// É sessão-scoped (reset ao reiniciar a app).
+final biometricLockedProvider =
+    NotifierProvider<BiometricLockNotifier, bool>(BiometricLockNotifier.new);
+
+class BiometricLockNotifier extends Notifier<bool> {
+  @override
+  bool build() => true;
+
+  void unlock() => state = false;
+  void reset() => state = true;
+}
+
+/// Leitura síncrona de se a biometria está ativada — derivada do controller
+/// assíncrono com null-safety (devolve false enquanto carrega).
+final biometricEnabledProvider = Provider<bool>((ref) {
+  return ref.watch(biometricControllerProvider).asData?.value.isEnabled ?? false;
+});
+
 /// Estado imutável com as duas propriedades que a UI precisa.
 class BiometricState {
   const BiometricState({
