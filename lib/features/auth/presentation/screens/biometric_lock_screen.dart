@@ -41,7 +41,8 @@ class _BiometricLockScreenState extends ConsumerState<BiometricLockScreen> {
 
       if (success) {
         ref.read(biometricLockedProvider.notifier).unlock();
-        // O router redirect detecta biometricLocked=false e navega para Home.
+        // Navegação explícita como garantia; o router redirect também captura.
+        if (mounted) context.go(AppRoutes.home);
       }
     } finally {
       if (mounted) setState(() => _isAuthenticating = false);

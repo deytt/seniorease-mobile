@@ -84,6 +84,12 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       if (!isLoggedIn && isBiometricLockRoute) return AppRoutes.login;
 
+      // Se está no ecrã de bloqueio e já desbloqueou → Home.
+      if (isLoggedIn && isBiometricLockRoute) {
+        final locked = ref.read(biometricLockedProvider);
+        return locked ? null : AppRoutes.home;
+      }
+
       if (isLoggedIn && isAuthRoute) {
         final biometricEnabled = ref.read(biometricEnabledProvider);
         if (biometricEnabled) {
