@@ -13,7 +13,6 @@ import 'package:mobile/core/widgets/senior_logo.dart';
 import 'package:mobile/core/widgets/senior_toast.dart';
 import 'package:mobile/features/auth/domain/auth_exceptions.dart';
 import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
-import 'package:mobile/features/auth/presentation/providers/biometric_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -24,10 +23,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  // TODO(dev): remover credenciais de teste antes de publicar; ao remover, re-ativar o
-  // teste 'redireciona para home quando autenticado' em test/widget_test.dart
-  final _emailController = TextEditingController(text: 'senior@teste.com');
-  final _passwordController = TextEditingController(text: '123456');
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   var _rememberMe = true;
 
   static const _formHorizontalPadding = 20.0;
@@ -77,35 +74,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
-  Future<void> _submitBiometric() async {
-    final controller = ref.read(biometricControllerProvider.notifier);
-    final success = await controller.authenticateForLogin();
-
-    if (!mounted) return;
-
-    if (success) {
-      // A sessão Firebase já está persistida localmente; o auth guard redireciona.
-      context.go(AppRoutes.home);
-    } else {
-      showSeniorToast(
-        context,
-        title: 'Não foi possível entrar',
-        message: 'Autenticação biométrica cancelada ou falhada.',
-        variant: SeniorToastVariant.warning,
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final authAction = ref.watch(authControllerProvider);
     final isLoading = authAction.isLoading;
-
-    final biometricState = ref.watch(biometricControllerProvider).asData?.value;
-    final showBiometric =
-        biometricState != null &&
-        biometricState.isAvailable &&
-        biometricState.isEnabled;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SeniorSystemUi.loginOverlay,
@@ -224,15 +196,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           isLoading: isLoading,
                           onPressed: isLoading ? null : _submit,
                         ),
-                        if (showBiometric) ...[
-                          const SizedBox(height: AppSpacing.md),
-                          SeniorButton(
-                            label: 'Entrar com biometria',
-                            variant: SeniorButtonVariant.outline,
-                            icon: Icons.fingerprint,
-                            onPressed: isLoading ? null : _submitBiometric,
-                          ),
-                        ],
                         const SizedBox(height: AppSpacing.md),
                         Row(
                           children: [
