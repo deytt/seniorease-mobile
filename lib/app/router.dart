@@ -234,8 +234,8 @@ final routerProvider = Provider<GoRouter>((ref) {
 
 class GoRouterRefreshNotifier extends ChangeNotifier {
   GoRouterRefreshNotifier(Ref ref) {
-    ref.listen(authStateProvider, (_, __) => notifyListeners());
-    ref.listen(biometricLockedProvider, (_, __) => notifyListeners());
-    ref.listen(biometricControllerProvider, (_, __) => notifyListeners());
+    ref.listen(authStateProvider, (prev, next) => notifyListeners());
+    ref.listen(biometricLockedProvider, (prev, next) => notifyListeners());
+    ref.listen(biometricControllerProvider, (prev, next) => notifyListeners());
   }
 }
