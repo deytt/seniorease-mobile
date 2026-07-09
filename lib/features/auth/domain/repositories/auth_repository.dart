@@ -23,6 +23,13 @@ abstract class AuthRepository {
 
   Future<void> sendPasswordResetEmail({required String email});
 
+  /// Reautentica o utilizador com a senha atual e define uma nova senha.
+  /// Obrigatório pelo Firebase para operações sensíveis quando a sessão é antiga.
+  Future<void> reauthenticateAndChangePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
+
   /// Envia o e-mail de confirmação de conta para o utilizador autenticado.
   Future<void> sendEmailVerification();
 
