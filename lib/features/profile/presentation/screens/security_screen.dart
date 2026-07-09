@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/feedback/senior_feedback.dart';
+import 'package:mobile/core/firebase/firebase_providers.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
@@ -8,6 +10,7 @@ import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_help_button.dart';
 import 'package:mobile/core/tour/tour_id.dart';
 import 'package:mobile/core/widgets/senior_button.dart';
+import 'package:mobile/core/widgets/senior_input.dart';
 import 'package:mobile/core/widgets/senior_screen_scaffold.dart';
 import 'package:mobile/core/widgets/senior_toast.dart';
 import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
@@ -40,21 +43,13 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen>
   List<GlobalKey> get tourKeys =>
       [_biometricShowcaseKey, _verifyShowcaseKey, _passwordShowcaseKey];
 
-  // Envio do e-mail de verificação em curso.
+  // --- Verificação de e-mail ---
   bool _sending = false;
-  // Verificação ("Já confirmei") em curso.
   bool _checking = false;
-  // Mostra o painel de ajuda depois de o utilizador iniciar a verificação.
   bool _verificationStarted = false;
 
-  void _showComingSoon() {
-    SeniorFeedback.light(ref);
-    showSeniorToast(
-      context,
-      title: 'Em breve',
-      message: 'Esta opção estará disponível numa próxima atualização.',
-    );
-  }
+  // --- Alterar senha ---
+  bool _changePasswordExpanded = false;
 
   Future<void> _toggleBiometric({required bool currentlyEnabled}) async {
     await SeniorFeedback.light(ref);
@@ -86,6 +81,18 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen>
         variant: SeniorToastVariant.danger,
       );
     }
+  }
+
+  void _showBiometricUnavailable() {
+    SeniorFeedback.light(ref);
+    showSeniorToast(
+      context,
+      title: 'Biometria não disponível',
+      message:
+          'O seu dispositivo não tem sensor biométrico configurado. '
+          'Active nas definições do sistema.',
+      variant: SeniorToastVariant.warning,
+    );
   }
 
   Future<void> _startVerification() async {
@@ -152,6 +159,15 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen>
     }
   }
 
+  void _toggleChangePassword() {
+    SeniorFeedback.light(ref);
+    setState(() => _changePasswordExpanded = !_changePasswordExpanded);
+  }
+
+  void _closeChangePassword() {
+    setState(() => _changePasswordExpanded = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isVerified =
@@ -160,6 +176,13 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen>
     final biometricAsync = ref.watch(biometricControllerProvider);
     final biometricState = biometricAsync.asData?.value;
     final isBiometricLoading = biometricAsync.isLoading;
+
+    // Determina se o utilizador tem provedor de senha (e-mail + password).
+    // Contas Google puras não têm o provedor 'password' e não podem usar este fluxo.
+    final firebaseUser = ref.watch(firebaseAuthProvider).currentUser;
+    final hasPasswordProvider = firebaseUser?.providerData
+            .any((p) => p.providerId == EmailAuthProvider.PROVIDER_ID) ??
+        false;
 
     return SeniorScreenScaffold(
       title: 'Segurança',
@@ -229,19 +252,31 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen>
                     scope: _scope,
                     title: 'Alterar a palavra-passe',
                     description:
-                        'Em breve poderá definir uma nova palavra-passe sempre que '
-                        'quiser.',
+                        'Defina uma nova palavra-passe sempre que quiser.',
                     child: _SecurityRow(
                       icon: Icons.lock_outline,
                       label: 'Alterar senha',
-                      onTap: _showComingSoon,
+                      onTap: _toggleChangePassword,
                       showDivider: false,
-                      trailing: const _ComingSoonBadge(),
+                      trailing: Icon(
+                        _changePasswordExpanded
+                            ? Icons.keyboard_arrow_up
+                            : Icons.chevron_right,
+                        color: AppColors.slate400,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
+            if (_changePasswordExpanded) ...[
+              const SizedBox(height: AppSpacing.md),
+              _ChangePasswordPanel(
+                hasPasswordProvider: hasPasswordProvider,
+                onSuccess: _closeChangePassword,
+                onCancel: _closeChangePassword,
+              ),
+            ],
             if (!isVerified) ...[
               const SizedBox(height: AppSpacing.md),
               _VerificationPanel(
@@ -255,7 +290,7 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen>
             const SizedBox(height: AppSpacing.md),
             Text(
               isVerified
-                  ? 'A sua conta está protegida. Em breve teremos mais opções de segurança.'
+                  ? 'A sua conta está protegida. Continue a usar senhas seguras.'
                   : 'Confirmar o e-mail ajuda a manter a sua conta protegida.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: AppColors.slate500,
@@ -266,16 +301,223 @@ class _SecurityScreenState extends ConsumerState<SecurityScreen>
       ),
     );
   }
+}
 
-  void _showBiometricUnavailable() {
-    SeniorFeedback.light(ref);
-    showSeniorToast(
-      context,
-      title: 'Biometria não disponível',
-      message:
-          'O seu dispositivo não tem sensor biométrico configurado. '
-          'Active nas definições do sistema.',
-      variant: SeniorToastVariant.warning,
+/// Painel para alterar a senha. Exibe aviso para contas Google puras
+/// (sem provedor de senha) e formulário para as demais.
+class _ChangePasswordPanel extends ConsumerStatefulWidget {
+  const _ChangePasswordPanel({
+    required this.hasPasswordProvider,
+    required this.onSuccess,
+    required this.onCancel,
+  });
+
+  final bool hasPasswordProvider;
+  final VoidCallback onSuccess;
+  final VoidCallback onCancel;
+
+  @override
+  ConsumerState<_ChangePasswordPanel> createState() =>
+      _ChangePasswordPanelState();
+}
+
+class _ChangePasswordPanelState extends ConsumerState<_ChangePasswordPanel> {
+  final _formKey = GlobalKey<FormState>();
+  final _currentPasswordController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    await SeniorFeedback.light(ref);
+    setState(() => _isLoading = true);
+
+    try {
+      await ref.read(authControllerProvider.notifier).changePassword(
+            currentPassword: _currentPasswordController.text,
+            newPassword: _newPasswordController.text,
+          );
+
+      if (!mounted) return;
+
+      final hasError = ref.read(authControllerProvider).hasError;
+
+      if (hasError) {
+        final error = ref.read(authControllerProvider).error;
+        showSeniorToast(
+          context,
+          title: 'Não foi possível alterar',
+          message: error.toString().replaceFirst('Exception: ', ''),
+          variant: SeniorToastVariant.danger,
+        );
+      } else {
+        showSeniorToast(
+          context,
+          title: 'Senha alterada',
+          message: 'A sua nova senha já está ativa.',
+          variant: SeniorToastVariant.success,
+        );
+        widget.onSuccess();
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border.all(color: theme.colorScheme.outline),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: widget.hasPasswordProvider
+          ? _buildForm(theme)
+          : _buildGoogleWarning(theme),
+    );
+  }
+
+  Widget _buildGoogleWarning(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.info_outline, color: AppColors.primary, size: 22),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                'Conta vinculada ao Google',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          'A sua conta usa o Google para entrar. Para alterar a senha, '
+          'aceda às definições da sua conta Google.',
+          style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        SeniorButton(
+          label: 'Fechar',
+          variant: SeniorButtonVariant.outline,
+          onPressed: widget.onCancel,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildForm(ThemeData theme) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.lock_outline, color: AppColors.primary, size: 22),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  'Alterar senha',
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          SeniorInput(
+            controller: _currentPasswordController,
+            label: 'Senha atual',
+            hint: 'Digite a sua senha atual',
+            prefixIcon: Icons.lock_outline,
+            obscureText: true,
+            autocorrect: false,
+            textInputAction: TextInputAction.next,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Informe a senha atual.';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: AppSpacing.md),
+          SeniorInput(
+            controller: _newPasswordController,
+            label: 'Nova senha',
+            hint: 'Mínimo de 6 caracteres',
+            prefixIcon: Icons.lock_reset_outlined,
+            obscureText: true,
+            autocorrect: false,
+            textInputAction: TextInputAction.next,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Informe a nova senha.';
+              }
+              if (value.length < 6) {
+                return 'A senha deve ter pelo menos 6 caracteres.';
+              }
+              if (value == _currentPasswordController.text) {
+                return 'A nova senha deve ser diferente da atual.';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: AppSpacing.md),
+          SeniorInput(
+            controller: _confirmPasswordController,
+            label: 'Confirmar nova senha',
+            hint: 'Repita a nova senha',
+            prefixIcon: Icons.check_circle_outline,
+            obscureText: true,
+            autocorrect: false,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _submit(),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Confirme a nova senha.';
+              }
+              if (value != _newPasswordController.text) {
+                return 'As senhas não coincidem.';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          SeniorButton(
+            label: 'Confirmar alteração',
+            icon: Icons.check,
+            isLoading: _isLoading,
+            onPressed: _isLoading ? null : _submit,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          SeniorButton(
+            label: 'Cancelar',
+            variant: SeniorButtonVariant.outline,
+            onPressed: _isLoading ? null : widget.onCancel,
+          ),
+        ],
+      ),
     );
   }
 }
