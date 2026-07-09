@@ -78,6 +78,12 @@ HistoryVisual historyVisual(HistoryActionType type, {String? category}) {
         color: AppColors.success,
         semanticLabel: 'Conta verificada',
       );
+    case HistoryActionType.passwordChanged:
+      return const HistoryVisual(
+        icon: Icons.lock_reset_outlined,
+        color: AppColors.secondary,
+        semanticLabel: 'Senha alterada',
+      );
   }
 }
 
