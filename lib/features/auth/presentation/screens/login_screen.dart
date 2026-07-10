@@ -12,7 +12,10 @@ import 'package:mobile/core/widgets/senior_input.dart';
 import 'package:mobile/core/widgets/senior_logo.dart';
 import 'package:mobile/core/widgets/senior_toast.dart';
 import 'package:mobile/features/auth/domain/auth_exceptions.dart';
+import 'package:mobile/features/auth/domain/entities/login_preferences.dart';
+import 'package:mobile/features/auth/domain/usecases/save_login_preferences_use_case.dart';
 import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:mobile/features/auth/presentation/providers/login_preferences_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -25,52 +28,124 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _passwordFocus = FocusNode();
   var _rememberMe = true;
 
+  /// E-mail lembrado do último acesso (null quando não há identidade guardada).
+  String? _rememberedEmail;
+
+  /// Método do último acesso — usado para destacar o botão correspondente.
+  LoginMethod? _lastMethod;
+
+  /// Guardado após o carregamento para persistir sem depender do `ref` (o
+  /// widget pode ser desmontado pelo redirect logo após o login bem-sucedido).
+  SaveLoginPreferencesUseCase? _saveUseCase;
+
   static const _formHorizontalPadding = 20.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreferences();
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _passwordFocus.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadPreferences() async {
+    final getUseCase =
+        await ref.read(getLoginPreferencesUseCaseProvider.future);
+    _saveUseCase = await ref.read(saveLoginPreferencesUseCaseProvider.future);
+
+    final prefs = await getUseCase.call();
+    if (!mounted) return;
+
+    setState(() {
+      _rememberMe = prefs.rememberMe;
+      if (prefs.hasRememberedIdentity) {
+        _emailController.text = prefs.lastEmail!;
+        _rememberedEmail = prefs.lastEmail;
+        _lastMethod = prefs.lastMethod;
+      }
+    });
+  }
+
+  Future<void> _persistPreferences({
+    required String email,
+    required LoginMethod method,
+  }) async {
+    final useCase = _saveUseCase;
+    if (useCase == null) return;
+    await useCase.call(
+      LoginPreferences(
+        rememberMe: _rememberMe,
+        lastEmail: _rememberMe ? email : null,
+        lastMethod: _rememberMe ? method : null,
+      ),
+    );
+  }
+
+  /// Limpa a identidade lembrada e devolve o foco ao campo de e-mail.
+  Future<void> _useAnotherAccount() async {
+    setState(() {
+      _emailController.clear();
+      _passwordController.clear();
+      _rememberedEmail = null;
+      _lastMethod = null;
+    });
+    await _saveUseCase?.call(LoginPreferences(rememberMe: _rememberMe));
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final email = _emailController.text.trim();
+
     await ref.read(authControllerProvider.notifier).signIn(
-          email: _emailController.text,
+          email: email,
           password: _passwordController.text,
         );
 
-    if (!mounted) return;
-
     final state = ref.read(authControllerProvider);
     if (state.hasError) {
+      if (!mounted) return;
       showSeniorToast(
         context,
         title: 'Não foi possível entrar',
         message: state.error.toString().replaceFirst('Exception: ', ''),
         variant: SeniorToastVariant.danger,
       );
+      return;
     }
+
+    await _persistPreferences(email: email, method: LoginMethod.email);
   }
 
   Future<void> _submitGoogle() async {
     await ref.read(authControllerProvider.notifier).signInWithGoogle();
 
-    if (!mounted) return;
-
     final state = ref.read(authControllerProvider);
-    // Cancelamento do seletor de contas não é um erro — ignora em silêncio.
-    if (state.hasError && state.error is! AuthCancelledException) {
-      showSeniorToast(
-        context,
-        title: 'Não foi possível entrar com o Google',
-        message: state.error.toString().replaceFirst('Exception: ', ''),
-        variant: SeniorToastVariant.danger,
-      );
+    if (state.hasError) {
+      // Cancelamento do seletor de contas não é um erro — ignora em silêncio.
+      if (state.error is! AuthCancelledException && mounted) {
+        showSeniorToast(
+          context,
+          title: 'Não foi possível entrar com o Google',
+          message: state.error.toString().replaceFirst('Exception: ', ''),
+          variant: SeniorToastVariant.danger,
+        );
+      }
+      return;
+    }
+
+    final email = ref.read(authStateProvider).asData?.value?.email;
+    if (email != null && email.isNotEmpty) {
+      await _persistPreferences(email: email, method: LoginMethod.google);
     }
   }
 
@@ -78,6 +153,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authAction = ref.watch(authControllerProvider);
     final isLoading = authAction.isLoading;
+
+    final hasRemembered = _rememberedEmail != null;
+    final prefersGoogle = _lastMethod == LoginMethod.google;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SeniorSystemUi.loginOverlay,
@@ -101,7 +179,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
-                      'Entre na sua conta SeniorEase',
+                      hasRemembered
+                          ? 'Confirme para entrar na sua conta'
+                          : 'Entre na sua conta SeniorEase',
                       style: Theme.of(context).textTheme.bodyMedium,
                       textAlign: TextAlign.center,
                     ),
@@ -118,6 +198,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        if (hasRemembered) ...[
+                          _RememberedAccountCard(
+                            email: _rememberedEmail!,
+                            method: _lastMethod,
+                            onUseAnotherAccount:
+                                isLoading ? null : _useAnotherAccount,
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                        ],
                         SeniorInput(
                           controller: _emailController,
                           label: 'E-mail',
@@ -126,6 +215,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           textInputAction: TextInputAction.next,
                           prefixIcon: Icons.email_outlined,
                           autocorrect: false,
+                          onSubmitted: (_) => _passwordFocus.requestFocus(),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
                               return 'Informe seu e-mail';
@@ -139,6 +229,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         const SizedBox(height: AppSpacing.md),
                         SeniorInput(
                           controller: _passwordController,
+                          focusNode: _passwordFocus,
                           label: 'Senha',
                           hint: 'Digite sua senha',
                           obscureText: true,
@@ -193,7 +284,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         SeniorButton(
                           label: 'Entrar',
                           icon: Icons.login,
-                          isLoading: isLoading,
+                          variant: prefersGoogle
+                              ? SeniorButtonVariant.outline
+                              : SeniorButtonVariant.primary,
+                          isLoading: isLoading && !prefersGoogle,
                           onPressed: isLoading ? null : _submit,
                         ),
                         const SizedBox(height: AppSpacing.md),
@@ -214,9 +308,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                         const SizedBox(height: AppSpacing.md),
                         SeniorButton(
-                          label: 'Entrar com Google',
-                          variant: SeniorButtonVariant.secondary,
-                          customForegroundColor: AppColors.slate600,
+                          label: prefersGoogle
+                              ? 'Continuar com Google'
+                              : 'Entrar com Google',
+                          variant: prefersGoogle
+                              ? SeniorButtonVariant.primary
+                              : SeniorButtonVariant.secondary,
+                          customForegroundColor:
+                              prefersGoogle ? null : AppColors.slate600,
+                          isLoading: isLoading && prefersGoogle,
                           leading: Image.asset(
                             'assets/images/google_logo.png',
                             width: 22,
@@ -256,6 +356,87 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Card que mostra a conta lembrada com opção de trocar de conta.
+class _RememberedAccountCard extends StatelessWidget {
+  const _RememberedAccountCard({
+    required this.email,
+    required this.method,
+    required this.onUseAnotherAccount,
+  });
+
+  final String email;
+  final LoginMethod? method;
+  final VoidCallback? onUseAnotherAccount;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final initial = email.isNotEmpty ? email[0].toUpperCase() : '?';
+    final isGoogle = method == LoginMethod.google;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 22,
+            backgroundColor: AppColors.primary,
+            child: Text(
+              initial,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isGoogle ? 'Você entra com o Google' : 'Continue como',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: AppColors.slate500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  email,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppColors.slate900,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: onUseAnotherAccount,
+            style: TextButton.styleFrom(
+              minimumSize: const Size(44, 44),
+            ),
+            child: Text(
+              'Trocar',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

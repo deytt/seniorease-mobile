@@ -8,6 +8,7 @@ class SeniorInput extends StatefulWidget {
   const SeniorInput({
     super.key,
     this.controller,
+    this.focusNode,
     this.label,
     this.hint,
     this.helperText,
@@ -29,6 +30,7 @@ class SeniorInput extends StatefulWidget {
   });
 
   final TextEditingController? controller;
+  final FocusNode? focusNode;
   final String? label;
   final String? hint;
   final String? helperText;
@@ -96,6 +98,7 @@ class _SeniorInputState extends State<SeniorInput> {
                 : AppTheme.inputHeight,
             child: TextFormField(
               controller: widget.controller,
+              focusNode: widget.focusNode,
               enabled: widget.enabled,
               readOnly: widget.readOnly,
               obscureText: _obscure,
