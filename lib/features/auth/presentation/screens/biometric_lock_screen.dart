@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/app/router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
-import 'package:mobile/core/widgets/senior_button.dart';
 import 'package:mobile/core/widgets/senior_logo.dart';
 import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:mobile/features/auth/presentation/providers/biometric_provider.dart';
@@ -24,9 +22,6 @@ class _BiometricLockScreenState extends ConsumerState<BiometricLockScreen> {
   @override
   void initState() {
     super.initState();
-    // Dispara o prompt biométrico logo após o primeiro frame para que a tela
-    // esteja visível ao utilizador antes de o sistema mostrar o diálogo nativo.
-    SchedulerBinding.instance.addPostFrameCallback((_) => _tryBiometric());
   }
 
   Future<void> _tryBiometric() async {
@@ -80,8 +75,10 @@ class _BiometricLockScreenState extends ConsumerState<BiometricLockScreen> {
                 const SeniorLogo(size: 96),
                 const SizedBox(height: AppSpacing.xl),
 
-                // Ícone biométrico
-                Container(
+                // Ícone biométrico — toque para autenticar
+                GestureDetector(
+                  onTap: _isAuthenticating ? null : _tryBiometric,
+                  child: Container(
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
@@ -101,6 +98,7 @@ class _BiometricLockScreenState extends ConsumerState<BiometricLockScreen> {
                           size: 56,
                           color: AppColors.primary,
                         ),
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
 
@@ -118,7 +116,7 @@ class _BiometricLockScreenState extends ConsumerState<BiometricLockScreen> {
                 Text(
                   _isAuthenticating
                       ? 'Aguarde…'
-                      : 'Toque para entrar com biometria',
+                      : 'Toque na digital para entrar',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: AppColors.slate500,
                   ),
@@ -126,13 +124,6 @@ class _BiometricLockScreenState extends ConsumerState<BiometricLockScreen> {
                 ),
 
                 const SizedBox(height: AppSpacing.xl),
-
-                // Botão de tentar novamente (visível após cancelamento)
-                if (!_isAuthenticating)
-                  SeniorButton(
-                    label: 'Tentar novamente',
-                    onPressed: _tryBiometric,
-                  ),
 
                 const Spacer(),
 
