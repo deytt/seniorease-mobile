@@ -154,14 +154,22 @@ class AuthController extends Notifier<AsyncValue<void>> {
     return verified;
   }
 
-  Future<void> signInWithGoogle() async {
+  Future<void> signInWithGoogle({bool preferSilent = false}) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(
-      () => ref.read(signInWithGoogleUseCaseProvider).call().then((_) {}),
+      () => ref
+          .read(signInWithGoogleUseCaseProvider)
+          .call(preferSilent: preferSilent)
+          .then((_) {}),
     );
     if (state is AsyncData) {
       ref.read(biometricLockedProvider.notifier).unlock();
     }
+  }
+
+  /// Limpa a sessão Google no dispositivo (ex.: "Usar outra conta").
+  Future<void> clearGoogleSession() {
+    return ref.read(authRepositoryProvider).clearGoogleSession();
   }
 
   /// Reautentica com [currentPassword] e define [newPassword]. Regista a ação

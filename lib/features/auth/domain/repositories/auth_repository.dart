@@ -19,7 +19,16 @@ abstract class AuthRepository {
   /// O Firebase vincula automaticamente contas com o mesmo e-mail (definição
   /// ativada no console). No primeiro login, o perfil em `users/{uid}` é criado
   /// com nome/foto do Google.
-  Future<AppUser> signInWithGoogle();
+  ///
+  /// Quando [preferSilent] é `true`, tenta primeiro `signInSilently` (sem UI)
+  /// e só abre o seletor/consentimento Google se a sessão em cache não existir.
+  /// Usado no re-login com conta lembrada (ex.: após biometria) para evitar a
+  /// race de UI entre Face ID/Touch ID e o sheet OAuth no iOS.
+  Future<AppUser> signInWithGoogle({bool preferSilent = false});
+
+  /// Limpa a sessão Google no dispositivo (não afecta o Firebase Auth).
+  /// Usado ao escolher "Usar outra conta" para o próximo login forçar o seletor.
+  Future<void> clearGoogleSession();
 
   Future<void> sendPasswordResetEmail({required String email});
 
@@ -38,5 +47,8 @@ abstract class AuthRepository {
   /// `authStateChanges`.
   Future<bool> reloadAndCheckEmailVerified();
 
+  /// Termina apenas a sessão Firebase. A sessão Google no dispositivo é
+  /// preservada de propósito para permitir reauth silenciosa após biometria
+  /// (ver [signInWithGoogle] com `preferSilent: true`).
   Future<void> signOut();
 }

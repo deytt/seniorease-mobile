@@ -6,7 +6,8 @@ class SignInWithGoogleUseCase {
 
   final AuthRepository _repository;
 
-  Future<AppUser> call() {
-    return _repository.signInWithGoogle();
+  /// [preferSilent] — ver [AuthRepository.signInWithGoogle].
+  Future<AppUser> call({bool preferSilent = false}) {
+    return _repository.signInWithGoogle(preferSilent: preferSilent);
   }
 }

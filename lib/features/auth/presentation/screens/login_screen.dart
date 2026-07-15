@@ -107,6 +107,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
     await _saveUseCase?.call(LoginPreferences(rememberMe: _rememberMe));
     await ref.read(secureCredentialCacheProvider).clear();
+    // Sem sessão Google em cache, o próximo "Entrar com Google" mostra o seletor.
+    await ref.read(authControllerProvider.notifier).clearGoogleSession();
   }
 
   /// Ação do botão "Entrar" no Modo A (identidade lembrada).
@@ -141,8 +143,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ref.read(biometricLockedProvider.notifier).unlock();
 
       if (_lastMethod == LoginMethod.google) {
-        // Google não precisa de credenciais armazenadas — o OAuth lida com isso.
-        await _submitGoogle();
+        // PreferSilent: reauth sem sheet OAuth (evita race Face ID ↔ Google no iOS).
+        await _submitGoogle(preferSilent: true);
       } else {
         // Tenta login silencioso com as credenciais guardadas em secure storage.
         final cache = ref.read(secureCredentialCacheProvider);
@@ -175,10 +177,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
 
-    // Biometria não habilitada — fluxo direto.
+    // Biometria não habilitada — fluxo direto (ainda preferSilent se Google
+    // lembrado: sessão em cache no device, sem UI desnecessária).
     debugPrint('[LoginScreen] biometrics disabled, proceeding directly');
     if (_lastMethod == LoginMethod.google) {
-      await _submitGoogle();
+      await _submitGoogle(preferSilent: true);
     } else {
       setState(() => _showPasswordForRemembered = true);
       WidgetsBinding.instance.addPostFrameCallback(
@@ -255,8 +258,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     await _persistPreferences(email: email, method: LoginMethod.email);
   }
 
-  Future<void> _submitGoogle() async {
-    await ref.read(authControllerProvider.notifier).signInWithGoogle();
+  Future<void> _submitGoogle({bool preferSilent = false}) async {
+    await ref
+        .read(authControllerProvider.notifier)
+        .signInWithGoogle(preferSilent: preferSilent);
 
     final state = ref.read(authControllerProvider);
     if (state.hasError) {

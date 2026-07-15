@@ -99,9 +99,22 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AppUser> signInWithGoogle() async {
+  Future<AppUser> signInWithGoogle({bool preferSilent = false}) async {
     try {
-      final googleUser = await _googleSignIn.signIn();
+      GoogleSignInAccount? googleUser;
+      if (preferSilent) {
+        // Reauth sem UI: evita empilhar Face ID/Touch ID com o sheet OAuth.
+        googleUser = await _googleSignIn.signInSilently();
+        if (googleUser == null) {
+          // Edge case (sessão Google ausente/expirada): o prompt biométrico
+          // acabou de fechar — dá tempo ao sistema apresentar o sheet OAuth
+          // sem a race de UI observada no iOS.
+          await Future<void>.delayed(const Duration(milliseconds: 350));
+        }
+      }
+      // Fallback interativo (1.º login, sessão Google expirada, ou preferSilent
+      // false — ex.: botão "Entrar com Google" no formulário completo).
+      googleUser ??= await _googleSignIn.signIn();
       if (googleUser == null) {
         // Utilizador fechou/cancelou o seletor de contas.
         throw const AuthCancelledException();
@@ -129,6 +142,11 @@ class FirebaseAuthRepository implements AuthRepository {
     } on FirebaseAuthException catch (error) {
       throw _mapAuthException(error);
     }
+  }
+
+  @override
+  Future<void> clearGoogleSession() async {
+    await _googleSignIn.signOut();
   }
 
   /// Cria o documento `users/{uid}` no primeiro login com Google (auto-preenche
@@ -211,7 +229,8 @@ class FirebaseAuthRepository implements AuthRepository {
 
   @override
   Future<void> signOut() async {
-    await _googleSignIn.signOut();
+    // Preserva a sessão Google no device para `signInSilently` no próximo
+    // "Continuar com Google" (após biometria). Só limpa Firebase Auth.
     await _auth.signOut();
   }
 
