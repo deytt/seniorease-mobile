@@ -103,10 +103,18 @@ void main() {
 
   group('SignInWithGoogleUseCase', () {
     test('delega para signInWithGoogle e devolve o utilizador', () async {
-      when(() => repo.signInWithGoogle()).thenAnswer((_) async => user);
+      when(() => repo.signInWithGoogle(preferSilent: any(named: 'preferSilent')))
+          .thenAnswer((_) async => user);
       final result = await SignInWithGoogleUseCase(repo).call();
       expect(result, user);
-      verify(() => repo.signInWithGoogle()).called(1);
+      verify(() => repo.signInWithGoogle(preferSilent: false)).called(1);
+    });
+
+    test('propaga preferSilent para o repositório', () async {
+      when(() => repo.signInWithGoogle(preferSilent: any(named: 'preferSilent')))
+          .thenAnswer((_) async => user);
+      await SignInWithGoogleUseCase(repo).call(preferSilent: true);
+      verify(() => repo.signInWithGoogle(preferSilent: true)).called(1);
     });
   });
 }

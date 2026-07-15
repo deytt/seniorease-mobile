@@ -96,13 +96,25 @@ void main() {
   });
 
   group('signOut', () {
-    test('termina a sessão (authStateChanges passa a emitir null)', () async {
+    test('termina a sessão Firebase sem limpar a sessão Google', () async {
       final auth = MockFirebaseAuth(mockUser: user(), signedIn: true);
       final repo = buildRepo(auth);
 
       await repo.signOut();
 
       expect(auth.currentUser, isNull);
+      // Sessão Google preservada de propósito (reauth silenciosa).
+      verifyNever(() => mockGoogleSignIn.signOut());
+    });
+  });
+
+  group('clearGoogleSession', () {
+    test('chama GoogleSignIn.signOut', () async {
+      final repo = buildRepo(MockFirebaseAuth());
+
+      await repo.clearGoogleSession();
+
+      verify(() => mockGoogleSignIn.signOut()).called(1);
     });
   });
 
