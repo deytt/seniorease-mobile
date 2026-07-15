@@ -4,8 +4,12 @@
 <dict>
 	<key>CLIENT_ID</key>
 	<string>98401811269-8p2965kff2nd0ahvfqdpdv907l090rj7.apps.googleusercontent.com</string>
+	<key>GIDClientID</key>
+	<string>98401811269-8p2965kff2nd0ahvfqdpdv907l090rj7.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
 	<string>com.googleusercontent.apps.98401811269-8p2965kff2nd0ahvfqdpdv907l090rj7</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>98401811269-tmf3mr19c6mjo9bctf6k4gaj09ji9nif.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
 	<string>AIzaSyDH9jdJYJA_QtAYMSxEB_vqyM_GywmarxY</string>
 	<key>GCM_SENDER_ID</key>
