@@ -101,7 +101,7 @@ class Task {
   final TaskCategory category;
   final TaskStatus status;
 
-  /// Passos ordenados por `order`. Vazio quando não carregados.
+  /// Passos ordenados por `order` (campo `steps` no documento Firestore).
   final List<TaskStep> steps;
 
   final DateTime? dueDate;
@@ -156,7 +156,7 @@ class Task {
         notified: notified ?? this.notified,
       );
 
-  /// Mapa para gravação no Firestore. Não inclui `steps` (subcollection).
+  /// Mapa para gravação no Firestore, incluindo o array `steps`.
   Map<String, dynamic> toMap() => {
         'userId': userId,
         'title': title,
@@ -168,6 +168,7 @@ class Task {
         'completedAt':
             completedAt != null ? Timestamp.fromDate(completedAt!) : null,
         'notified': notified,
+        'steps': steps.map((s) => s.toMap()).toList(),
         'createdAt': Timestamp.fromDate(createdAt),
         'updatedAt': FieldValue.serverTimestamp(),
       };
@@ -175,7 +176,7 @@ class Task {
   factory Task.fromMap(
     String id,
     Map<String, dynamic> map, {
-    List<TaskStep> steps = const [],
+    List<TaskStep>? steps,
   }) =>
       Task(
         id: id,
@@ -185,11 +186,29 @@ class Task {
         priority: TaskPriority.fromString(map['priority'] as String? ?? ''),
         category: TaskCategory.fromString(map['category'] as String? ?? ''),
         status: TaskStatus.fromString(map['status'] as String? ?? ''),
-        steps: steps,
+        steps: steps ?? parseSteps(map['steps'], taskId: id),
         dueDate: (map['dueDate'] as Timestamp?)?.toDate(),
         completedAt: (map['completedAt'] as Timestamp?)?.toDate(),
         notified: map['notified'] as bool? ?? false,
         createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
         updatedAt: (map['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       );
+
+  /// Converte o campo Firestore `steps` (array de maps) em [TaskStep]s ordenados.
+  static List<TaskStep> parseSteps(dynamic raw, {required String taskId}) {
+    if (raw is! List) return const [];
+
+    final steps = <TaskStep>[];
+    for (var i = 0; i < raw.length; i++) {
+      final item = raw[i];
+      if (item is! Map) continue;
+      final map = Map<String, dynamic>.from(item);
+      final step = TaskStep.fromMap(map['id'] as String? ?? 'step_$i', map);
+      steps.add(
+        step.taskId.isEmpty ? step.copyWith(taskId: taskId) : step,
+      );
+    }
+    steps.sort((a, b) => a.order.compareTo(b.order));
+    return steps;
+  }
 }

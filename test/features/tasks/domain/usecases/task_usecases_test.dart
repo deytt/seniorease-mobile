@@ -64,7 +64,7 @@ void main() {
   });
 
   group('CreateTaskUseCase', () {
-    test('normaliza a ordem dos passos (1-indexed) e zera isCompleted', () async {
+    test('normaliza a ordem dos passos (0-indexed) e zera isCompleted', () async {
       when(() => repo.createTask(any(), any())).thenAnswer((_) async => 'new-id');
 
       final steps = [
@@ -78,7 +78,8 @@ void main() {
       final captured = verify(() => repo.createTask(any(), captureAny()))
           .captured
           .single as List<TaskStep>;
-      expect(captured.map((s) => s.order), [1, 2]);
+      expect(captured.map((s) => s.id), ['step_0', 'step_1']);
+      expect(captured.map((s) => s.order), [0, 1]);
       expect(captured.every((s) => !s.isCompleted), isTrue);
     });
   });

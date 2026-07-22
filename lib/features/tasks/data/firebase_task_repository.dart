@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mobile/features/tasks/domain/entities/task.dart';
 import 'package:mobile/features/tasks/domain/entities/task_filter.dart';
@@ -15,9 +13,6 @@ class FirebaseTaskRepository implements TaskRepository {
   CollectionReference<Map<String, dynamic>> get _tasks =>
       _firestore.collection('tasks');
 
-  CollectionReference<Map<String, dynamic>> _steps(String taskId) =>
-      _tasks.doc(taskId).collection('steps');
-
   @override
   Stream<List<Task>> watchTasks(String userId) =>
       watchTasksFiltered(userId, TaskFilter.empty);
@@ -28,13 +23,13 @@ class FirebaseTaskRepository implements TaskRepository {
     Query<Map<String, dynamic>> query =
         _tasks.where('userId', isEqualTo: userId);
 
-    // Filtro por categoria (equality — não precisa de composite index sozinho).
+    // Filtro por categoria (equality).
     if (filter.category != null) {
       query = query.where('category',
           isEqualTo: filter.category!.toFirestore());
     }
 
-    // Filtro por prioridade (equality — não precisa de composite index sozinho).
+    // Filtro por prioridade (equality).
     if (filter.priority != null) {
       query = query.where('priority',
           isEqualTo: filter.priority!.toFirestore());
@@ -52,88 +47,45 @@ class FirebaseTaskRepository implements TaskRepository {
           .where('dueDate', isLessThan: Timestamp.fromDate(endOfDay));
     }
 
-    return query.snapshots().map((snap) {
-      final tasks =
-          snap.docs.map((doc) => Task.fromMap(doc.id, doc.data())).toList();
+    // Ordenação server-side: dueDate DESC (data maior primeiro — futuras/
+    // recentes acima; mais antigas abaixo). Docs sem dueDate ficam de fora
+    // do orderBy do Firestore. Índices: firebaseSchema.md / firestore.indexes.json.
+    query = query.orderBy('dueDate', descending: true);
 
-      // Ordena em memória (mantém o mesmo critério do watchTasks):
-      // 1. Pendentes/em progresso antes de concluídas.
-      // 2. Dentro de pendentes: dueDate ascendente; null vai para o fim.
-      // 3. Dentro de concluídas: completedAt descendente.
-      tasks.sort((a, b) {
-        final aDone = a.isCompleted;
-        final bDone = b.isCompleted;
-        if (aDone != bDone) return aDone ? 1 : -1;
-
-        if (aDone) {
-          final aAt = a.completedAt ?? a.updatedAt;
-          final bAt = b.completedAt ?? b.updatedAt;
-          return bAt.compareTo(aAt);
-        }
-
-        final aDue = a.dueDate;
-        final bDue = b.dueDate;
-        if (aDue == null && bDue == null) {
-          return b.createdAt.compareTo(a.createdAt);
-        }
-        if (aDue == null) return 1;
-        if (bDue == null) return -1;
-        return aDue.compareTo(bDue);
-      });
-      return tasks;
-    });
+    return query.snapshots().map(
+          (snap) => snap.docs
+              .map((doc) => Task.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
   }
 
   @override
   Stream<Task> watchTask(String taskId) {
-    // Combina os snapshots da tarefa e dos passos, reemitindo sempre que
-    // qualquer um dos dois muda.
-    final controller = StreamController<Task>();
-
-    DocumentSnapshot<Map<String, dynamic>>? lastTask;
-    List<TaskStep> lastSteps = const [];
-
-    void emit() {
-      if (lastTask == null) return;
-      controller.add(
-        Task.fromMap(lastTask!.id, lastTask!.data() ?? {}, steps: lastSteps),
-      );
-    }
-
-    final taskSub = _tasks.doc(taskId).snapshots().listen((snap) {
-      lastTask = snap;
-      emit();
-    }, onError: controller.addError);
-
-    final stepsSub =
-        _steps(taskId).orderBy('order').snapshots().listen((snap) {
-      lastSteps =
-          snap.docs.map((doc) => TaskStep.fromMap(doc.id, doc.data())).toList();
-      emit();
-    }, onError: controller.addError);
-
-    controller.onCancel = () async {
-      await taskSub.cancel();
-      await stepsSub.cancel();
-    };
-
-    return controller.stream;
+    return _tasks.doc(taskId).snapshots().map((snap) {
+      return Task.fromMap(snap.id, snap.data() ?? {});
+    });
   }
 
   @override
   Future<String> createTask(Task task, List<TaskStep> steps) async {
-    final batch = _firestore.batch();
     final taskRef = _tasks.doc();
+    final taskId = taskRef.id;
 
-    batch.set(taskRef, task.toMap());
+    final normalizedSteps = [
+      for (var i = 0; i < steps.length; i++)
+        steps[i].copyWith(
+          id: steps[i].id.isEmpty ? 'step_$i' : steps[i].id,
+          taskId: taskId,
+          order: steps[i].order,
+          isCompleted: false,
+        ),
+    ];
 
-    for (final step in steps) {
-      final stepRef = taskRef.collection('steps').doc();
-      batch.set(stepRef, step.toMap());
-    }
-
-    await batch.commit();
-    return taskRef.id;
+    await taskRef.set({
+      ...task.toMap(),
+      'steps': normalizedSteps.map((s) => s.toMap()).toList(),
+    });
+    return taskId;
   }
 
   @override
@@ -141,15 +93,7 @@ class FirebaseTaskRepository implements TaskRepository {
       _tasks.doc(task.id).set(task.toMap(), SetOptions(merge: true));
 
   @override
-  Future<void> deleteTask(String taskId) async {
-    final stepsSnap = await _steps(taskId).get();
-    final batch = _firestore.batch();
-    for (final doc in stepsSnap.docs) {
-      batch.delete(doc.reference);
-    }
-    batch.delete(_tasks.doc(taskId));
-    await batch.commit();
-  }
+  Future<void> deleteTask(String taskId) => _tasks.doc(taskId).delete();
 
   @override
   Future<void> setStepCompleted(
@@ -157,50 +101,60 @@ class FirebaseTaskRepository implements TaskRepository {
     String stepId, {
     required bool isCompleted,
   }) async {
-    await _steps(taskId).doc(stepId).update({'isCompleted': isCompleted});
-    await _syncStatusFromSteps(taskId);
+    final ref = _tasks.doc(taskId);
+    final snap = await ref.get();
+    final task = Task.fromMap(taskId, snap.data() ?? {});
+
+    final updatedSteps = [
+      for (final step in task.steps)
+        step.id == stepId ? step.copyWith(isCompleted: isCompleted) : step,
+    ];
+
+    await ref.update({
+      'steps': updatedSteps.map((s) => s.toMap()).toList(),
+      ..._statusFieldsFromSteps(updatedSteps),
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   @override
   Future<void> completeTask(String taskId) async {
-    final stepsSnap = await _steps(taskId).get();
-    final batch = _firestore.batch();
-    for (final doc in stepsSnap.docs) {
-      batch.update(doc.reference, {'isCompleted': true});
-    }
-    batch.update(_tasks.doc(taskId), {
+    final ref = _tasks.doc(taskId);
+    final snap = await ref.get();
+    final task = Task.fromMap(taskId, snap.data() ?? {});
+
+    final updatedSteps = [
+      for (final step in task.steps) step.copyWith(isCompleted: true),
+    ];
+
+    await ref.update({
+      'steps': updatedSteps.map((s) => s.toMap()).toList(),
       'status': 'completed',
       'completedAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
-    await batch.commit();
   }
 
-  /// Recalcula o status da tarefa a partir do estado dos passos.
-  Future<void> _syncStatusFromSteps(String taskId) async {
-    final stepsSnap = await _steps(taskId).get();
-    if (stepsSnap.docs.isEmpty) return;
+  /// Campos de status derivados do estado dos passos (sem `updatedAt`).
+  Map<String, dynamic> _statusFieldsFromSteps(List<TaskStep> steps) {
+    if (steps.isEmpty) {
+      return const {};
+    }
 
-    final total = stepsSnap.docs.length;
-    final done = stepsSnap.docs
-        .where((d) => d.data()['isCompleted'] == true)
-        .length;
-
+    final done = steps.where((s) => s.isCompleted).length;
     final String status;
     if (done == 0) {
       status = 'pending';
-    } else if (done >= total) {
+    } else if (done >= steps.length) {
       status = 'completed';
     } else {
       status = 'in_progress';
     }
 
-    await _tasks.doc(taskId).update({
+    return {
       'status': status,
-      'completedAt': status == 'completed'
-          ? FieldValue.serverTimestamp()
-          : null,
-      'updatedAt': FieldValue.serverTimestamp(),
-    });
+      'completedAt':
+          status == 'completed' ? FieldValue.serverTimestamp() : null,
+    };
   }
 }
