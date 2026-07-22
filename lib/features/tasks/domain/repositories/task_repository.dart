@@ -3,24 +3,23 @@ import 'package:mobile/features/tasks/domain/entities/task_filter.dart';
 import 'package:mobile/features/tasks/domain/entities/task_step.dart';
 
 abstract interface class TaskRepository {
-  /// Stream de todas as tarefas do utilizador (sem os passos), ordenadas por
-  /// data de criação descendente.
+  /// Stream de todas as tarefas do utilizador (incluindo `steps` do documento).
   Stream<List<Task>> watchTasks(String userId);
 
   /// Stream filtrada de tarefas aplicando os critérios de [filter] na query Firestore.
   /// Quando [filter] está vazio, comporta-se como [watchTasks].
   Stream<List<Task>> watchTasksFiltered(String userId, TaskFilter filter);
 
-  /// Stream de uma tarefa individual, incluindo os seus passos.
+  /// Stream de uma tarefa individual (passos no campo `steps` do documento).
   Stream<Task> watchTask(String taskId);
 
-  /// Cria a tarefa e os seus passos de forma atómica. Devolve o ID gerado.
+  /// Cria a tarefa com o array `steps` no mesmo documento. Devolve o ID gerado.
   Future<String> createTask(Task task, List<TaskStep> steps);
 
-  /// Atualiza os campos editáveis de uma tarefa.
+  /// Atualiza os campos editáveis de uma tarefa (inclui `steps` se presentes).
   Future<void> updateTask(Task task);
 
-  /// Remove a tarefa e todos os seus passos.
+  /// Remove a tarefa (o array `steps` é removido com o documento).
   Future<void> deleteTask(String taskId);
 
   /// Marca/desmarca um passo como concluído.

@@ -158,8 +158,8 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
       for (var i = 0; i < _stepControllers.length; i++)
         if (_stepControllers[i].text.trim().isNotEmpty)
           TaskStep(
-            id: '',
-            order: i + 1,
+            id: 'step_$i',
+            order: i,
             title: _stepControllers[i].text.trim(),
           ),
     ];

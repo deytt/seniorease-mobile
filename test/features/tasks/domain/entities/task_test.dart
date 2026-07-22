@@ -140,5 +140,35 @@ void main() {
       expect(task.steps, hasLength(1));
       expect(task.steps.first.id, 's1');
     });
+
+    test('fromMap lê steps do campo array do documento', () {
+      final task = Task.fromMap('id1', {
+        'userId': 'u',
+        'title': 't',
+        'steps': [
+          {
+            'id': 'step_1',
+            'taskId': 'id1',
+            'order': 1,
+            'title': 'segundo',
+            'instruction': '',
+            'isCompleted': false,
+          },
+          {
+            'id': 'step_0',
+            'taskId': 'id1',
+            'order': 0,
+            'title': 'primeiro',
+            'instruction': 'faça',
+            'isCompleted': true,
+          },
+        ],
+      });
+      expect(task.steps, hasLength(2));
+      expect(task.steps.map((s) => s.id).toList(), ['step_0', 'step_1']);
+      expect(task.steps.first.title, 'primeiro');
+      expect(task.steps.first.isCompleted, isTrue);
+      expect(task.toMap()['steps'], hasLength(2));
+    });
   });
 }

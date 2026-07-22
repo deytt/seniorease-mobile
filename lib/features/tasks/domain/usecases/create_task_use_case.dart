@@ -7,11 +7,15 @@ class CreateTaskUseCase {
 
   final TaskRepository _repository;
 
-  /// Normaliza a ordem dos passos (1-indexed) e persiste a tarefa.
+  /// Normaliza a ordem dos passos (0-indexed) e persiste a tarefa.
   Future<String> call(Task task, List<TaskStep> steps) {
     final ordered = [
       for (var i = 0; i < steps.length; i++)
-        steps[i].copyWith(order: i + 1, isCompleted: false),
+        steps[i].copyWith(
+          id: 'step_$i',
+          order: i,
+          isCompleted: false,
+        ),
     ];
     return _repository.createTask(task, ordered);
   }

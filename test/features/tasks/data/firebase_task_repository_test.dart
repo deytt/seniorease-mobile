@@ -24,6 +24,7 @@ void main() {
     DateTime? createdAt,
     String category = 'health',
     String priority = 'medium',
+    List<Map<String, dynamic>> steps = const [],
   }) {
     return db.collection('tasks').doc(id).set({
       'userId': userId,
@@ -33,29 +34,27 @@ void main() {
       'category': category,
       'status': status.toFirestore(),
       'dueDate': dueDate != null ? Timestamp.fromDate(dueDate) : null,
-      'completedAt': completedAt != null ? Timestamp.fromDate(completedAt) : null,
+      'completedAt':
+          completedAt != null ? Timestamp.fromDate(completedAt) : null,
       'createdAt': Timestamp.fromDate(createdAt ?? DateTime(2026, 1, 1)),
       'updatedAt': Timestamp.fromDate(createdAt ?? DateTime(2026, 1, 1)),
+      'steps': steps,
     });
   }
 
-  Future<void> seedStep(
-    String taskId,
-    String stepId, {
-    required int order,
-    bool isCompleted = false,
-  }) {
-    return db
-        .collection('tasks')
-        .doc(taskId)
-        .collection('steps')
-        .doc(stepId)
-        .set({
-      'order': order,
-      'title': 'passo $stepId',
-      'instruction': '',
-      'isCompleted': isCompleted,
-    });
+  List<Map<String, dynamic>> stepsMaps(String taskId, int count,
+      {Set<int> completed = const {}}) {
+    return [
+      for (var i = 0; i < count; i++)
+        {
+          'id': 'step_$i',
+          'taskId': taskId,
+          'order': i,
+          'title': 'passo step_$i',
+          'instruction': '',
+          'isCompleted': completed.contains(i),
+        },
+    ];
   }
 
   Task newTask() => Task(
@@ -71,19 +70,23 @@ void main() {
       );
 
   group('createTask', () {
-    test('cria a tarefa + passos atomicamente e devolve o id gerado', () async {
+    test('cria a tarefa com steps no documento e devolve o id gerado', () async {
       final id = await repo.createTask(newTask(), [
-        const TaskStep(id: 'x', order: 1, title: 'A'),
-        const TaskStep(id: 'y', order: 2, title: 'B'),
+        const TaskStep(id: 'step_0', order: 0, title: 'A'),
+        const TaskStep(id: 'step_1', order: 1, title: 'B'),
       ]);
 
       final doc = await db.collection('tasks').doc(id).get();
       expect(doc.exists, isTrue);
       expect(doc.data()!['title'], 'Nova');
 
-      final steps =
-          await db.collection('tasks').doc(id).collection('steps').get();
-      expect(steps.docs, hasLength(2));
+      final steps = doc.data()!['steps'] as List<dynamic>;
+      expect(steps, hasLength(2));
+      expect(steps[0]['id'], 'step_0');
+      expect(steps[0]['taskId'], id);
+      expect(steps[0]['title'], 'A');
+      expect(steps[1]['order'], 1);
+      expect(steps[1]['taskId'], id);
     });
   });
 
@@ -118,73 +121,85 @@ void main() {
       final tasks = await repo.watchTasksFiltered('u1', TaskFilter.empty).first;
       expect(tasks.map((t) => t.id).toList(), ['a']);
     });
+
+    test('inclui steps do documento na lista', () async {
+      await seedTask('t', steps: stepsMaps('t', 2));
+
+      final tasks = await repo.watchTasksFiltered('u1', TaskFilter.empty).first;
+      expect(tasks.single.steps, hasLength(2));
+      expect(tasks.single.steps.first.id, 'step_0');
+    });
   });
 
   group('deleteTask', () {
-    test('remove a tarefa e os seus passos', () async {
-      await seedTask('t');
-      await seedStep('t', 's1', order: 1);
-      await seedStep('t', 's2', order: 2);
+    test('remove a tarefa (steps vão com o documento)', () async {
+      await seedTask('t', steps: stepsMaps('t', 2));
 
       await repo.deleteTask('t');
 
       expect((await db.collection('tasks').doc('t').get()).exists, isFalse);
-      final steps =
-          await db.collection('tasks').doc('t').collection('steps').get();
-      expect(steps.docs, isEmpty);
     });
   });
 
   group('setStepCompleted — sincroniza o status', () {
-    test('parcial → in_progress; todos → completed; nenhum → pending', () async {
-      await seedTask('t');
-      await seedStep('t', 's1', order: 1);
-      await seedStep('t', 's2', order: 2);
+    test('parcial → in_progress; todos → completed; nenhum → pending',
+        () async {
+      await seedTask('t', steps: stepsMaps('t', 2));
 
       Future<String> status() async =>
           (await db.collection('tasks').doc('t').get()).data()!['status']
               as String;
 
-      await repo.setStepCompleted('t', 's1', isCompleted: true);
+      await repo.setStepCompleted('t', 'step_0', isCompleted: true);
       expect(await status(), 'in_progress');
 
-      await repo.setStepCompleted('t', 's2', isCompleted: true);
+      await repo.setStepCompleted('t', 'step_1', isCompleted: true);
       expect(await status(), 'completed');
 
-      await repo.setStepCompleted('t', 's1', isCompleted: false);
+      await repo.setStepCompleted('t', 'step_0', isCompleted: false);
       expect(await status(), 'in_progress');
     });
   });
 
   group('completeTask', () {
     test('marca todos os passos e o status como completed', () async {
-      await seedTask('t');
-      await seedStep('t', 's1', order: 1);
-      await seedStep('t', 's2', order: 2);
+      await seedTask('t', steps: stepsMaps('t', 2));
 
       await repo.completeTask('t');
 
       final task = await db.collection('tasks').doc('t').get();
       expect(task.data()!['status'], 'completed');
 
-      final steps =
-          await db.collection('tasks').doc('t').collection('steps').get();
-      expect(steps.docs.every((d) => d.data()['isCompleted'] == true), isTrue);
+      final steps = task.data()!['steps'] as List<dynamic>;
+      expect(steps.every((s) => s['isCompleted'] == true), isTrue);
     });
   });
 
   group('watchTask', () {
     test('emite a tarefa com os passos ordenados por order', () async {
-      await seedTask('t');
-      await seedStep('t', 's2', order: 2);
-      await seedStep('t', 's1', order: 1);
+      await seedTask('t', steps: [
+        {
+          'id': 'step_1',
+          'taskId': 't',
+          'order': 1,
+          'title': 'segundo',
+          'instruction': '',
+          'isCompleted': false,
+        },
+        {
+          'id': 'step_0',
+          'taskId': 't',
+          'order': 0,
+          'title': 'primeiro',
+          'instruction': '',
+          'isCompleted': false,
+        },
+      ]);
 
-      // watchTask combina os snapshots da tarefa e dos passos; a 1ª emissão
-      // pode chegar antes dos passos, por isso esperamos a que já os contém.
-      final task =
-          await repo.watchTask('t').firstWhere((t) => t.steps.length == 2);
+      final task = await repo.watchTask('t').first;
       expect(task.id, 't');
-      expect(task.steps.map((s) => s.order).toList(), [1, 2]);
+      expect(task.steps.map((s) => s.order).toList(), [0, 1]);
+      expect(task.steps.map((s) => s.title).toList(), ['primeiro', 'segundo']);
     });
   });
 }

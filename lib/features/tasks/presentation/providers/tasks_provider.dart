@@ -196,8 +196,8 @@ class TasksController extends Notifier<AsyncValue<void>> {
     }
   }
 
-  /// Procura uma tarefa na cache do stream (sem passos, mas com título e
-  /// categoria — suficiente para o registo de histórico).
+  /// Procura uma tarefa na cache do stream (título e categoria bastam
+  /// para o registo de histórico).
   Task? _findTask(String taskId) {
     final tasks = ref.read(tasksStreamProvider).asData?.value ?? const [];
     for (final task in tasks) {
