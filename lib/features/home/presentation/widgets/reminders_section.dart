@@ -10,7 +10,7 @@ import 'package:mobile/features/reminders/presentation/providers/reminders_provi
 import 'package:mobile/features/reminders/presentation/widgets/reminder_completed_icon.dart';
 import 'package:mobile/features/reminders/presentation/widgets/reminder_visuals.dart';
 
-/// Secção "Lembretes de Hoje" na Home, ligada ao Firestore.
+/// Secção "Próximos Lembretes" na Home, ligada ao Firestore.
 class RemindersSection extends ConsumerWidget {
   const RemindersSection({super.key});
 
@@ -26,7 +26,7 @@ class RemindersSection extends ConsumerWidget {
           children: [
             Expanded(
               child: Text(
-                'Lembretes de Hoje',
+                'Próximos Lembretes',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.titleLarge?.copyWith(
@@ -50,7 +50,7 @@ class RemindersSection extends ConsumerWidget {
         const SizedBox(height: AppSpacing.sm),
         if (items.isEmpty)
           Text(
-            'Não tem lembretes para hoje.',
+            'Não tem lembretes pendentes.',
             style: theme.textTheme.bodyMedium?.copyWith(
               color: AppColors.slate500,
             ),
