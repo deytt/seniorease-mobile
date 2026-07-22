@@ -37,7 +37,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   final _remindersActionShowcaseKey = GlobalKey();
   // Passo 6: ação rápida Ajuda Rápida
   final _quickHelpShowcaseKey = GlobalKey();
-  // Passo 7: seção "Lembretes de Hoje"
+  // Passo 7: seção "Próximos Lembretes"
   final _remindersSectionShowcaseKey = GlobalKey();
 
   @override
@@ -131,9 +131,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         SeniorShowcase(
                           showcaseKey: _remindersSectionShowcaseKey,
                           scope: _scope,
-                          title: 'Lembretes de Hoje',
+                          title: 'Próximos Lembretes',
                           description:
-                              'Aqui aparecem os seus lembretes para o dia de hoje. Toque num para ver os detalhes.',
+                              'Aqui aparecem os seus próximos lembretes pendentes. Toque num para ver na lista.',
                           targetBorderRadius: BorderRadius.circular(16),
                           child: const RemindersSection(),
                         ),

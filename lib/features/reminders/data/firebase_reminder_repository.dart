@@ -39,8 +39,8 @@ class FirebaseReminderRepository implements ReminderRepository {
           .where('scheduledAt', isLessThan: Timestamp.fromDate(end));
     }
 
-    // Ordenação server-side por horário agendado.
-    query = query.orderBy('scheduledAt');
+    // Ordenação server-side: data/hora maior primeiro (mais antigos por último).
+    query = query.orderBy('scheduledAt', descending: true);
 
     return query.snapshots().map(
           (snap) => snap.docs

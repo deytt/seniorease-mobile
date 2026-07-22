@@ -14,8 +14,8 @@ import 'package:mobile/features/reminders/presentation/widgets/reminder_card.dar
 /// Card de lembrete com swipe bidirecional integrado no mesmo contorno:
 /// arrastar para a esquerda revela **Excluir** (direita) e para a direita
 /// revela **Editar** (esquerda). Apenas um card aberto por vez e num único
-/// lado. Tocar no corpo expande/recolhe a descrição. Lembretes concluídos não
-/// podem ser editados nem excluídos (gesto desativado).
+/// lado. Tocar no corpo expande/recolhe a descrição. Lembretes concluídos
+/// podem ser excluídos, mas não editados (só o swipe de Excluir).
 class ReminderDismissibleCard extends ConsumerStatefulWidget {
   const ReminderDismissibleCard({
     required this.reminder,
@@ -156,9 +156,12 @@ class _ReminderDismissibleCardState
   }
 
   void _onHorizontalDragUpdate(DragUpdateDetails details) {
+    final minOffset = widget.reminder.isDone
+        ? 0.0
+        : -ReminderDismissibleCard.actionWidth;
     setState(() {
       _dragOffset = (_dragOffset - details.delta.dx).clamp(
-        -ReminderDismissibleCard.actionWidth,
+        minOffset,
         ReminderDismissibleCard.actionWidth,
       );
     });
@@ -172,7 +175,7 @@ class _ReminderDismissibleCardState
     final notifier = ref.read(openReminderSwipeProvider.notifier);
     if (offset > threshold) {
       notifier.open(widget.reminder.id, ReminderSwipeSide.delete);
-    } else if (offset < -threshold) {
+    } else if (!widget.reminder.isDone && offset < -threshold) {
       notifier.open(widget.reminder.id, ReminderSwipeSide.edit);
     } else {
       notifier.closeIf(widget.reminder.id);
@@ -302,11 +305,9 @@ class _ReminderDismissibleCardState
                   offset: Offset(-offset, 0),
                   child: GestureDetector(
                     onTap: _handleTap,
-                    onHorizontalDragStart:
-                        isDone ? null : _onHorizontalDragStart,
-                    onHorizontalDragUpdate:
-                        isDone ? null : _onHorizontalDragUpdate,
-                    onHorizontalDragEnd: isDone ? null : _onHorizontalDragEnd,
+                    onHorizontalDragStart: _onHorizontalDragStart,
+                    onHorizontalDragUpdate: _onHorizontalDragUpdate,
+                    onHorizontalDragEnd: _onHorizontalDragEnd,
                     child: DecoratedBox(
                       decoration: ReminderCard.shellDecoration(
                         context,

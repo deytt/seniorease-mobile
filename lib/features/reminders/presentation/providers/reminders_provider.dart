@@ -151,10 +151,13 @@ final filteredRemindersStreamProvider = StreamProvider<List<Reminder>>((ref) {
   return ref.read(getFilteredRemindersUseCaseProvider).call(userId, filter);
 });
 
-/// Lembretes de hoje para a secção na Home (máx. 3, por hora).
+/// Próximos lembretes ativos para a secção na Home (máx. 3).
+///
+/// Usa a mesma ordenação da listagem (`scheduledAt` DESC) e exclui
+/// lembretes já concluídos.
 final todayRemindersProvider = Provider<List<Reminder>>((ref) {
   final all = ref.watch(remindersStreamProvider).asData?.value ?? const [];
-  return all.take(3).toList();
+  return all.where((r) => !r.isDone).take(3).toList();
 });
 
 // --- Controller ---

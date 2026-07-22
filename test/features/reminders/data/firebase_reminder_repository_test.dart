@@ -53,7 +53,8 @@ void main() {
     expect(items.first.id, 'r1');
   });
 
-  test('watchRemindersFiltered devolve os lembretes ordenados por scheduledAt',
+  test(
+      'watchRemindersFiltered devolve os lembretes ordenados por scheduledAt DESC',
       () async {
     final now = DateTime.now();
     final base = DateTime(now.year, now.month, now.day, 6);
@@ -64,7 +65,7 @@ void main() {
     final items =
         await repo.watchRemindersFiltered('u1', ReminderFilter.empty).first;
 
-    expect(items.map((r) => r.id).toList(), ['early', 'mid', 'late']);
+    expect(items.map((r) => r.id).toList(), ['late', 'mid', 'early']);
   });
 
   test('watchRemindersFiltered medicação filtra por categoria', () async {
