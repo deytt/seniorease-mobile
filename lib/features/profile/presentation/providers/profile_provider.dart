@@ -73,7 +73,7 @@ class ProfileController extends Notifier<AsyncValue<void>> {
     if (!state.hasError) {
       await ref.read(historyRecorderProvider).record(
             type: HistoryActionType.profileUpdated,
-            title: 'Atualizou o seu perfil',
+            title: 'Atualizou perfil',
           );
     }
   }
