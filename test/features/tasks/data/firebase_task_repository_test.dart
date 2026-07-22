@@ -33,7 +33,8 @@ void main() {
       'priority': priority,
       'category': category,
       'status': status.toFirestore(),
-      'dueDate': dueDate != null ? Timestamp.fromDate(dueDate) : null,
+      // dueDate é obrigatório para aparecer em orderBy('dueDate') no Firestore.
+      'dueDate': Timestamp.fromDate(dueDate ?? DateTime(2026, 6, 1)),
       'completedAt':
           completedAt != null ? Timestamp.fromDate(completedAt) : null,
       'createdAt': Timestamp.fromDate(createdAt ?? DateTime(2026, 1, 1)),
@@ -91,19 +92,23 @@ void main() {
   });
 
   group('watchTasksFiltered', () {
-    test('ordena pendentes (dueDate asc) antes das concluídas', () async {
+    test('ordena por dueDate descendente (maior data primeiro)', () async {
       await seedTask('a', dueDate: DateTime(2026, 6, 10));
       await seedTask('b', dueDate: DateTime(2026, 6, 5));
       await seedTask('c',
-          status: TaskStatus.completed, completedAt: DateTime(2026, 6, 1));
+          status: TaskStatus.completed,
+          dueDate: DateTime(2026, 6, 15),
+          completedAt: DateTime(2026, 6, 1));
 
       final tasks = await repo.watchTasksFiltered('u1', TaskFilter.empty).first;
-      expect(tasks.map((t) => t.id).toList(), ['b', 'a', 'c']);
+      expect(tasks.map((t) => t.id).toList(), ['c', 'a', 'b']);
     });
 
     test('filtra por categoria', () async {
-      await seedTask('a', category: 'health');
-      await seedTask('b', category: 'exercise');
+      await seedTask('a',
+          category: 'health', dueDate: DateTime(2026, 6, 10));
+      await seedTask('b',
+          category: 'exercise', dueDate: DateTime(2026, 6, 11));
 
       final tasks = await repo
           .watchTasksFiltered(
@@ -115,15 +120,16 @@ void main() {
     });
 
     test('só devolve tarefas do utilizador', () async {
-      await seedTask('a', userId: 'u1');
-      await seedTask('b', userId: 'u2');
+      await seedTask('a', userId: 'u1', dueDate: DateTime(2026, 6, 10));
+      await seedTask('b', userId: 'u2', dueDate: DateTime(2026, 6, 11));
 
       final tasks = await repo.watchTasksFiltered('u1', TaskFilter.empty).first;
       expect(tasks.map((t) => t.id).toList(), ['a']);
     });
 
     test('inclui steps do documento na lista', () async {
-      await seedTask('t', steps: stepsMaps('t', 2));
+      await seedTask('t',
+          dueDate: DateTime(2026, 6, 10), steps: stepsMaps('t', 2));
 
       final tasks = await repo.watchTasksFiltered('u1', TaskFilter.empty).first;
       expect(tasks.single.steps, hasLength(2));

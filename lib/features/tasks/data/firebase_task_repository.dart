@@ -23,13 +23,13 @@ class FirebaseTaskRepository implements TaskRepository {
     Query<Map<String, dynamic>> query =
         _tasks.where('userId', isEqualTo: userId);
 
-    // Filtro por categoria (equality — não precisa de composite index sozinho).
+    // Filtro por categoria (equality).
     if (filter.category != null) {
       query = query.where('category',
           isEqualTo: filter.category!.toFirestore());
     }
 
-    // Filtro por prioridade (equality — não precisa de composite index sozinho).
+    // Filtro por prioridade (equality).
     if (filter.priority != null) {
       query = query.where('priority',
           isEqualTo: filter.priority!.toFirestore());
@@ -47,36 +47,16 @@ class FirebaseTaskRepository implements TaskRepository {
           .where('dueDate', isLessThan: Timestamp.fromDate(endOfDay));
     }
 
-    return query.snapshots().map((snap) {
-      final tasks =
-          snap.docs.map((doc) => Task.fromMap(doc.id, doc.data())).toList();
+    // Ordenação server-side: dueDate DESC (data maior primeiro — futuras/
+    // recentes acima; mais antigas abaixo). Docs sem dueDate ficam de fora
+    // do orderBy do Firestore. Índices: firebaseSchema.md / firestore.indexes.json.
+    query = query.orderBy('dueDate', descending: true);
 
-      // Ordena em memória (mantém o mesmo critério do watchTasks):
-      // 1. Pendentes/em progresso antes de concluídas.
-      // 2. Dentro de pendentes: dueDate ascendente; null vai para o fim.
-      // 3. Dentro de concluídas: completedAt descendente.
-      tasks.sort((a, b) {
-        final aDone = a.isCompleted;
-        final bDone = b.isCompleted;
-        if (aDone != bDone) return aDone ? 1 : -1;
-
-        if (aDone) {
-          final aAt = a.completedAt ?? a.updatedAt;
-          final bAt = b.completedAt ?? b.updatedAt;
-          return bAt.compareTo(aAt);
-        }
-
-        final aDue = a.dueDate;
-        final bDue = b.dueDate;
-        if (aDue == null && bDue == null) {
-          return b.createdAt.compareTo(a.createdAt);
-        }
-        if (aDue == null) return 1;
-        if (bDue == null) return -1;
-        return aDue.compareTo(bDue);
-      });
-      return tasks;
-    });
+    return query.snapshots().map(
+          (snap) => snap.docs
+              .map((doc) => Task.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
   }
 
   @override
