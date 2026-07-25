@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Tokens de cor do Design System SeniorEase (techContext.md).
+/// Tokens de cor do Design System SeniorEase.
 abstract final class AppColors {
   static const Color primary = Color(0xFF2563EB);
   static const Color primaryDark = Color(0xFF1D4ED8);

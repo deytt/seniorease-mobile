@@ -19,8 +19,7 @@ class FirebaseHistoryRepository implements HistoryRepository {
 
   @override
   Stream<List<HistoryEvent>> watchRecent(String userId, {int limit = 50}) {
-    // Requer o composite index (userId ASC, occurredAt DESC) — ver
-    // firestore.indexes.json / firebaseSchema.md.
+    // Requer o composite index (userId ASC, occurredAt DESC).
     return _history
         .where('userId', isEqualTo: userId)
         .orderBy('occurredAt', descending: true)

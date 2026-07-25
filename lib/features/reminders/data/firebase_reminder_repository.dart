@@ -29,8 +29,8 @@ class FirebaseReminderRepository implements ReminderRepository {
       query = query.where('category', isEqualTo: category.toFirestore());
     }
 
-    // Filtro "Hoje" server-side (range em scheduledAt). Requer os composite
-    // indexes de firestore.indexes.json publicados (ver firebaseSchema.md).
+    // Filtro "Hoje" server-side (range em scheduledAt). Requer composite
+    // indexes publicados em firestore.indexes.json.
     if (filter.isToday) {
       final (start, end) = _todayRange();
       query = query

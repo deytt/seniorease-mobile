@@ -31,8 +31,34 @@ jobs:
       - name: Analyze
         run: flutter analyze
 
-      - name: Run tests
-        run: flutter test
+      - name: Run tests with coverage
+        run: flutter test --coverage
+
+      - name: Install lcov
+        run: sudo apt-get install -y lcov
+
+      - name: Generate HTML coverage report
+        run: |
+          lcov \
+            --remove coverage/lcov.info \
+            '*/generated/*' \
+            '*/firebase_options.dart' \
+            '**/*.g.dart' \
+            '**/*.freezed.dart' \
+            --output-file coverage/lcov.info \
+            --ignore-errors unused 2>/dev/null || true
+          genhtml coverage/lcov.info \
+            --output-directory coverage/html \
+            --title "SeniorEase Mobile — Cobertura de Testes" \
+            --show-details \
+            --legend
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/html/
+          retention-days: 30
 
   distribute:
     name: CD — Build & Distribute APK

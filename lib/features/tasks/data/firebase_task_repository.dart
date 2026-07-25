@@ -36,7 +36,7 @@ class FirebaseTaskRepository implements TaskRepository {
     }
 
     // Filtro "hoje": range query em dueDate — requer composite index com userId
-    // (e category/priority se combinados). Ver firebaseSchema.md § Indexes.
+    // (e category/priority se combinados).
     if (filter.isToday) {
       final now = DateTime.now();
       final startOfDay = DateTime(now.year, now.month, now.day);
@@ -49,7 +49,7 @@ class FirebaseTaskRepository implements TaskRepository {
 
     // Ordenação server-side: dueDate DESC (data maior primeiro — futuras/
     // recentes acima; mais antigas abaixo). Docs sem dueDate ficam de fora
-    // do orderBy do Firestore. Índices: firebaseSchema.md / firestore.indexes.json.
+    // do orderBy do Firestore.
     query = query.orderBy('dueDate', descending: true);
 
     return query.snapshots().map(

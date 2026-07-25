@@ -1,8 +1,7 @@
 /// Categorias de lembrete disponíveis no combo de criação e nos filtros.
 ///
 /// Os valores persistidos no Firestore são o [name] do enum (ver
-/// [toFirestore]/[fromString]). Ao alterar/adicionar categorias, atualizar
-/// também `memory-bank/firebaseSchema.md`.
+/// [toFirestore]/[fromString]).
 enum ReminderCategory {
   medication,
   appointment,
