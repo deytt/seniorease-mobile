@@ -114,6 +114,7 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen>
     await SeniorFeedbackOverlay.show(
       context,
       message: 'Concluiu "${task.title}". Muito bem!',
+      lottiePath: AppLottie.celebration,
     );
     if (!mounted) return;
     context.pop();

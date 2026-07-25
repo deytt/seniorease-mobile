@@ -4,10 +4,17 @@ import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/widgets/senior_button.dart';
 
-/// Overlay de feedback (celebração) exibido ao criar, editar ou concluir
+/// Caminhos das animações Lottie usadas no app.
+abstract final class AppLottie {
+  static const String checkAnimation = 'assets/lottie/check_animation.json';
+  static const String celebration = 'assets/lottie/celebration.json';
+}
+
+/// Overlay de feedback exibido ao criar, editar ou concluir
 /// uma tarefa ou lembrete.
 ///
-/// Mostra a animação Lottie "Check animation" + mensagem positiva.
+/// Usa [AppLottie.checkAnimation] por padrão (criação/edição).
+/// Para conclusão de tarefa inteira, passar [AppLottie.celebration].
 /// Pode ser fechado manualmente (acessibilidade) e fecha-se sozinho após
 /// alguns segundos.
 class SeniorFeedbackOverlay extends StatefulWidget {
@@ -15,6 +22,7 @@ class SeniorFeedbackOverlay extends StatefulWidget {
     required this.onDismiss,
     required this.message,
     this.title = 'Parabéns! 🎉',
+    this.lottiePath = AppLottie.checkAnimation,
     super.key,
   });
 
@@ -22,11 +30,15 @@ class SeniorFeedbackOverlay extends StatefulWidget {
   final String message;
   final String title;
 
+  /// Caminho do asset Lottie a exibir. Use [AppLottie] para evitar strings mágicas.
+  final String lottiePath;
+
   /// Apresenta o overlay como dialog modal.
   static Future<void> show(
     BuildContext context, {
     required String message,
     String title = 'Parabéns! 🎉',
+    String lottiePath = AppLottie.checkAnimation,
   }) {
     return showDialog<void>(
       context: context,
@@ -35,6 +47,7 @@ class SeniorFeedbackOverlay extends StatefulWidget {
       builder: (ctx) => SeniorFeedbackOverlay(
         message: message,
         title: title,
+        lottiePath: lottiePath,
         onDismiss: () => Navigator.of(ctx).pop(),
       ),
     );
@@ -72,7 +85,7 @@ class _SeniorFeedbackOverlayState extends State<SeniorFeedbackOverlay> {
               width: 160,
               height: 160,
               child: Lottie.asset(
-                'assets/lottie/check_animation.json',
+                widget.lottiePath,
                 repeat: false,
                 errorBuilder: (context, error, stack) => const Icon(
                   Icons.check_circle_outline,

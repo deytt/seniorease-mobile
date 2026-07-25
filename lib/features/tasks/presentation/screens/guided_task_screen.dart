@@ -81,6 +81,7 @@ class _GuidedTaskScreenState extends ConsumerState<GuidedTaskScreen>
       await SeniorFeedbackOverlay.show(
         context,
         message: 'Concluiu "${task.title}"!',
+        lottiePath: AppLottie.celebration,
       );
       if (!mounted) return;
       context.pop();
