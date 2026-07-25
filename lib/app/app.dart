@@ -18,11 +18,13 @@ class SeniorEaseApp extends ConsumerWidget {
 
     return ProviderScope(
       overrides: [
-        // Liga o provider de core/ ao valor real lido de features/accessibility.
+        // Liga os providers de core/ aos valores reais lidos de features/accessibility.
         // Desta forma core/ nunca importa features/, mas o comportamento
-        // em runtime é correctamente controlado pela preferência do utilizador.
+        // em runtime é correctamente controlado pelas preferências do utilizador.
         audioFeedbackEnabledProvider
             .overrideWithValue(prefs.audioFeedbackEnabled),
+        largeTouchTargetsProvider
+            .overrideWithValue(prefs.largeTouchTargets),
       ],
       child: AppNotificationsGate(
         child: MaterialApp.router(
