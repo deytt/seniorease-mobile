@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/feedback/senior_feedback.dart';
+import 'package:mobile/core/preferences/user_preferences.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
+import 'package:mobile/features/accessibility/presentation/providers/preferences_provider.dart';
 import 'package:mobile/features/tasks/domain/entities/task.dart';
 import 'package:mobile/features/tasks/domain/entities/task_filter.dart';
 
@@ -90,6 +92,8 @@ class _TaskFilterSheetState extends ConsumerState<TaskFilterSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
+    final isBasic = ref.watch(preferencesProvider).asData?.value.interfaceMode ==
+        InterfaceMode.basic;
 
     return Container(
       decoration: BoxDecoration(
@@ -181,32 +185,34 @@ class _TaskFilterSheetState extends ConsumerState<TaskFilterSheet> {
                       )
                       .toList(),
                 ),
-                const SizedBox(height: AppSpacing.lg),
+                if (!isBasic) ...[
+                  const SizedBox(height: AppSpacing.lg),
 
-                // --- Secção Prioridade ---
-                _SectionLabel(label: 'Prioridade'),
-                const SizedBox(height: AppSpacing.sm),
-                Row(
-                  children: [
-                    _PriorityChip(
-                      priority: TaskPriority.high,
-                      selected: _filter.priority == TaskPriority.high,
-                      onTap: () => _togglePriority(TaskPriority.high),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    _PriorityChip(
-                      priority: TaskPriority.medium,
-                      selected: _filter.priority == TaskPriority.medium,
-                      onTap: () => _togglePriority(TaskPriority.medium),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    _PriorityChip(
-                      priority: TaskPriority.low,
-                      selected: _filter.priority == TaskPriority.low,
-                      onTap: () => _togglePriority(TaskPriority.low),
-                    ),
-                  ],
-                ),
+                  // --- Secção Prioridade (oculta no Modo Básico) ---
+                  _SectionLabel(label: 'Prioridade'),
+                  const SizedBox(height: AppSpacing.sm),
+                  Row(
+                    children: [
+                      _PriorityChip(
+                        priority: TaskPriority.high,
+                        selected: _filter.priority == TaskPriority.high,
+                        onTap: () => _togglePriority(TaskPriority.high),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      _PriorityChip(
+                        priority: TaskPriority.medium,
+                        selected: _filter.priority == TaskPriority.medium,
+                        onTap: () => _togglePriority(TaskPriority.medium),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      _PriorityChip(
+                        priority: TaskPriority.low,
+                        selected: _filter.priority == TaskPriority.low,
+                        onTap: () => _togglePriority(TaskPriority.low),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),

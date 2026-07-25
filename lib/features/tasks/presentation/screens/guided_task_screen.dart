@@ -6,6 +6,7 @@ import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
+import 'package:mobile/core/theme/senior_spacing_theme.dart';
 import 'package:mobile/core/theme/senior_system_ui.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
 import 'package:mobile/core/tour/tour_help_button.dart';
@@ -164,6 +165,7 @@ class _GuidedBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final spacing = theme.extension<SeniorSpacingTheme>();
     final step = task.steps[currentIndex];
     final total = task.steps.length;
     final isLast = currentIndex >= total - 1;
@@ -180,9 +182,9 @@ class _GuidedBody extends StatelessWidget {
         GuidedProgressHeader(steps: task.steps, currentIndex: currentIndex),
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.lg,
-              vertical: AppSpacing.xl,
+            padding: EdgeInsets.symmetric(
+              horizontal: spacing?.screenPadding ?? AppSpacing.lg,
+              vertical: spacing?.sectionGap ?? AppSpacing.xl,
             ),
             child: SeniorShowcase(
               showcaseKey: stepCardShowcaseKey,
@@ -203,7 +205,7 @@ class _GuidedBody extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  SizedBox(height: spacing?.itemGap ?? AppSpacing.md),
                   Container(
                     width: 80,
                     height: 80,
@@ -221,7 +223,7 @@ class _GuidedBody extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.lg),
+                  SizedBox(height: spacing?.sectionGap ?? AppSpacing.lg),
                   Text(
                     step.title,
                     textAlign: TextAlign.center,
@@ -231,7 +233,7 @@ class _GuidedBody extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  SizedBox(height: spacing?.itemGap ?? AppSpacing.md),
                   Text(
                     step.instruction.isNotEmpty
                         ? step.instruction

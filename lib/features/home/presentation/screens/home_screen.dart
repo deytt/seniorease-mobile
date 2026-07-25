@@ -10,6 +10,8 @@ import 'package:mobile/core/tour/tour_dialogs.dart';
 import 'package:mobile/core/tour/tour_gate.dart';
 import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_id.dart';
+import 'package:mobile/core/preferences/user_preferences.dart';
+import 'package:mobile/features/accessibility/presentation/providers/preferences_provider.dart';
 import 'package:mobile/features/home/presentation/widgets/home_header.dart';
 import 'package:mobile/features/home/presentation/widgets/quick_actions_grid.dart';
 import 'package:mobile/features/home/presentation/widgets/reminders_section.dart';
@@ -90,6 +92,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isBasic = ref.watch(preferencesProvider).asData?.value.interfaceMode ==
+        InterfaceMode.basic;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SeniorSystemUi.blueHeaderOverlay,
       child: Scaffold(
@@ -137,10 +142,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           targetBorderRadius: BorderRadius.circular(16),
                           child: const RemindersSection(),
                         ),
-                        SizedBox(
-                          height: spacing?.cardPadding ?? AppSpacing.md,
-                        ),
-                        _SuccessBanner(),
+                        if (!isBasic) ...[
+                          SizedBox(
+                            height: spacing?.cardPadding ?? AppSpacing.md,
+                          ),
+                          _SuccessBanner(),
+                        ],
                         SizedBox(
                           height: spacing?.cardPadding ?? AppSpacing.md,
                         ),

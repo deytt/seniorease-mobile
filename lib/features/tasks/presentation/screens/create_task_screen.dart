@@ -4,6 +4,7 @@ import 'package:mobile/core/feedback/senior_feedback.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
+import 'package:mobile/core/theme/senior_spacing_theme.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
 import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_id.dart';
@@ -205,6 +206,11 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
   Widget build(BuildContext context) {
     final isSaving = ref.watch(tasksControllerProvider).isLoading;
 
+    final spacing = Theme.of(context).extension<SeniorSpacingTheme>();
+    final screenPad = spacing?.screenPadding ?? AppSpacing.md;
+    final itemGap = spacing?.itemGap ?? AppSpacing.md;
+    final sectionGap = spacing?.sectionGap ?? AppSpacing.lg;
+
     return SeniorScreenScaffold(
       title: 'Nova Tarefa',
       backIcon: Icons.close,
@@ -212,7 +218,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(AppSpacing.md),
+          padding: EdgeInsets.all(screenPad),
           children: [
             SeniorShowcase(
               showcaseKey: _titleShowcaseKey,
@@ -231,9 +237,9 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
                     : null,
               ),
             ),
-            const SizedBox(height: AppSpacing.md),
+            SizedBox(height: itemGap),
             _DescriptionField(controller: _descriptionController),
-            const SizedBox(height: AppSpacing.md),
+            SizedBox(height: itemGap),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -246,7 +252,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
                     ),
                   ),
                 ),
-                const SizedBox(width: AppSpacing.md),
+                SizedBox(width: itemGap),
                 Expanded(
                   child: _LabeledField(
                     label: 'Categoria',
@@ -258,7 +264,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
+            SizedBox(height: itemGap),
             _LabeledField(
               label: 'Data e Hora',
               child: _DateTimePickerField(
@@ -270,7 +276,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
                 onTap: _pickDateTime,
               ),
             ),
-            const SizedBox(height: AppSpacing.lg),
+            SizedBox(height: sectionGap),
             SeniorShowcase(
               showcaseKey: _stepsShowcaseKey,
               scope: _scope,
@@ -284,7 +290,7 @@ class _CreateTaskScreenState extends ConsumerState<CreateTaskScreen>
                 onRemove: _removeStep,
               ),
             ),
-            const SizedBox(height: AppSpacing.lg),
+            SizedBox(height: sectionGap),
             SeniorShowcase(
               showcaseKey: _createShowcaseKey,
               scope: _scope,

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/feedback/senior_feedback.dart';
+import 'package:mobile/core/preferences/user_preferences.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
+import 'package:mobile/features/accessibility/presentation/providers/preferences_provider.dart';
 import 'package:mobile/features/tasks/domain/entities/task.dart';
 
 /// Cor associada à prioridade da tarefa.
@@ -53,6 +55,8 @@ class TaskCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final isDone = task.isCompleted;
     final pColor = priorityColor(task.priority);
+    final isBasic = ref.watch(preferencesProvider).asData?.value.interfaceMode ==
+        InterfaceMode.basic;
 
     return Semantics(
       button: true,
@@ -96,15 +100,17 @@ class TaskCard extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      // Linha 1: Prioridade + Categoria
+                      // Linha 1: badges — prioridade oculta no Modo Básico
                       Row(
                         children: [
-                          _CardBadge(
-                            label: task.priority.fullLabel,
-                            color: pColor,
-                            background: pColor.withValues(alpha: 0.12),
-                          ),
-                          const SizedBox(width: AppSpacing.xs + 2),
+                          if (!isBasic) ...[
+                            _CardBadge(
+                              label: task.priority.fullLabel,
+                              color: pColor,
+                              background: pColor.withValues(alpha: 0.12),
+                            ),
+                            const SizedBox(width: AppSpacing.xs + 2),
+                          ],
                           _CardBadge(
                             label: task.category.label,
                             color: AppColors.secondary,
@@ -167,6 +173,7 @@ class _CardBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
@@ -175,10 +182,9 @@ class _CardBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(
+        style: theme.textTheme.bodySmall?.copyWith(
           color: color,
           fontWeight: FontWeight.w600,
-          fontSize: 11,
         ),
       ),
     );

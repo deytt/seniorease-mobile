@@ -22,7 +22,10 @@ class FirebasePreferencesRepository implements PreferencesRepository {
   @override
   Future<void> save(UserPreferences preferences) =>
       _collection.doc(preferences.userId).set(
-            preferences.toMap(),
+            {
+              ...preferences.toMap(),
+              'updatedAt': FieldValue.serverTimestamp(),
+            },
             SetOptions(merge: true),
           );
 }

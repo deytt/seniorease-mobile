@@ -43,11 +43,9 @@ void main() {
       expect(map['title'], 'Concluiu: Tomar remédio');
       expect(map['entityId'], 't1');
       expect(map['category'], 'medication');
-      expect(map['occurredAt'], isA<Timestamp>());
-      expect(
-        (map['occurredAt'] as Timestamp).toDate(),
-        DateTime(2026, 6, 30, 8, 5),
-      );
+      // Entidade devolve DateTime; o repositório Firebase converte para Timestamp.
+      expect(map['occurredAt'], isA<DateTime>());
+      expect(map['occurredAt'], DateTime(2026, 6, 30, 8, 5));
       expect(map.containsKey('id'), isFalse);
     });
   });

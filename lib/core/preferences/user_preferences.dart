@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum FontSizeScale {
   small,
@@ -6,20 +5,21 @@ enum FontSizeScale {
   large,
   extraLarge;
 
-  /// Factor de escala aplicado ao TextTheme
+  /// Factor de escala aplicado ao TextTheme.
+  /// Alinhado aos tokens de techContext.md: 0.875 / 1.0 / 1.125 / 1.25.
   double get scale => switch (this) {
         FontSizeScale.small => 0.875,
         FontSizeScale.medium => 1.0,
-        FontSizeScale.large => 1.2,
-        FontSizeScale.extraLarge => 1.5,
+        FontSizeScale.large => 1.125,
+        FontSizeScale.extraLarge => 1.25,
       };
 
-  /// Percentagem exibida na UI (ex: "120%")
+  /// Percentagem exibida na UI (ex: "112%")
   String get label => switch (this) {
         FontSizeScale.small => '87%',
         FontSizeScale.medium => '100%',
-        FontSizeScale.large => '120%',
-        FontSizeScale.extraLarge => '150%',
+        FontSizeScale.large => '112%',
+        FontSizeScale.extraLarge => '125%',
       };
 
   static FontSizeScale fromString(String value) => switch (value) {
@@ -243,8 +243,21 @@ class UserPreferences {
         'taskNotificationOffset': taskNotificationOffset.toFirestore(),
         'remindersNotificationsEnabled': remindersNotificationsEnabled,
         'reminderNotificationOffset': reminderNotificationOffset.toFirestore(),
-        'updatedAt': FieldValue.serverTimestamp(),
+        'updatedAt': updatedAt.toIso8601String(),
       };
+
+  /// Converte um valor dinâmico (Timestamp do Firestore ou DateTime ou String ISO)
+  /// em [DateTime], sem importar o SDK do Firebase no domínio.
+  static DateTime? _dateFrom(dynamic v) {
+    if (v == null) return null;
+    if (v is DateTime) return v;
+    if (v is String) return DateTime.tryParse(v);
+    try {
+      return (v as dynamic).toDate() as DateTime;
+    } catch (_) {
+      return null;
+    }
+  }
 
   factory UserPreferences.fromMap(String userId, Map<String, dynamic> map) =>
       UserPreferences(
@@ -268,7 +281,6 @@ class UserPreferences {
         reminderNotificationOffset: NotificationOffset.fromString(
           map['reminderNotificationOffset'] as String? ?? '',
         ),
-        updatedAt:
-            (map['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        updatedAt: _dateFrom(map['updatedAt']) ?? DateTime.now(),
       );
 }

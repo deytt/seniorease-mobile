@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mobile/core/history/history_recorder.dart';
 
 /// Um evento registado no Histórico de Atividades do utilizador.
@@ -29,14 +28,27 @@ class HistoryEvent {
   /// `true` se o evento conta para o streak e o contador semanal.
   bool get isCompletion => type.isCompletion;
 
+  /// Mapa para gravação no Firestore. Datas são [DateTime] — o repositório
+  /// Firebase converte para Timestamp antes de gravar.
   Map<String, dynamic> toMap() => {
         'userId': userId,
         'type': type.storageKey,
         'title': title,
         'entityId': entityId,
         'category': category,
-        'occurredAt': Timestamp.fromDate(occurredAt),
+        'occurredAt': occurredAt,
       };
+
+  /// Converte um valor dinâmico (Timestamp do Firestore ou DateTime) em [DateTime?].
+  static DateTime? _dateFrom(dynamic v) {
+    if (v == null) return null;
+    if (v is DateTime) return v;
+    try {
+      return (v as dynamic).toDate() as DateTime;
+    } catch (_) {
+      return null;
+    }
+  }
 
   factory HistoryEvent.fromMap(String id, Map<String, dynamic> map) =>
       HistoryEvent(
@@ -46,7 +58,6 @@ class HistoryEvent {
         title: map['title'] as String? ?? '',
         entityId: map['entityId'] as String?,
         category: map['category'] as String?,
-        occurredAt:
-            (map['occurredAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        occurredAt: _dateFrom(map['occurredAt']) ?? DateTime.now(),
       );
 }

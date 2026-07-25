@@ -106,9 +106,9 @@ void main() {
       expect(map['priority'], 'high');
       expect(map['category'], 'medication');
       expect(map['status'], 'in_progress');
-      expect(map['createdAt'], isA<Timestamp>());
-      // updatedAt é sempre serverTimestamp na escrita.
-      expect(map['updatedAt'], isA<FieldValue>());
+      // Entidade devolve DateTime; o repositório Firebase converte para Timestamp.
+      expect(map['createdAt'], isA<DateTime>());
+      expect(map['updatedAt'], isA<DateTime>());
     });
 
     test('fromMap reconstrói a entidade e usa defaults para campos ausentes',

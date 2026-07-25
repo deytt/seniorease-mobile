@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/feedback/senior_feedback.dart';
+import 'package:mobile/core/preferences/user_preferences.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
+import 'package:mobile/features/accessibility/presentation/providers/preferences_provider.dart';
 import 'package:mobile/features/reminders/domain/entities/reminder_category.dart';
 import 'package:mobile/features/reminders/domain/entities/reminder_filter.dart';
 
@@ -81,6 +83,8 @@ class _ReminderFilterSheetState extends ConsumerState<ReminderFilterSheet> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
+    final isBasic = ref.watch(preferencesProvider).asData?.value.interfaceMode ==
+        InterfaceMode.basic;
 
     return Container(
       decoration: BoxDecoration(
@@ -151,22 +155,25 @@ class _ReminderFilterSheetState extends ConsumerState<ReminderFilterSheet> {
                   selected: _filter.isToday,
                   onTap: _toggleToday,
                 ),
-                const SizedBox(height: AppSpacing.lg),
-                const _SectionLabel(label: 'Categoria'),
-                const SizedBox(height: AppSpacing.sm),
-                Wrap(
-                  spacing: AppSpacing.sm,
-                  runSpacing: AppSpacing.sm,
-                  children: ReminderCategory.values
-                      .map(
-                        (cat) => _FilterChip(
-                          label: cat.label,
-                          selected: _filter.category == cat,
-                          onTap: () => _toggleCategory(cat),
-                        ),
-                      )
-                      .toList(),
-                ),
+                if (!isBasic) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  // Categorias ocultas no Modo Básico
+                  const _SectionLabel(label: 'Categoria'),
+                  const SizedBox(height: AppSpacing.sm),
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
+                    children: ReminderCategory.values
+                        .map(
+                          (cat) => _FilterChip(
+                            label: cat.label,
+                            selected: _filter.category == cat,
+                            onTap: () => _toggleCategory(cat),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ],
               ],
             ),
           ),
