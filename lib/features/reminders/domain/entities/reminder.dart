@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mobile/features/reminders/domain/entities/reminder_category.dart';
 
 class Reminder {
@@ -56,17 +55,30 @@ class Reminder {
         notified: notified ?? this.notified,
       );
 
+  /// Mapa para gravação no Firestore. Datas são [DateTime] — o repositório
+  /// Firebase converte para Timestamp antes de gravar.
   Map<String, dynamic> toMap() => {
         'userId': userId,
         'taskId': taskId,
         'title': title,
         'message': message,
         'category': category.toFirestore(),
-        'scheduledAt': Timestamp.fromDate(scheduledAt),
+        'scheduledAt': scheduledAt,
         'isRead': isRead,
         'notified': notified,
-        'createdAt': Timestamp.fromDate(createdAt),
+        'createdAt': createdAt,
       };
+
+  /// Converte um valor dinâmico (Timestamp do Firestore ou DateTime) em [DateTime?].
+  static DateTime? _dateFrom(dynamic v) {
+    if (v == null) return null;
+    if (v is DateTime) return v;
+    try {
+      return (v as dynamic).toDate() as DateTime;
+    } catch (_) {
+      return null;
+    }
+  }
 
   factory Reminder.fromMap(String id, Map<String, dynamic> map) => Reminder(
         id: id,
@@ -76,11 +88,9 @@ class Reminder {
         message: map['message'] as String? ?? '',
         category:
             ReminderCategory.fromString(map['category'] as String? ?? ''),
-        scheduledAt:
-            (map['scheduledAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        scheduledAt: _dateFrom(map['scheduledAt']) ?? DateTime.now(),
         isRead: map['isRead'] as bool? ?? false,
         notified: map['notified'] as bool? ?? false,
-        createdAt:
-            (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        createdAt: _dateFrom(map['createdAt']) ?? DateTime.now(),
       );
 }

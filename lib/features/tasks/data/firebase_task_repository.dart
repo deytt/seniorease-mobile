@@ -84,13 +84,16 @@ class FirebaseTaskRepository implements TaskRepository {
     await taskRef.set({
       ...task.toMap(),
       'steps': normalizedSteps.map((s) => s.toMap()).toList(),
+      'updatedAt': FieldValue.serverTimestamp(),
     });
     return taskId;
   }
 
   @override
-  Future<void> updateTask(Task task) =>
-      _tasks.doc(task.id).set(task.toMap(), SetOptions(merge: true));
+  Future<void> updateTask(Task task) => _tasks.doc(task.id).set(
+        {...task.toMap(), 'updatedAt': FieldValue.serverTimestamp()},
+        SetOptions(merge: true),
+      );
 
   @override
   Future<void> deleteTask(String taskId) => _tasks.doc(taskId).delete();

@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mobile/features/tasks/domain/entities/task_step.dart';
 
 enum TaskPriority {
@@ -157,6 +156,8 @@ class Task {
       );
 
   /// Mapa para gravação no Firestore, incluindo o array `steps`.
+  /// Datas são devolvidas como [DateTime] — o repositório Firebase converte
+  /// para Timestamp antes de gravar (e adiciona `updatedAt` com serverTimestamp).
   Map<String, dynamic> toMap() => {
         'userId': userId,
         'title': title,
@@ -164,14 +165,25 @@ class Task {
         'priority': priority.toFirestore(),
         'category': category.toFirestore(),
         'status': status.toFirestore(),
-        'dueDate': dueDate != null ? Timestamp.fromDate(dueDate!) : null,
-        'completedAt':
-            completedAt != null ? Timestamp.fromDate(completedAt!) : null,
+        'dueDate': dueDate,
+        'completedAt': completedAt,
         'notified': notified,
         'steps': steps.map((s) => s.toMap()).toList(),
-        'createdAt': Timestamp.fromDate(createdAt),
-        'updatedAt': FieldValue.serverTimestamp(),
+        'createdAt': createdAt,
+        'updatedAt': updatedAt,
       };
+
+  /// Converte um valor dinâmico (Timestamp do Firestore, DateTime ou null)
+  /// em [DateTime?], sem importar o SDK do Firebase no domínio.
+  static DateTime? _dateFrom(dynamic v) {
+    if (v == null) return null;
+    if (v is DateTime) return v;
+    try {
+      return (v as dynamic).toDate() as DateTime;
+    } catch (_) {
+      return null;
+    }
+  }
 
   factory Task.fromMap(
     String id,
@@ -187,11 +199,11 @@ class Task {
         category: TaskCategory.fromString(map['category'] as String? ?? ''),
         status: TaskStatus.fromString(map['status'] as String? ?? ''),
         steps: steps ?? parseSteps(map['steps'], taskId: id),
-        dueDate: (map['dueDate'] as Timestamp?)?.toDate(),
-        completedAt: (map['completedAt'] as Timestamp?)?.toDate(),
+        dueDate: _dateFrom(map['dueDate']),
+        completedAt: _dateFrom(map['completedAt']),
         notified: map['notified'] as bool? ?? false,
-        createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-        updatedAt: (map['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        createdAt: _dateFrom(map['createdAt']) ?? DateTime.now(),
+        updatedAt: _dateFrom(map['updatedAt']) ?? DateTime.now(),
       );
 
   /// Converte o campo Firestore `steps` (array de maps) em [TaskStep]s ordenados.

@@ -55,12 +55,10 @@ void main() {
       expect(map['message'], 'Com água');
       expect(map['category'], 'medication');
       expect(map['isRead'], isFalse);
-      expect(map['scheduledAt'], isA<Timestamp>());
-      expect(
-        (map['scheduledAt'] as Timestamp).toDate(),
-        DateTime(2026, 6, 30, 8, 30),
-      );
-      expect(map['createdAt'], isA<Timestamp>());
+      // Entidade devolve DateTime; o repositório Firebase converte para Timestamp.
+      expect(map['scheduledAt'], isA<DateTime>());
+      expect(map['scheduledAt'], DateTime(2026, 6, 30, 8, 30));
+      expect(map['createdAt'], isA<DateTime>());
       // O id não é persistido no mapa (vem do docId).
       expect(map.containsKey('id'), isFalse);
     });

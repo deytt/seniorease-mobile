@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 enum FontSizeScale {
   small,
@@ -244,8 +243,21 @@ class UserPreferences {
         'taskNotificationOffset': taskNotificationOffset.toFirestore(),
         'remindersNotificationsEnabled': remindersNotificationsEnabled,
         'reminderNotificationOffset': reminderNotificationOffset.toFirestore(),
-        'updatedAt': FieldValue.serverTimestamp(),
+        'updatedAt': updatedAt.toIso8601String(),
       };
+
+  /// Converte um valor dinâmico (Timestamp do Firestore ou DateTime ou String ISO)
+  /// em [DateTime], sem importar o SDK do Firebase no domínio.
+  static DateTime? _dateFrom(dynamic v) {
+    if (v == null) return null;
+    if (v is DateTime) return v;
+    if (v is String) return DateTime.tryParse(v);
+    try {
+      return (v as dynamic).toDate() as DateTime;
+    } catch (_) {
+      return null;
+    }
+  }
 
   factory UserPreferences.fromMap(String userId, Map<String, dynamic> map) =>
       UserPreferences(
@@ -269,7 +281,6 @@ class UserPreferences {
         reminderNotificationOffset: NotificationOffset.fromString(
           map['reminderNotificationOffset'] as String? ?? '',
         ),
-        updatedAt:
-            (map['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        updatedAt: _dateFrom(map['updatedAt']) ?? DateTime.now(),
       );
 }
