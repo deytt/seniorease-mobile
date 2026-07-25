@@ -244,11 +244,15 @@ abstract final class AppTheme {
   }
 
   /// Multiplica todos os tamanhos de fonte de um [TextTheme] pelo factor dado.
+  /// Nenhum valor resultante ficará abaixo de 14 px (mínimo absoluto WCAG).
   static TextTheme _scale(TextTheme base, double factor) {
     if (factor == 1.0) return base;
 
-    TextStyle? scaleStyle(TextStyle? style) =>
-        style?.copyWith(fontSize: (style.fontSize ?? 14) * factor);
+    TextStyle? scaleStyle(TextStyle? style) {
+      if (style == null) return null;
+      final scaled = (style.fontSize ?? 14) * factor;
+      return style.copyWith(fontSize: scaled.clamp(14.0, double.infinity));
+    }
 
     return base.copyWith(
       displayLarge: scaleStyle(base.displayLarge),
@@ -356,9 +360,9 @@ abstract final class AppTheme {
       height: 1.5,
       color: AppColors.slate500,
     ),
-    // Caption — 12px Semibold — badge labels, status tags (uppercase only)
+    // Caption — 14px Semibold — badge labels, status tags (uppercase only)
     labelSmall: TextStyle(
-      fontSize: 12,
+      fontSize: 14,
       fontWeight: FontWeight.w600,
       height: 1.5,
       letterSpacing: 0.5,
@@ -371,9 +375,9 @@ abstract final class AppTheme {
       height: 1.4,
       color: AppColors.slate900,
     ),
-    // Body Small — 13px Regular — texto de apoio muito pequeno
+    // Body Small — 14px Regular — texto de apoio, metadados, datas
     bodySmall: TextStyle(
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: FontWeight.normal,
       height: 1.4,
       color: AppColors.slate500,

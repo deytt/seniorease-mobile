@@ -312,23 +312,29 @@ class _FilterButton extends StatelessWidget {
               ),
               if (hasActive)
                 Positioned(
-                  top: 6,
-                  right: 6,
+                  top: 4,
+                  right: 4,
                   child: Container(
-                    width: 14,
-                    height: 14,
+                    width: 18,
+                    height: 18,
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
                     ),
                     child: Center(
-                      child: Text(
-                        '$activeCount',
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          height: 1,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Padding(
+                          padding: const EdgeInsets.all(2),
+                          child: Text(
+                            '$activeCount',
+                            style: const TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              height: 1,
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -450,9 +456,8 @@ class _ActiveChip extends ConsumerWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.primary,
-                  fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
               ),

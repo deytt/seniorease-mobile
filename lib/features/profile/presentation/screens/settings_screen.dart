@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile/app/router.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
+import 'package:mobile/core/theme/senior_spacing_theme.dart';
 import 'package:mobile/core/theme/senior_system_ui.dart';
 import 'package:mobile/core/tour/senior_showcase.dart';
 import 'package:mobile/core/tour/tour_attention_wrapper.dart';
@@ -13,6 +14,8 @@ import 'package:mobile/core/tour/tour_host.dart';
 import 'package:mobile/core/tour/tour_id.dart';
 import 'package:mobile/core/widgets/senior_button.dart';
 import 'package:mobile/core/widgets/senior_modal.dart';
+import 'package:mobile/core/preferences/user_preferences.dart';
+import 'package:mobile/features/accessibility/presentation/providers/preferences_provider.dart';
 import 'package:mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:mobile/features/notifications/presentation/providers/notifications_provider.dart';
 import 'package:mobile/features/profile/presentation/providers/profile_provider.dart';
@@ -49,6 +52,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
   Widget build(BuildContext context) {
     final user = ref.watch(authStateProvider).asData?.value;
     final profile = ref.watch(profileProvider).asData?.value;
+    final isBasic = ref.watch(preferencesProvider).asData?.value.interfaceMode ==
+        InterfaceMode.basic;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SeniorSystemUi.blueHeaderOverlay,
@@ -69,64 +74,70 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen>
               tourId: tourId,
             ),
             Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: AppSpacing.md),
-                    // Card de navegação
-                    Padding(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-                      child: SeniorShowcase(
-                        showcaseKey: _navShowcaseKey,
-                        scope: _scope,
-                        title: 'Atalhos das definições',
-                        description:
-                            'Aqui abre a acessibilidade, os guias do aplicativo e a página Sobre.',
-                        child: _NavCard(
-                          securityAlert: user != null && !user.emailVerified,
+              child: Builder(
+                builder: (context) {
+                  final spacing =
+                      Theme.of(context).extension<SeniorSpacingTheme>();
+                  final h = spacing?.screenPadding ?? AppSpacing.md;
+                  final gap = spacing?.sectionGap ?? AppSpacing.md;
+                  return SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SizedBox(height: gap),
+                        // Card de navegação
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: h),
+                          child: SeniorShowcase(
+                            showcaseKey: _navShowcaseKey,
+                            scope: _scope,
+                            title: 'Atalhos das definições',
+                            description:
+                                'Aqui abre a acessibilidade, os guias do aplicativo e a página Sobre.',
+                            child: _NavCard(
+                              securityAlert:
+                                  user != null && !user.emailVerified,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    // Card "Precisa de Ajuda?"
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                      ),
-                      child: SeniorShowcase(
-                        showcaseKey: _helpShowcaseKey,
-                        scope: _scope,
-                        title: 'Precisa de ajuda?',
-                        description:
-                            'Tem sempre o nosso telefone de apoio à mão, a qualquer hora.',
-                        child: _HelpCard(),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    // Botão "Sair da Conta"
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                      ),
-                      child: SeniorShowcase(
-                        showcaseKey: _signOutShowcaseKey,
-                        scope: _scope,
-                        title: 'Sair da conta',
-                        description:
-                            'Quando quiser sair, toque aqui. Pedimos sempre confirmação antes.',
-                        child: SeniorButton(
-                          label: 'Sair da Conta',
-                          variant: SeniorButtonVariant.destructive,
-                          icon: Icons.logout,
-                          onPressed: _confirmSignOut,
+                        if (!isBasic) ...[
+                          SizedBox(height: gap),
+                          // Card "Precisa de Ajuda?" — oculto no Modo Básico
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: h),
+                            child: SeniorShowcase(
+                              showcaseKey: _helpShowcaseKey,
+                              scope: _scope,
+                              title: 'Precisa de ajuda?',
+                              description:
+                                  'Tem sempre o nosso telefone de apoio à mão, a qualquer hora.',
+                              child: _HelpCard(),
+                            ),
+                          ),
+                        ],
+                        SizedBox(height: gap),
+                        // Botão "Sair da Conta"
+                        Padding(
+                          padding: EdgeInsets.symmetric(horizontal: h),
+                          child: SeniorShowcase(
+                            showcaseKey: _signOutShowcaseKey,
+                            scope: _scope,
+                            title: 'Sair da conta',
+                            description:
+                                'Quando quiser sair, toque aqui. Pedimos sempre confirmação antes.',
+                            child: SeniorButton(
+                              label: 'Sair da Conta',
+                              variant: SeniorButtonVariant.destructive,
+                              icon: Icons.logout,
+                              onPressed: _confirmSignOut,
+                            ),
+                          ),
                         ),
-                      ),
+                        SizedBox(height: gap),
+                      ],
                     ),
-                    const SizedBox(height: AppSpacing.xl),
-                  ],
-                ),
+                  );
+                },
               ),
             ),
           ],

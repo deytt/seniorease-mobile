@@ -6,20 +6,21 @@ enum FontSizeScale {
   large,
   extraLarge;
 
-  /// Factor de escala aplicado ao TextTheme
+  /// Factor de escala aplicado ao TextTheme.
+  /// Alinhado aos tokens de techContext.md: 0.875 / 1.0 / 1.125 / 1.25.
   double get scale => switch (this) {
         FontSizeScale.small => 0.875,
         FontSizeScale.medium => 1.0,
-        FontSizeScale.large => 1.2,
-        FontSizeScale.extraLarge => 1.5,
+        FontSizeScale.large => 1.125,
+        FontSizeScale.extraLarge => 1.25,
       };
 
-  /// Percentagem exibida na UI (ex: "120%")
+  /// Percentagem exibida na UI (ex: "112%")
   String get label => switch (this) {
         FontSizeScale.small => '87%',
         FontSizeScale.medium => '100%',
-        FontSizeScale.large => '120%',
-        FontSizeScale.extraLarge => '150%',
+        FontSizeScale.large => '112%',
+        FontSizeScale.extraLarge => '125%',
       };
 
   static FontSizeScale fromString(String value) => switch (value) {
