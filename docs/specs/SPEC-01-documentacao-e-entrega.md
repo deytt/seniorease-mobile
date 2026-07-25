@@ -27,6 +27,11 @@ Entregar documentação reproduzível e todos os links exigidos no Hackathon, se
 3. Confirmar visibilidade pública dos dois repositórios e do arquivo Figma.
 4. Criar o arquivo `.txt` ou `.docx` de submissão com links finais.
 5. Atualizar `progress.md` apenas depois de cada evidência externa ser confirmada.
+6. Configurar medição de cobertura de testes com `flutter test --coverage` + `lcov`:
+   - Adicionar o script `scripts/coverage.sh` que executa `flutter test --coverage` e gera o relatório HTML via `genhtml` (pacote `lcov`);
+   - Integrar o passo de cobertura no workflow de CI (`.github/workflows/`) para que o relatório seja publicado como artefato a cada push;
+   - Incluir no README um badge de cobertura e uma seção "Cobertura de Testes" com o comando local e link para o relatório;
+   - Documentar o percentual atual de cobertura no `memory-bank/progress.md` e mencionar no vídeo de apresentação.
 
 ## Fora de escopo
 
@@ -43,6 +48,11 @@ Entregar documentação reproduzível e todos os links exigidos no Hackathon, se
 - [ ] Links públicos e funcionais para Mobile, Web, Figma e vídeo estão presentes.
 - [ ] O arquivo de submissão contém links válidos e identifica o projeto.
 - [ ] Nenhuma credencial foi adicionada ao Git.
+- [ ] `flutter test --coverage` executa com sucesso e gera `coverage/lcov.info`.
+- [ ] O relatório HTML de cobertura é gerado localmente via `scripts/coverage.sh`.
+- [ ] O CI publica o relatório de cobertura como artefato a cada push.
+- [ ] O README exibe badge de cobertura e seção "Cobertura de Testes" com instruções.
+- [ ] O percentual de cobertura está registrado em `memory-bank/progress.md`.
 
 ## Plano de validação
 
@@ -50,6 +60,8 @@ Entregar documentação reproduzível e todos os links exigidos no Hackathon, se
 2. Revisar os links em janela anônima.
 3. Executar busca por arquivos e padrões sensíveis antes da publicação.
 4. Conferir que os comandos documentados correspondem ao workflow CI.
+5. Rodar `bash scripts/coverage.sh` e validar que o relatório HTML é gerado em `coverage/html/index.html`.
+6. Verificar no CI que o artefato de cobertura é publicado corretamente.
 
 ## Riscos e mitigação
 

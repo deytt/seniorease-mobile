@@ -5,8 +5,7 @@ enum FontSizeScale {
   large,
   extraLarge;
 
-  /// Factor de escala aplicado ao TextTheme.
-  /// Alinhado aos tokens de techContext.md: 0.875 / 1.0 / 1.125 / 1.25.
+  /// Factor de escala aplicado ao TextTheme: 0.875 / 1.0 / 1.125 / 1.25.
   double get scale => switch (this) {
         FontSizeScale.small => 0.875,
         FontSizeScale.medium => 1.0,

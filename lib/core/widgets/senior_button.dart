@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mobile/core/feedback/senior_feedback.dart';
+import 'package:mobile/core/preferences/preferences_state.dart';
 import 'package:mobile/core/theme/app_colors.dart';
 import 'package:mobile/core/theme/app_spacing.dart';
 import 'package:mobile/core/theme/app_theme.dart';
@@ -46,9 +47,8 @@ class SeniorButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final height = size == SeniorButtonSize.large
-        ? AppTheme.buttonHeight
-        : AppTheme.minTouchTarget;
+    final useLargeTargets = ref.watch(largeTouchTargetsProvider);
+    final height = SeniorButton.resolveHeight(size, useLargeTargets);
     final isDisabled = onPressed == null || isLoading;
 
     final button = Semantics(
@@ -129,6 +129,20 @@ class SeniorButton extends ConsumerWidget {
       return SizedBox(width: double.infinity, child: button);
     }
     return button;
+  }
+
+  /// Resolve a altura do botão combinando [size] com a preferência de alvos
+  /// de toque maiores. Extraído para facilitar testes unitários.
+  ///
+  /// | size   | largeTouchTargets=false | largeTouchTargets=true |
+  /// |--------|------------------------|------------------------|
+  /// | large  | 56 px (buttonHeight)   | 64 px (minTouchTargetLarge) |
+  /// | medium | 48 px (minTouchTarget) | 64 px (minTouchTargetLarge) |
+  static double resolveHeight(SeniorButtonSize size, bool largeTouchTargets) {
+    if (largeTouchTargets) return AppTheme.minTouchTargetLarge;
+    return size == SeniorButtonSize.large
+        ? AppTheme.buttonHeight
+        : AppTheme.minTouchTarget;
   }
 
   double get _fontSize => switch (variant) {
