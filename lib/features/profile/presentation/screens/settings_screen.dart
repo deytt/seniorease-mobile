@@ -459,7 +459,7 @@ class _HelpCard extends StatelessWidget {
               ),
               const SizedBox(width: AppSpacing.xs),
               Text(
-                '1-800-SENIOR',
+                '0800 600 0300',
                 style: theme.textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: AppColors.primary,

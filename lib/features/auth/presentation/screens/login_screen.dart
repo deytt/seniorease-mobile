@@ -567,7 +567,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         children: const [
           TextSpan(text: 'Precisa de ajuda? Ligue para '),
           TextSpan(
-            text: '0800-SENIOR',
+            text: '0800 600 0300',
             style: TextStyle(
               color: AppColors.primary,
               fontWeight: FontWeight.bold,
