@@ -134,61 +134,111 @@ void main() {
   });
 
   // -------------------------------------------------------------------------
-  // Tests — todayNotificationCountProvider
-  // Testa a lógica de filtragem sobrepondo directamente o StreamProvider,
-  // sem passar pela cadeia auth → repositório.
+  // Tests — unreadNotificationCountProvider
+  // Badge "não lido" baseado em lastSeenAt (SharedPreferences).
   // -------------------------------------------------------------------------
 
-  group('todayNotificationCountProvider', () {
-    ProviderContainer makeContainer(List<NotificationItem> items) {
+  group('unreadNotificationCountProvider', () {
+    ProviderContainer _makeContainer(
+      List<NotificationItem> items, {
+      DateTime? lastSeenAt,
+    }) {
       final container = ProviderContainer(overrides: [
         notificationHistoryProvider.overrideWith(
           (ref) => Stream.fromFuture(Future.value(items)),
+        ),
+        // Simula o lastSeenAt sem aceder ao SharedPreferences real.
+        notifLastSeenAtProvider.overrideWith(
+          (ref) => Future.value(lastSeenAt),
         ),
       ]);
       addTearDown(container.dispose);
       return container;
     }
 
-    Future<int> readCount(List<NotificationItem> items) async {
-      final c = makeContainer(items);
-      // Usa _firstEmission para aguardar a emissão via Completer (mais robusto
-      // que .future quando o stream usa Future.value internamente).
+    Future<int> _readCount(
+      List<NotificationItem> items, {
+      DateTime? lastSeenAt,
+    }) async {
+      final c = _makeContainer(items, lastSeenAt: lastSeenAt);
       await _firstEmission(c);
-      return c.read(todayNotificationCountProvider);
+      // Aguarda o FutureProvider do lastSeenAt completar.
+      await c.read(notifLastSeenAtProvider.future);
+      return c.read(unreadNotificationCountProvider);
     }
 
-    test('conta apenas notificações enviadas hoje', () async {
+    test('conta todas como não lidas quando não há lastSeenAt', () async {
       final now = DateTime.now();
-      final today1 =
-          _item('n1', sentAt: DateTime(now.year, now.month, now.day, 9));
-      final today2 =
-          _item('n2', sentAt: DateTime(now.year, now.month, now.day, 15));
-      final yesterday =
-          _item('n3', sentAt: DateTime(now.year, now.month, now.day - 1, 10));
-
-      expect(await readCount([today1, today2, yesterday]), 2);
+      final items = [
+        _item('n1', sentAt: now.subtract(const Duration(hours: 1))),
+        _item('n2', sentAt: now.subtract(const Duration(days: 1))),
+        _item('n3', sentAt: now.subtract(const Duration(days: 5))),
+      ];
+      // Sem lastSeenAt → todas as notificações são consideradas não lidas.
+      expect(await _readCount(items), 3);
     });
 
     test('devolve 0 quando não há notificações', () async {
-      expect(await readCount([]), 0);
+      expect(await _readCount([]), 0);
     });
 
-    test('devolve 0 quando todas as notificações são de dias anteriores',
+    test('devolve 0 quando lastSeenAt é posterior a todas as notificações',
         () async {
       final past = _item('n1', sentAt: DateTime(2024, 1, 1, 10));
-      expect(await readCount([past]), 0);
+      final lastSeen = DateTime(2025, 1, 1); // mais recente que a notificação
+      expect(await _readCount([past], lastSeenAt: lastSeen), 0);
     });
 
-    test('conta todas as notificações de hoje se não houver anteriores',
-        () async {
-      final now = DateTime.now();
-      final items = List.generate(
-        5,
-        (i) => _item('n$i',
-            sentAt: DateTime(now.year, now.month, now.day, i + 8)),
+    test('conta apenas notificações enviadas após lastSeenAt', () async {
+      final lastSeen = DateTime(2026, 1, 15, 12);
+      final before = _item('n1', sentAt: DateTime(2026, 1, 15, 10)); // antes
+      final after1 = _item('n2', sentAt: DateTime(2026, 1, 15, 14)); // depois
+      final after2 = _item('n3', sentAt: DateTime(2026, 1, 16)); // depois
+
+      expect(
+        await _readCount([before, after1, after2], lastSeenAt: lastSeen),
+        2,
       );
-      expect(await readCount(items), 5);
+    });
+
+    test('devolve 0 imediatamente após marcar como lido', () async {
+      final now = DateTime.now();
+      final items = [
+        _item('n1', sentAt: now.subtract(const Duration(minutes: 5))),
+      ];
+      // Simula lastSeenAt = agora (equivalente a markNotificationsSeen).
+      expect(await _readCount(items, lastSeenAt: DateTime.now()), 0);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Tests — todayNotificationCountProvider (alias de unreadNotificationCountProvider)
+  // -------------------------------------------------------------------------
+
+  group('todayNotificationCountProvider', () {
+    test('delega para unreadNotificationCountProvider', () async {
+      final now = DateTime.now();
+      final items = [
+        _item('n1', sentAt: now),
+        _item('n2', sentAt: now),
+      ];
+
+      final container = ProviderContainer(overrides: [
+        notificationHistoryProvider.overrideWith(
+          (ref) => Stream.fromFuture(Future.value(items)),
+        ),
+        notifLastSeenAtProvider.overrideWith((ref) => Future.value(null)),
+      ]);
+      addTearDown(container.dispose);
+
+      await _firstEmission(container);
+      await container.read(notifLastSeenAtProvider.future);
+
+      // todayNotificationCountProvider é alias de unreadNotificationCountProvider.
+      expect(
+        container.read(todayNotificationCountProvider),
+        container.read(unreadNotificationCountProvider),
+      );
     });
   });
 }

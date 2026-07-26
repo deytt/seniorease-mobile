@@ -8,23 +8,34 @@ import 'package:mobile/features/notifications/domain/entities/notification_item.
 ///
 /// Mostra ícone diferenciado por [entityType], título, corpo e data/hora
 /// formatada. Área clicável ≥ 44×44px.
+/// Quando [isUnread] é `true`, exibe indicador visual de não lido
+/// (borda colorida + ponto azul), espelhando o `NotificationCard` do Web.
 class NotificationItemCard extends StatelessWidget {
   const NotificationItemCard({
     required this.item,
     required this.onTap,
+    this.isUnread = false,
     super.key,
   });
 
   final NotificationItem item;
   final VoidCallback onTap;
 
+  /// Indica se esta notificação ainda não foi vista pelo utilizador.
+  final bool isUnread;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final borderColor =
+        isUnread ? AppColors.primary.withValues(alpha: 0.4) : theme.colorScheme.outline;
+    final backgroundColor = isUnread
+        ? AppColors.primary.withValues(alpha: 0.05)
+        : theme.colorScheme.surface;
 
     return Semantics(
       button: true,
-      label: '${item.title}. ${item.body}. ${_formattedDate(item.sentAt)}',
+      label: '${isUnread ? 'Não lida. ' : ''}${item.title}. ${item.body}. ${_formattedDate(item.sentAt)}',
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -32,8 +43,8 @@ class NotificationItemCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppTheme.borderRadius),
           child: Ink(
             decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              border: Border.all(color: theme.colorScheme.outline),
+              color: backgroundColor,
+              border: Border.all(color: borderColor),
               borderRadius: BorderRadius.circular(AppTheme.borderRadius),
               boxShadow: [
                 BoxShadow(
@@ -84,11 +95,24 @@ class NotificationItemCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
-                  Icon(
-                    Icons.chevron_right,
-                    size: 20,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
-                  ),
+                  if (isUnread)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    )
+                  else
+                    Icon(
+                      Icons.chevron_right,
+                      size: 20,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+                    ),
                 ],
               ),
             ),

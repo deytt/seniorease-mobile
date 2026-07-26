@@ -121,7 +121,7 @@ class HomeHeader extends ConsumerWidget {
       scope: tourScope!,
       title: 'As suas notificações',
       description:
-          'Aqui vê as notificações recebidas. O número a vermelho indica quantas chegaram hoje.',
+          'Aqui vê as notificações recebidas. O número a vermelho indica quantas ainda não foram vistas.',
       targetPadding: const EdgeInsets.all(4),
       targetBorderRadius: BorderRadius.circular(14),
       child: bell,
@@ -180,7 +180,7 @@ class _HeaderHelpButton extends ConsumerWidget {
 // ------------------------------------------------------------------ Notification Bell
 
 /// Botão sininho que navega para o histórico de notificações push.
-/// Exibe um badge vermelho com a contagem de notificações recebidas hoje.
+/// Exibe um badge vermelho com a contagem de notificações ainda não vistas.
 /// Ao abrir a Home, balança por 5 segundos para chamar a atenção do usuário.
 class _NotificationBell extends ConsumerStatefulWidget {
   @override
@@ -242,13 +242,13 @@ class _NotificationBellState extends ConsumerState<_NotificationBell>
 
   @override
   Widget build(BuildContext context) {
-    final todayCount = ref.watch(todayNotificationCountProvider);
-    final hasBadge = todayCount > 0;
+    final unreadCount = ref.watch(unreadNotificationCountProvider);
+    final hasBadge = unreadCount > 0;
 
     return Semantics(
       button: true,
       label: hasBadge
-          ? 'Notificações — $todayCount nova${todayCount > 1 ? 's' : ''} hoje'
+          ? 'Notificações — $unreadCount não lida${unreadCount > 1 ? 's' : ''}'
           : 'Ver notificações',
       child: GestureDetector(
         onTap: () {
@@ -288,11 +288,11 @@ class _NotificationBellState extends ConsumerState<_NotificationBell>
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
                     color: AppColors.danger,
-                    shape: todayCount < 10
+                    shape: unreadCount < 10
                         ? BoxShape.circle
                         : BoxShape.rectangle,
                     borderRadius:
-                        todayCount >= 10 ? BorderRadius.circular(9) : null,
+                        unreadCount >= 10 ? BorderRadius.circular(9) : null,
                     border: Border.all(
                       color: AppColors.primaryDark,
                       width: 1.5,
@@ -300,7 +300,7 @@ class _NotificationBellState extends ConsumerState<_NotificationBell>
                   ),
                   child: Center(
                     child: Text(
-                      todayCount > 99 ? '99+' : '$todayCount',
+                      unreadCount > 99 ? '99+' : '$unreadCount',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 10,

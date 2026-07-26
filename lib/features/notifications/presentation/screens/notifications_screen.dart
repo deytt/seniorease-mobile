@@ -46,8 +46,19 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
       [_headerShowcaseKey, _listShowcaseKey, _cardShowcaseKey];
 
   @override
+  void initState() {
+    super.initState();
+    // Marca todas as notificações como lidas ao abrir a tela — badge vai a zero
+    // imediatamente. Equivalente ao useEffect(fn, []) do Web.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) markNotificationsSeen(ref);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final notificationsAsync = ref.watch(notificationHistoryProvider);
+    final lastSeenAt = ref.watch(notifLastSeenAtProvider).asData?.value;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SeniorSystemUi.headerOverlay,
@@ -70,6 +81,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen>
                     ? _EmptyState(listShowcaseKey: _listShowcaseKey, scope: _scope)
                     : _NotificationList(
                         items: items,
+                        lastSeenAt: lastSeenAt,
                         scope: _scope,
                         listShowcaseKey: _listShowcaseKey,
                         cardShowcaseKey: _cardShowcaseKey,
@@ -200,6 +212,7 @@ class _Header extends StatelessWidget {
 class _NotificationList extends StatelessWidget {
   const _NotificationList({
     required this.items,
+    required this.lastSeenAt,
     required this.scope,
     required this.listShowcaseKey,
     required this.cardShowcaseKey,
@@ -207,6 +220,7 @@ class _NotificationList extends StatelessWidget {
   });
 
   final List<NotificationItem> items;
+  final DateTime? lastSeenAt;
   final String scope;
   final GlobalKey listShowcaseKey;
   final GlobalKey cardShowcaseKey;
@@ -226,9 +240,12 @@ class _NotificationList extends StatelessWidget {
         separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.sm),
         itemBuilder: (context, index) {
           final item = items[index];
+          final isUnread =
+              lastSeenAt == null || item.sentAt.isAfter(lastSeenAt!);
           final card = NotificationItemCard(
             key: ValueKey(item.id),
             item: item,
+            isUnread: isUnread,
             onTap: () => onTap(item),
           );
 
