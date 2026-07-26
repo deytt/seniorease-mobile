@@ -139,7 +139,7 @@ void main() {
   // -------------------------------------------------------------------------
 
   group('unreadNotificationCountProvider', () {
-    ProviderContainer _makeContainer(
+    ProviderContainer makeContainer(
       List<NotificationItem> items, {
       DateTime? lastSeenAt,
     }) {
@@ -156,11 +156,11 @@ void main() {
       return container;
     }
 
-    Future<int> _readCount(
+    Future<int> readCount(
       List<NotificationItem> items, {
       DateTime? lastSeenAt,
     }) async {
-      final c = _makeContainer(items, lastSeenAt: lastSeenAt);
+      final c = makeContainer(items, lastSeenAt: lastSeenAt);
       await _firstEmission(c);
       // Aguarda o FutureProvider do lastSeenAt completar.
       await c.read(notifLastSeenAtProvider.future);
@@ -175,18 +175,18 @@ void main() {
         _item('n3', sentAt: now.subtract(const Duration(days: 5))),
       ];
       // Sem lastSeenAt → todas as notificações são consideradas não lidas.
-      expect(await _readCount(items), 3);
+      expect(await readCount(items), 3);
     });
 
     test('devolve 0 quando não há notificações', () async {
-      expect(await _readCount([]), 0);
+      expect(await readCount([]), 0);
     });
 
     test('devolve 0 quando lastSeenAt é posterior a todas as notificações',
         () async {
       final past = _item('n1', sentAt: DateTime(2024, 1, 1, 10));
       final lastSeen = DateTime(2025, 1, 1); // mais recente que a notificação
-      expect(await _readCount([past], lastSeenAt: lastSeen), 0);
+      expect(await readCount([past], lastSeenAt: lastSeen), 0);
     });
 
     test('conta apenas notificações enviadas após lastSeenAt', () async {
@@ -196,7 +196,7 @@ void main() {
       final after2 = _item('n3', sentAt: DateTime(2026, 1, 16)); // depois
 
       expect(
-        await _readCount([before, after1, after2], lastSeenAt: lastSeen),
+        await readCount([before, after1, after2], lastSeenAt: lastSeen),
         2,
       );
     });
@@ -207,7 +207,7 @@ void main() {
         _item('n1', sentAt: now.subtract(const Duration(minutes: 5))),
       ];
       // Simula lastSeenAt = agora (equivalente a markNotificationsSeen).
-      expect(await _readCount(items, lastSeenAt: DateTime.now()), 0);
+      expect(await readCount(items, lastSeenAt: DateTime.now()), 0);
     });
   });
 
