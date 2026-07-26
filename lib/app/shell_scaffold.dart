@@ -14,14 +14,33 @@ class ShellScaffold extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: navigationShell,
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: NavigationBarTheme(
+        data: NavigationBarThemeData(
+          indicatorColor: AppColors.primary,
+          iconTheme: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.selected)) {
+              return const IconThemeData(color: Colors.white);
+            }
+            return IconThemeData(color: theme.colorScheme.onSurfaceVariant);
+          }),
+          labelTextStyle: WidgetStateProperty.resolveWith((states) {
+            final base = theme.textTheme.labelSmall;
+            if (states.contains(WidgetState.selected)) {
+              return base?.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.bold,
+              );
+            }
+            return base?.copyWith(color: theme.colorScheme.onSurfaceVariant);
+          }),
+        ),
+        child: NavigationBar(
         selectedIndex: navigationShell.currentIndex,
         onDestinationSelected: (index) => navigationShell.goBranch(
           index,
           initialLocation: index == navigationShell.currentIndex,
         ),
         backgroundColor: theme.colorScheme.surface,
-        indicatorColor: AppColors.primaryLight,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: const [
           NavigationDestination(
@@ -50,6 +69,7 @@ class ShellScaffold extends StatelessWidget {
             label: 'Ajustes'
           ),
         ],
+        ),
       ),
     );
   }

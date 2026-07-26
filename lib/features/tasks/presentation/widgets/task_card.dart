@@ -94,23 +94,23 @@ class TaskCard extends ConsumerWidget {
                         overflow: TextOverflow.ellipsis,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: isDone ? AppColors.slate400 : AppColors.slate900,
+                          color: isDone ? AppColors.slate400 : theme.colorScheme.onSurface,
                           decoration:
                               isDone ? TextDecoration.lineThrough : null,
                         ),
                       ),
                       const SizedBox(height: 6),
                       // Linha 1: badges — prioridade oculta no Modo Básico
-                      Row(
+                      Wrap(
+                        spacing: AppSpacing.xs + 2,
+                        runSpacing: AppSpacing.xs,
                         children: [
-                          if (!isBasic) ...[
+                          if (!isBasic)
                             _CardBadge(
                               label: task.priority.fullLabel,
                               color: pColor,
                               background: pColor.withValues(alpha: 0.12),
                             ),
-                            const SizedBox(width: AppSpacing.xs + 2),
-                          ],
                           _CardBadge(
                             label: task.category.label,
                             color: AppColors.secondary,
@@ -182,6 +182,8 @@ class _CardBadge extends StatelessWidget {
       ),
       child: Text(
         label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: theme.textTheme.bodySmall?.copyWith(
           color: color,
           fontWeight: FontWeight.w600,
