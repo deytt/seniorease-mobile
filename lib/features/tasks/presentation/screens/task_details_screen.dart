@@ -304,7 +304,7 @@ class _DescriptionCard extends StatelessWidget {
             Text(
               task.description,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: AppColors.slate500,
+                color: theme.colorScheme.onSurfaceVariant,
                 height: 1.6,
               ),
             ),
@@ -323,7 +323,7 @@ class _DescriptionCard extends StatelessWidget {
                   _formatDueDate(task.dueDate!),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: AppColors.slate900,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -385,7 +385,7 @@ class _StepRow extends ConsumerWidget {
             child: Text(
               step.title,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: done ? AppColors.slate400 : AppColors.slate900,
+                color: done ? AppColors.slate400 : theme.colorScheme.onSurface,
                 decoration: done ? TextDecoration.lineThrough : null,
                 height: 1.5,
               ),

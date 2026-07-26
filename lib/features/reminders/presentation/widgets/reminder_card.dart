@@ -174,17 +174,26 @@ class _ReminderCardContent extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Align(alignment: Alignment.topLeft, child: content),
-            ),
-            const SizedBox(width: 8),
-            Align(
-              alignment: Alignment.topCenter,
-              child: isDone
-                  ? Semantics(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  content,
+                  if (!isDone) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: _DoneButton(onPressed: onMarkDone, ref: ref),
+                    ),
+                  ] else ...[
+                    const SizedBox(height: 8),
+                    Semantics(
                       label: 'Concluído',
                       child: ReminderCompletedIcon(size: 20),
-                    )
-                  : _DoneButton(onPressed: onMarkDone, ref: ref),
+                    ),
+                  ],
+                ],
+              ),
             ),
           ],
         ),
@@ -208,7 +217,8 @@ class _TimeBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = muted ? AppColors.slate400 : AppColors.slate900;
+    final theme = Theme.of(context);
+    final color = muted ? AppColors.slate400 : theme.colorScheme.onSurface;
 
     return SizedBox(
       width: 56,
