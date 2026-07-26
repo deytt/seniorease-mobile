@@ -42,11 +42,18 @@ class FirebaseReminderRepository implements ReminderRepository {
     // Ordenação server-side: data/hora maior primeiro (mais antigos por último).
     query = query.orderBy('scheduledAt', descending: true);
 
-    return query.snapshots().map(
-          (snap) => snap.docs
-              .map((doc) => Reminder.fromMap(doc.id, doc.data()))
-              .toList(),
-        );
+    return query.snapshots().map((snap) {
+      var reminders =
+          snap.docs.map((doc) => Reminder.fromMap(doc.id, doc.data())).toList();
+
+      // Filtro de status aplicado em memória (isDone → isRead no domínio).
+      if (filter.isDone != null) {
+        reminders =
+            reminders.where((r) => r.isDone == filter.isDone).toList();
+      }
+
+      return reminders;
+    });
   }
 
   (DateTime start, DateTime end) _todayRange() {

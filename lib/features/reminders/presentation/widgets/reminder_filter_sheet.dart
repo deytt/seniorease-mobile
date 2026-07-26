@@ -68,6 +68,13 @@ class _ReminderFilterSheetState extends ConsumerState<ReminderFilterSheet> {
     });
   }
 
+  void _toggleStatus(bool done) {
+    SeniorFeedback.selection(ref);
+    setState(() {
+      _filter = _filter.copyWith(isDone: _filter.isDone == done ? null : done);
+    });
+  }
+
   void _clear() {
     SeniorFeedback.light(ref);
     setState(() => _filter = ReminderFilter.empty);
@@ -154,6 +161,26 @@ class _ReminderFilterSheetState extends ConsumerState<ReminderFilterSheet> {
                   subtitle: 'Mostrar apenas lembretes agendados para hoje',
                   selected: _filter.isToday,
                   onTap: _toggleToday,
+                ),
+                const SizedBox(height: AppSpacing.lg),
+
+                // --- Secção Status ---
+                const _SectionLabel(label: 'Status'),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: [
+                    _FilterChip(
+                      label: 'Pendente',
+                      selected: _filter.isDone == false,
+                      onTap: () => _toggleStatus(false),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    _FilterChip(
+                      label: 'Concluído',
+                      selected: _filter.isDone == true,
+                      onTap: () => _toggleStatus(true),
+                    ),
+                  ],
                 ),
                 if (!isBasic) ...[
                   const SizedBox(height: AppSpacing.lg),

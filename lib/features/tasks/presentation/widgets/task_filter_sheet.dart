@@ -77,6 +77,13 @@ class _TaskFilterSheetState extends ConsumerState<TaskFilterSheet> {
     });
   }
 
+  void _toggleStatus(TaskStatus s) {
+    SeniorFeedback.selection(ref);
+    setState(() {
+      _filter = _filter.copyWith(status: _filter.status == s ? null : s);
+    });
+  }
+
   void _clear() {
     SeniorFeedback.light(ref);
     setState(() => _filter = TaskFilter.empty);
@@ -166,6 +173,26 @@ class _TaskFilterSheetState extends ConsumerState<TaskFilterSheet> {
                   subtitle: 'Mostrar apenas tarefas agendadas para hoje',
                   selected: _filter.isToday,
                   onTap: _toggleToday,
+                ),
+                const SizedBox(height: AppSpacing.lg),
+
+                // --- Secção Status ---
+                _SectionLabel(label: 'Status'),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: [
+                    _FilterChip(
+                      label: 'Pendente',
+                      selected: _filter.status == TaskStatus.pending,
+                      onTap: () => _toggleStatus(TaskStatus.pending),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    _FilterChip(
+                      label: 'Concluída',
+                      selected: _filter.status == TaskStatus.completed,
+                      onTap: () => _toggleStatus(TaskStatus.completed),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: AppSpacing.lg),
 

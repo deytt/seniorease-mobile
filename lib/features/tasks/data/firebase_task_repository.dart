@@ -52,11 +52,18 @@ class FirebaseTaskRepository implements TaskRepository {
     // do orderBy do Firestore.
     query = query.orderBy('dueDate', descending: true);
 
-    return query.snapshots().map(
-          (snap) => snap.docs
-              .map((doc) => Task.fromMap(doc.id, doc.data()))
-              .toList(),
-        );
+    return query.snapshots().map((snap) {
+      var tasks = snap.docs.map((doc) => Task.fromMap(doc.id, doc.data())).toList();
+
+      // Filtro de status aplicado em memória para evitar índices compostos
+      // adicionais. pending → inclui pending + in_progress; completed → apenas completed.
+      if (filter.status != null) {
+        final wantCompleted = filter.status == TaskStatus.completed;
+        tasks = tasks.where((t) => t.isCompleted == wantCompleted).toList();
+      }
+
+      return tasks;
+    });
   }
 
   @override

@@ -387,7 +387,22 @@ class _ActiveFilterBar extends StatelessWidget {
                           );
                     },
                   ),
-                if (filter.isToday && filter.category != null)
+                if (filter.isToday && filter.status != null)
+                  const SizedBox(width: 6),
+                // Chip de status
+                if (filter.status != null)
+                  _ActiveChip(
+                    label: filter.status == TaskStatus.completed
+                        ? 'Concluídas'
+                        : 'Pendentes',
+                    onRemove: () {
+                      ref.read(taskFilterProvider.notifier).update(
+                            filter.removeStatus(),
+                          );
+                    },
+                  ),
+                if ((filter.isToday || filter.status != null) &&
+                    filter.category != null)
                   const SizedBox(width: 6),
                 // Chip de categoria
                 if (filter.category != null)
@@ -399,7 +414,9 @@ class _ActiveFilterBar extends StatelessWidget {
                           );
                     },
                   ),
-                if ((filter.isToday || filter.category != null) &&
+                if ((filter.isToday ||
+                        filter.status != null ||
+                        filter.category != null) &&
                     filter.priority != null)
                   const SizedBox(width: 6),
                 // Chip de prioridade
