@@ -35,6 +35,7 @@ class _AccessibilityScreenState extends ConsumerState<AccessibilityScreen>
   final _modeShowcaseKey = GlobalKey();
   final _spacingShowcaseKey = GlobalKey();
   final _togglesShowcaseKey = GlobalKey();
+  final _resetShowcaseKey = GlobalKey();
   final _saveShowcaseKey = GlobalKey();
 
   @override
@@ -49,6 +50,7 @@ class _AccessibilityScreenState extends ConsumerState<AccessibilityScreen>
         _modeShowcaseKey,
         _spacingShowcaseKey,
         _togglesShowcaseKey,
+        _resetShowcaseKey,
         _saveShowcaseKey,
       ];
 
@@ -68,6 +70,20 @@ class _AccessibilityScreenState extends ConsumerState<AccessibilityScreen>
   }
 
   void _update(UserPreferences updated) => setState(() => _draft = updated);
+
+  void _resetToDefaults() {
+    final prefs = ref.read(preferencesProvider).value;
+    final userId = prefs?.userId ?? _draft?.userId ?? '';
+    setState(
+      () => _draft = UserPreferences.defaults(userId: userId),
+    );
+    showSeniorToast(
+      context,
+      title: 'Padrões restaurados',
+      message: 'As configurações voltaram ao estado original.',
+      variant: SeniorToastVariant.info,
+    );
+  }
 
   Future<void> _save() async {
     if (_draft == null) return;
@@ -131,12 +147,14 @@ class _AccessibilityScreenState extends ConsumerState<AccessibilityScreen>
           current: current,
           isSaving: isSaving,
           onUpdate: _update,
+          onReset: _resetToDefaults,
           onSave: _save,
           tourScope: _scope,
           fontShowcaseKey: _fontShowcaseKey,
           modeShowcaseKey: _modeShowcaseKey,
           spacingShowcaseKey: _spacingShowcaseKey,
           togglesShowcaseKey: _togglesShowcaseKey,
+          resetShowcaseKey: _resetShowcaseKey,
           saveShowcaseKey: _saveShowcaseKey,
         ),
       ),
@@ -151,18 +169,21 @@ class _Body extends StatelessWidget {
     required this.current,
     required this.isSaving,
     required this.onUpdate,
+    required this.onReset,
     required this.onSave,
     required this.tourScope,
     required this.fontShowcaseKey,
     required this.modeShowcaseKey,
     required this.spacingShowcaseKey,
     required this.togglesShowcaseKey,
+    required this.resetShowcaseKey,
     required this.saveShowcaseKey,
   });
 
   final UserPreferences current;
   final bool isSaving;
   final ValueChanged<UserPreferences> onUpdate;
+  final VoidCallback onReset;
   final VoidCallback onSave;
 
   final String tourScope;
@@ -170,6 +191,7 @@ class _Body extends StatelessWidget {
   final GlobalKey modeShowcaseKey;
   final GlobalKey spacingShowcaseKey;
   final GlobalKey togglesShowcaseKey;
+  final GlobalKey resetShowcaseKey;
   final GlobalKey saveShowcaseKey;
 
   @override
@@ -282,6 +304,21 @@ class _Body extends StatelessWidget {
           ),
 
           SizedBox(height: spacing?.sectionGap ?? AppSpacing.lg),
+
+          SeniorShowcase(
+            showcaseKey: resetShowcaseKey,
+            scope: tourScope,
+            title: 'Redefinir padrões',
+            description:
+                'Toque aqui para voltar tudo ao estado original: fonte 100%, modo avançado, espaçamento confortável e ajustes rápidos desligados.',
+            child: SeniorButton(
+              label: 'Redefinir padrões',
+              onPressed: onReset,
+              variant: SeniorButtonVariant.outline,
+            ),
+          ),
+
+          SizedBox(height: spacing?.itemGap ?? 12),
 
           SeniorShowcase(
             showcaseKey: saveShowcaseKey,
