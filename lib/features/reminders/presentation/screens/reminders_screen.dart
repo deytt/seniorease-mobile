@@ -378,7 +378,19 @@ class _ActiveFilterBar extends StatelessWidget {
                           );
                     },
                   ),
-                if (filter.isToday && filter.category != null)
+                if (filter.isToday && filter.isDone != null)
+                  const SizedBox(width: 6),
+                if (filter.isDone != null)
+                  _ActiveChip(
+                    label: filter.isDone! ? 'Concluídos' : 'Pendentes',
+                    onRemove: () {
+                      ref.read(reminderFilterProvider.notifier).update(
+                            filter.removeStatus(),
+                          );
+                    },
+                  ),
+                if ((filter.isToday || filter.isDone != null) &&
+                    filter.category != null)
                   const SizedBox(width: 6),
                 if (filter.category != null)
                   _ActiveChip(
